@@ -1,8 +1,8 @@
-# pdfcompare
+# PdfCompare
 A simple Java library to compare two PDF files.
 Files are rendered and compared pixel by pixel.
 
-Sample Usage:
+### Usage
 ```java
 new PdfComparator().compare("expected.pdf", "actual.pdf").writeTo("diffOutput.pdf");
 ```
@@ -28,4 +28,5 @@ if (!isEquals) {
 }
 ```
 
-Currently only works well for comparing pages of the same size.
+### Known Issues
+Currently only works well for comparing pages of the same size. Pages of differing Sizes are of course not matching, but the resulting output-PDF is not correct.
