@@ -19,6 +19,7 @@ package de.redsix.pdfcompare;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -33,6 +34,8 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 public class CompareResult {
 
     private Map<Integer, BufferedImage> diffImages = new TreeMap<>();
+    private Map<Integer, BufferedImage> expectedImages = new TreeMap<>();
+    private Map<Integer, BufferedImage> actualImages = new TreeMap<>();
     private boolean isEqual = true;
 
     /**
@@ -65,6 +68,8 @@ public class CompareResult {
     }
 
     public void addPageThatsEqual(final int pageIndex, final BufferedImage diffImage) {
+        expectedImages.put(pageIndex, diffImage);
+        actualImages.put(pageIndex, diffImage);
         diffImages.put(pageIndex, diffImage);
     }
 
@@ -73,10 +78,33 @@ public class CompareResult {
         diffImages.put(pageIndex, diffImage);
     }
 
+    public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+        isEqual = false;
+        expectedImages.put(pageIndex, expectedImage);
+        actualImages.put(pageIndex, actualImage);
+        diffImages.put(pageIndex, diffImage);
+    }
+
     public boolean isEqual() {
         return isEqual;
     }
     public boolean isNotEqual() {
         return !isEqual;
+    }
+
+    public BufferedImage getDiffImage(final int page) {
+        return diffImages.get(page);
+    }
+
+    public BufferedImage getExpectedImage(final int page) {
+        return expectedImages.get(page);
+    }
+
+    public BufferedImage getActualImage(final int page) {
+        return actualImages.get(page);
+    }
+
+    public int getNumberOfPages() {
+        return Collections.max(diffImages.keySet());
     }
 }

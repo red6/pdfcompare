@@ -27,6 +27,3 @@ if (!isEquals) {
     System.out.println("Differences found!");
 }
 ```
-
-### Known Issues
-Currently only works well for comparing pages of the same size. Pages of differing Sizes are of course not matching, but the resulting output-PDF is not correct.

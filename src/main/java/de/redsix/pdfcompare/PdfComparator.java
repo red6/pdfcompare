@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.redsix.pdfcompare;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,22 +46,9 @@ public class PdfComparator {
         if (expectedPdfIS.equals(actualPdfIS)) {
             return result;
         }
-        final InputStream expectedPdf = expectedPdfIS;
-        final InputStream actualPdf = actualPdfIS;
-//        final InputStream actualPdf = new BufferedInputStream(actualPdfIS);
-//        final InputStream expectedPdf = new BufferedInputStream(expectedPdfIS);
-//        if (expectedPdf.markSupported() && actualPdf.markSupported()) {
-//            expectedPdf.mark(expectedPdf.available());
-//            actualPdf.mark(expectedPdf.available());
-//            if (isBinaryEquals(expectedPdf, actualPdf)) {
-//                return result;
-//            }
-//            expectedPdf.reset();
-//            actualPdf.reset();
-//        }
-        try (PDDocument expectedDocument = PDDocument.load(expectedPdf)) {
+        try (PDDocument expectedDocument = PDDocument.load(expectedPdfIS)) {
             PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
-            try (PDDocument actualDocument = PDDocument.load(actualPdf)) {
+            try (PDDocument actualDocument = PDDocument.load(actualPdfIS)) {
                 PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
                 final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
                 for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
@@ -72,27 +57,21 @@ public class PdfComparator {
                     compare(expectedImage, actualImage, pageIndex, result);
                 }
                 if (expectedDocument.getNumberOfPages() > minPageCount) {
-                    addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, result, MISSING_RGB);
+                    addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, result, MISSING_RGB, true);
                 } else if (actualDocument.getNumberOfPages() > minPageCount) {
-                    addExtraPages(actualDocument, actualPdfRenderer, minPageCount, result, EXTRA_RGB);
+                    addExtraPages(actualDocument, actualPdfRenderer, minPageCount, result, EXTRA_RGB, false);
                 }
             }
         }
         return result;
     }
 
-    private boolean isBinaryEquals(final InputStream expectedPdf, final InputStream actualPdf) throws IOException {
-        int expectedRead;
-        while((expectedRead = expectedPdf.read()) != -1) {
-            if (expectedRead != actualPdf.read()) {
-                return false;
-            }
-        }
-        return true;
+    public static BufferedImage deepCopy(BufferedImage image) {
+        return new BufferedImage(image.getColorModel(), image.copyData(null), image.getColorModel().isAlphaPremultiplied(), null);
     }
 
     private void addExtraPages(final PDDocument document, final PDFRenderer pdfRenderer, final int minPageCount, final CompareResult result,
-            final int color) throws IOException {
+            final int color, final boolean expected) throws IOException {
         for (int pageIndex = minPageCount; pageIndex < document.getNumberOfPages(); pageIndex++) {
             BufferedImage image = renderPageAsImage(pdfRenderer, pageIndex);
             final DataBuffer dataBuffer = image.getRaster().getDataBuffer();
@@ -104,8 +83,17 @@ public class PdfComparator {
                     dataBuffer.setElem(i * image.getWidth() + j, color);
                 }
             }
-            result.addPageThatsNotEqual(pageIndex, image);
+            if (expected) {
+                result.addPageThatsNotEqual(pageIndex, image, blank(image), image);
+            }
+            else {
+                result.addPageThatsNotEqual(pageIndex, blank(image), image, image);
+            }
         }
+    }
+
+    private BufferedImage blank(final BufferedImage image) {
+        return new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
     }
 
     private BufferedImage renderPageAsImage(final PDFRenderer expectedPdfRenderer, final int pageIndex) throws IOException {
@@ -116,73 +104,114 @@ public class PdfComparator {
             final CompareResult result) {
         Optional<BufferedImage> diffImage = diffImages(expectedImage, actualImage);
         if (diffImage.isPresent()) {
-            result.addPageThatsNotEqual(pageIndex, diffImage.get());
+            result.addPageThatsNotEqual(pageIndex, expectedImage, actualImage, diffImage.get());
         } else {
             result.addPageThatsEqual(pageIndex, expectedImage);
         }
     }
 
     /**
-     * Modifies the actualImage marking the differences, when they are found
+     * Creates a new ResultImage and returns that image or an empty Optional
      */
     private Optional<BufferedImage> diffImages(final BufferedImage expectedImage, final BufferedImage actualImage) {
-        final WritableRaster expectedImageRaster = expectedImage.getRaster();
-        final DataBuffer expectedBuffer = expectedImageRaster.getDataBuffer();
-        final WritableRaster actualImageRaster = actualImage.getRaster();
-        final DataBuffer actualBuffer = actualImageRaster.getDataBuffer();
+        final DataBuffer expectedBuffer = expectedImage.getRaster().getDataBuffer();
+        final DataBuffer actualBuffer = actualImage.getRaster().getDataBuffer();
 
         final int expectedImageWidth = expectedImage.getWidth();
+        final int expectedImageHeight = expectedImage.getHeight();
         final int actualImageWidth = actualImage.getWidth();
+        final int actualImageHeight = actualImage.getHeight();
 
-        int[] diffPixel;
+        final int resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
+        final int resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
+        final BufferedImage resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualImage.getType());
+        final DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
+        int expectedElement = 0;
+        int actualElement = 0;
         boolean diffFound = false;
-        final int maxIndex = Math.min(expectedBuffer.getSize(), actualBuffer.getSize());
-        for (int i = 0; i < maxIndex; i++) {
-            if (expectedBuffer.getElem(i) != actualBuffer.getElem(i)) {
-                diffFound = true;
-                final int[] expectedPixel = expectedImageRaster.getPixel(i % expectedImageWidth, i / expectedImageWidth, (int[]) null);
-                final int[] actualPixel = actualImageRaster.getPixel(i % actualImageWidth, i / actualImageWidth, (int[]) null);
-                int expectedDarkness = calcDarkness(expectedPixel);
-                int actualDarkness = calcDarkness(actualPixel);
-                if (expectedDarkness > actualDarkness) {
-                    diffPixel = new int[] {Math.max(180, Math.min(expectedDarkness / 3, 255)), 0, 0};
+
+        for (int y = 0; y < resultImageHeight; y++) {
+            final int expectedLineOffset = y * expectedImageWidth;
+            final int actualLineOffset = y * actualImageWidth;
+            final int resultLineOffset = y * resultImageWidth;
+            for (int x = 0; x < resultImageWidth; x++) {
+                if (x < expectedImageWidth && y < expectedImageHeight) {
+                    expectedElement = expectedBuffer.getElem(x + expectedLineOffset);
                 } else {
-                    diffPixel = new int[] {0, Math.max(180, Math.min(actualDarkness / 3, 255)), 0};
+                    expectedElement = 0;
+                    diffFound = true;
                 }
-                actualImageRaster.setPixel(i % actualImageWidth, i / actualImageWidth, diffPixel);
-                mark(actualBuffer, i, actualImageWidth, MARKER_RGB);
-            }
-        }
-        if (actualBuffer.getSize() != expectedBuffer.getSize()) {
-            if (actualBuffer.getSize() > expectedBuffer.getSize()) {
-                for (int i = expectedBuffer.getSize() + 1; i < actualBuffer.getSize(); i++) {
-                    mark(actualBuffer, i, actualImageWidth, MARKER_RGB);
+                if (x < actualImageWidth && y < actualImageHeight) {
+                    actualElement = actualBuffer.getElem(x + actualLineOffset);
+                } else {
+                    actualElement = 0;
+                    diffFound = true;
                 }
-            } else {
-                mark(actualBuffer, actualBuffer.getSize() - 1, actualImageWidth, MARKER_RGB);
-                diffFound = true;
+                if (expectedElement != actualElement) {
+                    diffFound = true;
+                    int expectedDarkness = calcDarkness(expectedElement);
+                    int actualDarkness = calcDarkness(actualElement);
+                    int element;
+                    if (expectedDarkness > actualDarkness) {
+                        element = createElement(Math.max(50, Math.min(expectedDarkness / 3, 255)), 0, 0);
+                    } else {
+                        element = createElement(0, Math.max(50, Math.min(actualDarkness / 3, 255)), 0);
+                    }
+                    resultBuffer.setElem(x + resultLineOffset, element);
+                    mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
+                } else {
+                    resultBuffer.setElem(x + resultLineOffset, fadeElement(expectedElement));
+                }
             }
         }
         if (diffFound) {
-            return Optional.of(actualImage);
+            return Optional.of(resultImage);
         }
         return Optional.empty();
     }
 
-    private int calcDarkness(final int[] pixel) {
-        int result = 0;
-        for (int i : pixel) {
-            result += i;
-        }
-        return result;
+    private static int getRed(final int element) {
+        return element & 0xff0000 >> 16;
     }
 
-    private void mark(final DataBuffer expectedImageBuffer, final int index, final int imageWidth, final int markerRGB) {
-        int column = index % imageWidth;
+    private static int getGreen(final int element) {
+        return element & 0xff00 >> 8;
+    }
+
+    private static int getBlue(final int element) {
+        return element & 0xff;
+    }
+
+    private int createElement(final int red, final int green, final int blue) {
+        return ((red & 0xff) << 16) | ((green & 0xff) << 8) | blue & 0xff;
+    }
+
+    private static void blankImage(final BufferedImage resultImage) {
+        Graphics2D graphics = resultImage.createGraphics();
+        graphics.setPaint(Color.white);
+        graphics.fillRect(0, 0, resultImage.getWidth(), resultImage.getHeight());
+    }
+
+    private static int fadeElement(final int i) {
+        return fade(getRed(i)) << 16
+                | fade(getGreen(i)) << 8
+                | fade(getBlue(i));
+    }
+
+    private static int fade(final int i) {
+        return i + ((255 - i) * 4 / 5);
+    }
+
+    private static int calcDarkness(final int element) {
+        return getRed(element) + getGreen(element) + getRed(element);
+    }
+
+    private static void mark(final DataBuffer image, final int x, final int y, final int imageWidth, final int markerRGB) {
+        final int yOffset = y * imageWidth;
         for (int i = 0; i < MARKER_WIDTH; i++) {
-            expectedImageBuffer.setElem(column + i * imageWidth, markerRGB);
-            expectedImageBuffer.setElem(index - column + i, markerRGB);
+            image.setElem(x + i * imageWidth, markerRGB);
+            image.setElem(i + yOffset, markerRGB);
         }
     }
 }
