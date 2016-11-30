@@ -42,6 +42,7 @@ public class CompareResult {
      * Either write a file or do nothing, when there are no differences.
      *
      * @param filename without pdf-Extension
+     * @return a boolean indicating, whether the files are equal. When true, the files are equal and nothing was saved.
      */
     public boolean writeTo(String filename) {
         if (isEqual) {
