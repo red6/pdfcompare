@@ -25,9 +25,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         String file1="expected.pdf";
-                String file2="actual.pdf";
-//           String file2="actual_marked.pdf";
-//        String file2 = "/home/malte/aa/DokumentvorlageJadiceTest.pdf";
+        String file2="actual.pdf";
 
         Instant start = Instant.now();
         final CompareResult result = new PdfComparator().compare(file1, file2);
