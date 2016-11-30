@@ -1,6 +1,6 @@
 #sudo: required
 
 language: java
-script: mvn -q install --settings .travis-settings.xml
+script: mvn -B deploy --settings .travis-settings.xml
 jdk:
   - oraclejdk8
