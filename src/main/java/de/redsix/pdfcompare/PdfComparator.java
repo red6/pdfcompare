@@ -18,7 +18,9 @@ package de.redsix.pdfcompare;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -39,6 +41,13 @@ public class PdfComparator {
             return new CompareResult();
         }
         return compare(new FileInputStream(expectedPdfFilename), new FileInputStream(actualPdfFilename));
+    }
+
+    public CompareResult compare(final File expectedFile, final File actualFile) throws IOException {
+        if (expectedFile.equals(actualFile)) {
+            return new CompareResult();
+        }
+        return compare(new FileInputStream(expectedFile), new FileInputStream(actualFile));
     }
 
     public CompareResult compare(InputStream expectedPdfIS, InputStream actualPdfIS) throws IOException {

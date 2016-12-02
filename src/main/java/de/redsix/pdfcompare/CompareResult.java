@@ -106,6 +106,9 @@ public class CompareResult {
     }
 
     public int getNumberOfPages() {
+        if (diffImages.isEmpty()) {
+            return 0;
+        }
         return Collections.max(diffImages.keySet());
     }
 }
