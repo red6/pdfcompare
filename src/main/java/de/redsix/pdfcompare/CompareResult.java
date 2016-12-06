@@ -19,10 +19,12 @@ package de.redsix.pdfcompare;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -37,6 +39,7 @@ public class CompareResult {
     private Map<Integer, BufferedImage> expectedImages = new TreeMap<>();
     private Map<Integer, BufferedImage> actualImages = new TreeMap<>();
     private boolean isEqual = true;
+    private Collection<Integer> diffPages = new TreeSet<>();
 
     /**
      * Either write a file or do nothing, when there are no differences.
@@ -81,6 +84,7 @@ public class CompareResult {
 
     public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         isEqual = false;
+        diffPages.add(pageIndex);
         expectedImages.put(pageIndex, expectedImage);
         actualImages.put(pageIndex, actualImage);
         diffImages.put(pageIndex, diffImage);
@@ -110,5 +114,9 @@ public class CompareResult {
             return 0;
         }
         return Collections.max(diffImages.keySet());
+    }
+
+    public Collection<Integer> getPagesThatDiffer() {
+        return diffPages;
     }
 }
