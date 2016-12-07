@@ -24,6 +24,10 @@
     <url>https://github.com/red6/pdfcompare</url>
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
 
+    <prerequisites>
+        <maven>3.0.4</maven>
+    </prerequisites>
+
     <properties>
         <java.version>1.8</java.version>
     </properties>
@@ -97,6 +101,27 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.0.4</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
