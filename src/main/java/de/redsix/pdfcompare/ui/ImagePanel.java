@@ -1,4 +1,4 @@
-package de.redsix.pdfcompare;
+package de.redsix.pdfcompare.ui;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

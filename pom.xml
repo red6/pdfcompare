@@ -94,7 +94,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>de.redsix.pdfcompare.DisplayMain</mainClass>
+                            <mainClass>de.redsix.pdfcompare.ui.DisplayMain</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

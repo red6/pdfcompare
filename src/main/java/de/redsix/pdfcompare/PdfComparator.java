@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -39,14 +41,33 @@ public class PdfComparator {
         if (expectedPdfFilename.equals(actualPdfFilename)) {
             return new CompareResult();
         }
-        return compare(new FileInputStream(expectedPdfFilename), new FileInputStream(actualPdfFilename));
+        try (final InputStream expectedPdfIS = new FileInputStream(expectedPdfFilename)) {
+            try (final InputStream actualPdfIS = new FileInputStream(actualPdfFilename)) {
+                return compare(expectedPdfIS, actualPdfIS);
+            }
+        }
+    }
+
+    public CompareResult compare(final Path expectedPath, final Path actualPath) throws IOException {
+        if (expectedPath.equals(actualPath)) {
+            return new CompareResult();
+        }
+        try (final InputStream expectedPdfIS = Files.newInputStream(expectedPath)) {
+            try (final InputStream actualPdfIS = Files.newInputStream(actualPath)) {
+                return compare(expectedPdfIS, actualPdfIS);
+            }
+        }
     }
 
     public CompareResult compare(final File expectedFile, final File actualFile) throws IOException {
         if (expectedFile.equals(actualFile)) {
             return new CompareResult();
         }
-        return compare(new FileInputStream(expectedFile), new FileInputStream(actualFile));
+        try (final InputStream expectedPdfIS = new FileInputStream(expectedFile)) {
+            try (final InputStream actualPdfIS = new FileInputStream(actualFile)) {
+                return compare(expectedPdfIS, actualPdfIS);
+            }
+        }
     }
 
     public CompareResult compare(InputStream expectedPdfIS, InputStream actualPdfIS) throws IOException {
@@ -93,8 +114,7 @@ public class PdfComparator {
             }
             if (expected) {
                 result.addPageThatsNotEqual(pageIndex, image, blank(image), image);
-            }
-            else {
+            } else {
                 result.addPageThatsNotEqual(pageIndex, blank(image), image, image);
             }
         }

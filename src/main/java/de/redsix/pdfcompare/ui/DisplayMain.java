@@ -1,6 +1,8 @@
-package de.redsix.pdfcompare;
+package de.redsix.pdfcompare.ui;
 
 import java.io.IOException;
+
+import de.redsix.pdfcompare.CompareResult;
 
 public class DisplayMain {
 

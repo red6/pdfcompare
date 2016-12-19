@@ -1,4 +1,4 @@
-package de.redsix.pdfcompare;
+package de.redsix.pdfcompare.ui;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -10,6 +10,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import javax.swing.*;
+
+import de.redsix.pdfcompare.CompareResult;
+import de.redsix.pdfcompare.PdfComparator;
 
 public class Display {
 

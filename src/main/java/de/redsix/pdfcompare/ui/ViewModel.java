@@ -1,6 +1,8 @@
-package de.redsix.pdfcompare;
+package de.redsix.pdfcompare.ui;
 
 import java.awt.image.BufferedImage;
+
+import de.redsix.pdfcompare.CompareResult;
 
 public class ViewModel {
 
