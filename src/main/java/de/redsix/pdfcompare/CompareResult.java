@@ -56,13 +56,10 @@ public class CompareResult {
                 final BufferedImage image = entry.getValue();
                 PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
                 document.addPage(page);
-                final String tmpFilename = filename + "_page_" + (entry.getKey() + 1) + ".png";
-                final File tmpFile = new File(tmpFilename);
                 final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
                 try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
                     contentStream.drawImage(imageXObject, 0, 0);
                 }
-                tmpFile.delete();
             }
             document.save(filename + ".pdf");
         } catch (IOException e) {
