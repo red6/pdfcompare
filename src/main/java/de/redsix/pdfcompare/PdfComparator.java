@@ -36,6 +36,7 @@ public class PdfComparator {
     private static final int EXTRA_RGB = Color.GREEN.getRGB();
     private static final int MISSING_RGB = Color.RED.getRGB();
     private static final int MARKER_WIDTH = 20;
+    private Exclusions exclusions = new Exclusions();
 
     public CompareResult compare(String expectedPdfFilename, String actualPdfFilename) throws IOException {
         if (expectedPdfFilename.equals(actualPdfFilename)) {
@@ -71,6 +72,7 @@ public class PdfComparator {
     }
 
     public CompareResult compare(InputStream expectedPdfIS, InputStream actualPdfIS) throws IOException {
+        exclusions.readExclusions();
         final CompareResult result = new CompareResult();
         if (expectedPdfIS.equals(actualPdfIS)) {
             return result;
@@ -130,7 +132,7 @@ public class PdfComparator {
 
     private void compare(final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex,
             final CompareResult result) {
-        Optional<BufferedImage> diffImage = diffImages(expectedImage, actualImage);
+        Optional<BufferedImage> diffImage = diffImages(pageIndex, expectedImage, actualImage);
         if (diffImage.isPresent()) {
             result.addPageThatsNotEqual(pageIndex, expectedImage, actualImage, diffImage.get());
         } else {
@@ -141,7 +143,7 @@ public class PdfComparator {
     /**
      * Creates a new ResultImage and returns that image or an empty Optional
      */
-    private Optional<BufferedImage> diffImages(final BufferedImage expectedImage, final BufferedImage actualImage) {
+    private Optional<BufferedImage> diffImages(final int page, final BufferedImage expectedImage, final BufferedImage actualImage) {
         final DataBuffer expectedBuffer = expectedImage.getRaster().getDataBuffer();
         final DataBuffer actualBuffer = actualImage.getRaster().getDataBuffer();
 
@@ -164,32 +166,34 @@ public class PdfComparator {
             final int actualLineOffset = y * actualImageWidth;
             final int resultLineOffset = y * resultImageWidth;
             for (int x = 0; x < resultImageWidth; x++) {
-                if (x < expectedImageWidth && y < expectedImageHeight) {
-                    expectedElement = expectedBuffer.getElem(x + expectedLineOffset);
-                } else {
-                    expectedElement = 0;
-                    diffFound = true;
-                }
-                if (x < actualImageWidth && y < actualImageHeight) {
-                    actualElement = actualBuffer.getElem(x + actualLineOffset);
-                } else {
-                    actualElement = 0;
-                    diffFound = true;
-                }
-                if (expectedElement != actualElement) {
-                    diffFound = true;
-                    int expectedDarkness = calcDarkness(expectedElement);
-                    int actualDarkness = calcDarkness(actualElement);
-                    int element;
-                    if (expectedDarkness > actualDarkness) {
-                        element = createElement(Math.max(50, Math.min(expectedDarkness / 3, 255)), 0, 0);
+                if (!exclusions.contains(page, x, y)) {
+                    if (x < expectedImageWidth && y < expectedImageHeight) {
+                        expectedElement = expectedBuffer.getElem(x + expectedLineOffset);
                     } else {
-                        element = createElement(0, Math.max(50, Math.min(actualDarkness / 3, 255)), 0);
+                        expectedElement = 0;
+                        diffFound = true;
                     }
-                    resultBuffer.setElem(x + resultLineOffset, element);
-                    mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
-                } else {
-                    resultBuffer.setElem(x + resultLineOffset, fadeElement(expectedElement));
+                    if (x < actualImageWidth && y < actualImageHeight) {
+                        actualElement = actualBuffer.getElem(x + actualLineOffset);
+                    } else {
+                        actualElement = 0;
+                        diffFound = true;
+                    }
+                    if (expectedElement != actualElement) {
+                        diffFound = true;
+                        int expectedDarkness = calcDarkness(expectedElement);
+                        int actualDarkness = calcDarkness(actualElement);
+                        int element;
+                        if (expectedDarkness > actualDarkness) {
+                            element = createElement(Math.max(50, Math.min(expectedDarkness / 3, 255)), 0, 0);
+                        } else {
+                            element = createElement(0, Math.max(50, Math.min(actualDarkness / 3, 255)), 0);
+                        }
+                        resultBuffer.setElem(x + resultLineOffset, element);
+                        mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
+                    } else {
+                        resultBuffer.setElem(x + resultLineOffset, fadeElement(expectedElement));
+                    }
                 }
             }
         }
