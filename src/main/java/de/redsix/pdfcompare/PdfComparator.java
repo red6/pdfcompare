@@ -49,6 +49,11 @@ public class PdfComparator {
         }
     }
 
+    public CompareResult compare(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename) throws IOException {
+        exclusions.readExclusions(ignoreFilename);
+        return compare(expectedPdfFilename, actualPdfFilename);
+    }
+
     public CompareResult compare(final Path expectedPath, final Path actualPath) throws IOException {
         if (expectedPath.equals(actualPath)) {
             return new CompareResult();
@@ -58,6 +63,11 @@ public class PdfComparator {
                 return compare(expectedPdfIS, actualPdfIS);
             }
         }
+    }
+
+    public CompareResult compare(final Path expectedPath, final Path actualPath, final Path ignorePath) throws IOException {
+        exclusions.readExclusions(ignorePath);
+        return compare(expectedPath, actualPath);
     }
 
     public CompareResult compare(final File expectedFile, final File actualFile) throws IOException {
@@ -71,8 +81,17 @@ public class PdfComparator {
         }
     }
 
+    public CompareResult compare(final File expectedFile, final File actualFile, final File ignoreFile) throws IOException {
+        exclusions.readExclusions(ignoreFile);
+        return compare(expectedFile, actualFile);
+    }
+
+    public CompareResult compare(InputStream expectedPdfIS, InputStream actualPdfIS, InputStream ignoreIS) throws IOException {
+        exclusions.readExclusions(ignoreIS);
+        return compare(expectedPdfIS, actualPdfIS);
+    }
+
     public CompareResult compare(InputStream expectedPdfIS, InputStream actualPdfIS) throws IOException {
-        exclusions.readExclusions();
         final CompareResult result = new CompareResult();
         if (expectedPdfIS.equals(actualPdfIS)) {
             return result;
