@@ -28,7 +28,7 @@ public class Main {
         String file2="actual.pdf";
 
         Instant start = Instant.now();
-        final CompareResult result = new PdfComparator().compare(file1, file2);
+        final CompareResult result = new PdfComparator().compare(file1, file2, "ignore.conf");
         if (result.isNotEqual()) {
             System.out.println("Differences found!");
         }

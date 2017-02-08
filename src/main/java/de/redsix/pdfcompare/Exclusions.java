@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,15 +34,19 @@ public class Exclusions {
     }
 
     public void readExclusions(final String filename) {
-        readExclusions(new File(filename));
+        if (filename != null) {
+            readExclusions(new File(filename));
+        }
     }
 
     public void readExclusions(final Path path) {
-        readExclusions(path.toFile());
+        if (path != null && Files.exists(path)) {
+            readExclusions(path.toFile());
+        }
     }
 
     public void readExclusions(final File file) {
-        if (file != null) {
+        if (file != null && file.exists()) {
             final Config config = ConfigFactory.parseFile(file, configParseOptions);
             readFromConfig(config);
         }

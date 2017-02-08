@@ -28,9 +28,12 @@ import java.util.Optional;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PdfComparator {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
     private static final int DPI = 300;
     private static final int MARKER_RGB = Color.MAGENTA.getRGB();
     private static final int EXTRA_RGB = Color.GREEN.getRGB();
@@ -199,6 +202,7 @@ public class PdfComparator {
                         diffFound = true;
                     }
                     if (expectedElement != actualElement) {
+                        LOG.debug("Difference found at x: {}, y: {}", x, y);
                         diffFound = true;
                         int expectedDarkness = calcDarkness(expectedElement);
                         int actualDarkness = calcDarkness(actualElement);
