@@ -2,16 +2,16 @@ package de.redsix.pdfcompare.ui;
 
 import java.awt.image.BufferedImage;
 
-import de.redsix.pdfcompare.CompareResult;
+import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
 
 public class ViewModel {
 
-    private final CompareResult result;
+    private final CompareResultWithExpectedAndActual result;
     private int pageToShow = 0;
     private boolean showExpected = true;
     private final int maxPages;
 
-    public ViewModel(final CompareResult compareResult) {
+    public ViewModel(final CompareResultWithExpectedAndActual compareResult) {
         this.maxPages = compareResult.getNumberOfPages();
         this.result = compareResult;
     }

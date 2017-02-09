@@ -33,11 +33,15 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
+/**
+ * A CompareResult tracks the differences, that result from a comparison.
+ * The CompareResult only stores the diffImages, for lower memory consumption.
+ * If you also need the expected and actual Image, please use the Subclass
+ * {@link CompareResultWithExpectedAndActual}
+ */
 public class CompareResult {
 
     private Map<Integer, BufferedImage> diffImages = new TreeMap<>();
-    private Map<Integer, BufferedImage> expectedImages = new TreeMap<>();
-    private Map<Integer, BufferedImage> actualImages = new TreeMap<>();
     private boolean isEqual = true;
     private Collection<Integer> diffPages = new TreeSet<>();
 
@@ -69,21 +73,12 @@ public class CompareResult {
     }
 
     public void addPageThatsEqual(final int pageIndex, final BufferedImage diffImage) {
-        expectedImages.put(pageIndex, diffImage);
-        actualImages.put(pageIndex, diffImage);
-        diffImages.put(pageIndex, diffImage);
-    }
-
-    public void addPageThatsNotEqual(final int pageIndex, final BufferedImage diffImage) {
-        isEqual = false;
         diffImages.put(pageIndex, diffImage);
     }
 
     public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         isEqual = false;
         diffPages.add(pageIndex);
-        expectedImages.put(pageIndex, expectedImage);
-        actualImages.put(pageIndex, actualImage);
         diffImages.put(pageIndex, diffImage);
     }
 
@@ -96,14 +91,6 @@ public class CompareResult {
 
     public BufferedImage getDiffImage(final int page) {
         return diffImages.get(page);
-    }
-
-    public BufferedImage getExpectedImage(final int page) {
-        return expectedImages.get(page);
-    }
-
-    public BufferedImage getActualImage(final int page) {
-        return actualImages.get(page);
     }
 
     public int getNumberOfPages() {
