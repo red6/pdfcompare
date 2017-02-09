@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,7 +41,6 @@ public class PdfComparator<T extends CompareResult> {
     private static final int EXTRA_RGB = Color.GREEN.getRGB();
     private static final int MISSING_RGB = Color.RED.getRGB();
     private static final int MARKER_WIDTH = 20;
-
     private final Exclusions exclusions = new Exclusions();
     private final T compareResult;
 
@@ -55,14 +55,7 @@ public class PdfComparator<T extends CompareResult> {
     public T compare(String expectedPdfFilename, String actualPdfFilename) throws IOException {
         Objects.requireNonNull(expectedPdfFilename, "expectedPdfFilename is null");
         Objects.requireNonNull(actualPdfFilename, "actualPdfFilename is null");
-        if (expectedPdfFilename.equals(actualPdfFilename)) {
-            return compareResult;
-        }
-        try (final InputStream expectedPdfIS = new FileInputStream(expectedPdfFilename)) {
-            try (final InputStream actualPdfIS = new FileInputStream(actualPdfFilename)) {
-                return compare(expectedPdfIS, actualPdfIS);
-            }
-        }
+        return compare(new File(expectedPdfFilename), new File(actualPdfFilename));
     }
 
     public T compare(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename) throws IOException {
@@ -80,7 +73,17 @@ public class PdfComparator<T extends CompareResult> {
         try (final InputStream expectedPdfIS = Files.newInputStream(expectedPath)) {
             try (final InputStream actualPdfIS = Files.newInputStream(actualPath)) {
                 return compare(expectedPdfIS, actualPdfIS);
+            } catch (NoSuchFileException ex) {
+                addSingleDocumentToResult(expectedPdfIS, MISSING_RGB);
+                return compareResult;
             }
+        } catch (NoSuchFileException ex) {
+            if (Files.exists(actualPath)) {
+                try (final InputStream actualPdfIS = Files.newInputStream(actualPath)) {
+                    addSingleDocumentToResult(actualPdfIS, EXTRA_RGB);
+                }
+            }
+            return compareResult;
         }
     }
 
@@ -99,7 +102,17 @@ public class PdfComparator<T extends CompareResult> {
         try (final InputStream expectedPdfIS = new FileInputStream(expectedFile)) {
             try (final InputStream actualPdfIS = new FileInputStream(actualFile)) {
                 return compare(expectedPdfIS, actualPdfIS);
+            } catch (NoSuchFileException ex) {
+                addSingleDocumentToResult(expectedPdfIS, MISSING_RGB);
+                return compareResult;
             }
+        } catch (NoSuchFileException ex) {
+            if (actualFile.exists()) {
+                try (final InputStream actualPdfIS = new FileInputStream(actualFile)) {
+                    addSingleDocumentToResult(actualPdfIS, EXTRA_RGB);
+                }
+            }
+            return compareResult;
         }
     }
 
@@ -113,6 +126,13 @@ public class PdfComparator<T extends CompareResult> {
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
         exclusions.readExclusions(ignoreIS);
         return compare(expectedPdfIS, actualPdfIS);
+    }
+
+    private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
+        try (PDDocument expectedDocument = PDDocument.load(expectedPdfIS)) {
+            PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
+            addExtraPages(expectedDocument, expectedPdfRenderer, 0, markerColor, true);
+        }
     }
 
     public T compare(InputStream expectedPdfIS, InputStream actualPdfIS) throws IOException {
