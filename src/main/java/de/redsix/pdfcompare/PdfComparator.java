@@ -229,7 +229,9 @@ public class PdfComparator<T extends CompareResult> {
             final int actualLineOffset = y * actualImageWidth;
             final int resultLineOffset = y * resultImageWidth;
             for (int x = 0; x < resultImageWidth; x++) {
-                if (!exclusions.contains(page, x, y)) {
+                if (exclusions.contains(page, x, y)) {
+                    resultBuffer.setElem(x + resultLineOffset, fadeElement(expectedElement));
+                } else {
                     if (x < expectedImageWidth && y < expectedImageHeight) {
                         expectedElement = expectedBuffer.getElem(x + expectedLineOffset);
                     } else {

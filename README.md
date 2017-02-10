@@ -1,4 +1,4 @@
-# PdfCompare[![Build Status](https://travis-ci.org/red6/pdfcompare.svg?branch=master)](https://travis-ci.org/red6/pdfcompare)
+# PdfCompare  [![Build Status](https://travis-ci.org/red6/pdfcompare.svg?branch=master)](https://travis-ci.org/red6/pdfcompare)
 A simple Java library to compare two PDF files.
 Files are rendered and compared pixel by pixel.
 
