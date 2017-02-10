@@ -30,7 +30,7 @@ if (!isEquals) {
 The compare method can be called with filenames as Strings, Files, Paths or InputStreams.
 
 It is also possible to define rectangular areas that are ignored during comparison. For that, a file needs to be created, which defines areas to ignore.
-The file format is JSON (or actually a superset called [HOCON](https://github.com/typesafehub/config/blob/master/HOCON.md)and has the following form:
+The file format is JSON (or actually a superset called [HOCON](https://github.com/typesafehub/config/blob/master/HOCON.md)) and has the following form:
 ```javascript
 exclusions: [
     {
