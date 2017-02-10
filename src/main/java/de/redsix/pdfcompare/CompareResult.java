@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.redsix.pdfcompare;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,22 +50,21 @@ public class CompareResult {
      * @return a boolean indicating, whether the files are equal. When true, the files are equal and nothing was saved.
      */
     public boolean writeTo(String filename) {
-        if (isEqual) {
-            return isEqual;
-        }
-        try (PDDocument document = new PDDocument()) {
-            for (Entry<Integer, BufferedImage> entry : diffImages.entrySet()) {
-                final BufferedImage image = entry.getValue();
-                PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
-                document.addPage(page);
-                final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
-                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                    contentStream.drawImage(imageXObject, 0, 0);
+        if (!isEqual) {
+            try (PDDocument document = new PDDocument()) {
+                for (Entry<Integer, BufferedImage> entry : diffImages.entrySet()) {
+                    final BufferedImage image = entry.getValue();
+                    PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+                    document.addPage(page);
+                    final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
+                    try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                        contentStream.drawImage(imageXObject, 0, 0);
+                    }
                 }
+                document.save(filename + ".pdf");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            document.save(filename + ".pdf");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return isEqual;
     }
@@ -76,7 +73,8 @@ public class CompareResult {
         diffImages.put(pageIndex, diffImage);
     }
 
-    public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+    public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage,
+            final BufferedImage diffImage) {
         isEqual = false;
         diffPages.add(pageIndex);
         diffImages.put(pageIndex, diffImage);
@@ -85,6 +83,7 @@ public class CompareResult {
     public boolean isEqual() {
         return isEqual;
     }
+
     public boolean isNotEqual() {
         return !isEqual;
     }
