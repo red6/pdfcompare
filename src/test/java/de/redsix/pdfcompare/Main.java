@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.redsix.pdfcompare;
 
 import java.io.IOException;
@@ -24,16 +23,27 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        String file1="expected.pdf";
-        String file2="actual.pdf";
+        String file1 = "expected.pdf";
+        String file2 = "actual.pdf";
 
-        Instant start = Instant.now();
-        final CompareResult result = new PdfComparator().compare(file1, file2, "ignore.conf");
+//        for (int i = 0; i < 100; i++) {
+            Instant start = Instant.now();
+            final CompareResult result = new PdfComparator().compare(file1, file2, "ignore.conf");
+            Instant end = Instant.now();
+            System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
+//        }
         if (result.isNotEqual()) {
             System.out.println("Differences found!");
         }
-        final boolean isEquals = result.writeTo("test");
-        Instant end = Instant.now();
+        result.writeTo("test_with_ignore");
+
+        start = Instant.now();
+        final CompareResult result2 = new PdfComparator().compare(file1, file2);
+        end = Instant.now();
         System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
+        if (result2.isNotEqual()) {
+            System.out.println("Differences found!");
+        }
+        result2.writeTo("test");
     }
 }

@@ -44,39 +44,35 @@ public class CompareResult {
     private Collection<Integer> diffPages = new TreeSet<>();
 
     /**
-     * Either write a file or do nothing, when there are no differences.
+     * Write the result to a file.
      *
      * @param filename without pdf-Extension
-     * @return a boolean indicating, whether the files are equal. When true, the files are equal and nothing was saved.
+     * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
     public boolean writeTo(String filename) {
-        if (!isEqual) {
-            try (PDDocument document = new PDDocument()) {
-                for (Entry<Integer, BufferedImage> entry : diffImages.entrySet()) {
-                    final BufferedImage image = entry.getValue();
-                    PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
-                    document.addPage(page);
-                    final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
-                    try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                        contentStream.drawImage(imageXObject, 0, 0);
-                    }
+        try (PDDocument document = new PDDocument()) {
+            for (Entry<Integer, BufferedImage> entry : diffImages.entrySet()) {
+                final BufferedImage image = entry.getValue();
+                PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+                document.addPage(page);
+                final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                    contentStream.drawImage(imageXObject, 0, 0);
                 }
-                document.save(filename + ".pdf");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
+            document.save(filename + ".pdf");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return isEqual;
     }
 
-    public void addPageThatsEqual(final int pageIndex, final BufferedImage diffImage) {
-        diffImages.put(pageIndex, diffImage);
-    }
-
-    public void addPageThatsNotEqual(final int pageIndex, final BufferedImage expectedImage, final BufferedImage actualImage,
-            final BufferedImage diffImage) {
-        isEqual = false;
-        diffPages.add(pageIndex);
+    public void addPage(final boolean hasDifferences, final int pageIndex,
+            final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+        if (hasDifferences) {
+            isEqual = false;
+            diffPages.add(pageIndex);
+        }
         diffImages.put(pageIndex, diffImage);
     }
 

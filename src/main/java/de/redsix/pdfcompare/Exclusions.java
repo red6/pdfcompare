@@ -7,9 +7,9 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -20,17 +20,18 @@ import com.typesafe.config.ConfigSyntax;
 public class Exclusions {
 
     final static ConfigParseOptions configParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF).setAllowMissing(true);
-    private final Collection<Exclusion> exclusions = new ArrayList<>();
-
-    public Exclusions() {
-    }
+    private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<>();
 
     public void add(final Exclusion exclusion) {
-        exclusions.add(exclusion);
+        exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions()).add(exclusion);
     }
 
     public boolean contains(final int page, final int x, final int y) {
-        return exclusions.stream().filter(e -> e.contains(page, x, y)).findFirst().isPresent();
+        final PageExclusions exclusionsThisPage = exclusionsPerPage.get(page);
+        if (exclusionsThisPage != null) {
+            return exclusionsThisPage.contains(x, y);
+        }
+        return false;
     }
 
     public void readExclusions(final String filename) {
@@ -70,6 +71,10 @@ public class Exclusions {
         exclusions.stream().map(co -> {
             final Config c = co.toConfig();
             return new Exclusion(c.getInt("page"), c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
-        }).forEach(e -> this.exclusions.add(e));
+        }).forEach(e -> add(e));
+    }
+
+    public PageExclusions forPage(final int page) {
+        return exclusionsPerPage.getOrDefault(page, new PageExclusions());
     }
 }
