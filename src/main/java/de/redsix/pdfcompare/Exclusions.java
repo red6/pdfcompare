@@ -1,6 +1,7 @@
 package de.redsix.pdfcompare;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -34,6 +35,10 @@ public class Exclusions {
         return false;
     }
 
+    public PageExclusions forPage(final int page) {
+        return exclusionsPerPage.getOrDefault(page, new PageExclusions());
+    }
+
     public void readExclusions(final String filename) {
         if (filename != null) {
             readExclusions(new File(filename));
@@ -55,7 +60,11 @@ public class Exclusions {
 
     public void readExclusions(InputStream inputStream) {
         if (inputStream != null) {
-            readExclusions(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            try(final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                readExclusions(inputStreamReader);
+            } catch (IOException e) {
+
+            }
         }
     }
 
@@ -72,9 +81,5 @@ public class Exclusions {
             final Config c = co.toConfig();
             return new Exclusion(c.getInt("page"), c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
         }).forEach(e -> add(e));
-    }
-
-    public PageExclusions forPage(final int page) {
-        return exclusionsPerPage.getOrDefault(page, new PageExclusions());
     }
 }

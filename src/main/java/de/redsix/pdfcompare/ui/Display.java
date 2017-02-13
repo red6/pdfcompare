@@ -11,7 +11,6 @@ import java.io.StringWriter;
 
 import javax.swing.*;
 
-import de.redsix.pdfcompare.CompareResult;
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
 import de.redsix.pdfcompare.PdfComparator;
 
@@ -80,7 +79,7 @@ public class Display {
                     final File actualFile = fileChooser.getSelectedFile();
                     try {
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        viewModel = new ViewModel(new PdfComparator<>(new CompareResultWithExpectedAndActual()).compare(expectedFile, actualFile));
+                        viewModel = new ViewModel(new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare());
                         leftPanel.setImage(viewModel.getLeftImage());
                         resultPanel.setImage(viewModel.getDiffImage());
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

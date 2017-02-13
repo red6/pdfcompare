@@ -13,9 +13,9 @@ public class CompareResultWithExpectedAndActual extends CompareResult {
     private Map<Integer, BufferedImage> actualImages = new TreeMap<>();
 
     @Override
-    public void addPage(final boolean hasDifferences, final int pageIndex, final BufferedImage expectedImage,
+    public void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex, final BufferedImage expectedImage,
             final BufferedImage actualImage, final BufferedImage diffImage) {
-        super.addPage(hasDifferences, pageIndex, expectedImage, actualImage, diffImage);
+        super.addPage(hasDifferences, hasDifferenceInExclusion, pageIndex, expectedImage, actualImage, diffImage);
         expectedImages.put(pageIndex, expectedImage);
         actualImages.put(pageIndex, actualImage);
     }

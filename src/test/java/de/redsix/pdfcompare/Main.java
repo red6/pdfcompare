@@ -28,7 +28,7 @@ public class Main {
 
 //        for (int i = 0; i < 100; i++) {
             Instant start = Instant.now();
-            final CompareResult result = new PdfComparator().compare(file1, file2, "ignore.conf");
+            final CompareResult result = new PdfComparator(file1, file2, "ignore.conf").compare();
             Instant end = Instant.now();
             System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
 //        }
@@ -38,7 +38,7 @@ public class Main {
         result.writeTo("test_with_ignore");
 
         start = Instant.now();
-        final CompareResult result2 = new PdfComparator().compare(file1, file2);
+        final CompareResult result2 = new PdfComparator(file1, file2).compare();
         end = Instant.now();
         System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
         if (result2.isNotEqual()) {

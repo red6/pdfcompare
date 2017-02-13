@@ -42,6 +42,7 @@ public class CompareResult {
     private Map<Integer, BufferedImage> diffImages = new TreeMap<>();
     private boolean isEqual = true;
     private Collection<Integer> diffPages = new TreeSet<>();
+    private boolean hasDifferenceInExclusion = false;
 
     /**
      * Write the result to a file.
@@ -67,8 +68,9 @@ public class CompareResult {
         return isEqual;
     }
 
-    public void addPage(final boolean hasDifferences, final int pageIndex,
+    public void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+        this.hasDifferenceInExclusion |= hasDifferenceInExclusion;
         if (hasDifferences) {
             isEqual = false;
             diffPages.add(pageIndex);
@@ -82,6 +84,10 @@ public class CompareResult {
 
     public boolean isNotEqual() {
         return !isEqual;
+    }
+
+    public boolean hasDifferenceInExclusion() {
+        return hasDifferenceInExclusion;
     }
 
     public BufferedImage getDiffImage(final int page) {
