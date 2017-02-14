@@ -22,9 +22,14 @@ public class Exclusions {
 
     final static ConfigParseOptions configParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF).setAllowMissing(true);
     private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<>();
+    private final PageExclusions exclusionsForAllPages = new PageExclusions();
 
     public void add(final Exclusion exclusion) {
-        exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions()).add(exclusion);
+        if (exclusion.page < 0) {
+            exclusionsForAllPages.add(exclusion);
+        } else {
+            exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions(exclusionsForAllPages)).add(exclusion);
+        }
     }
 
     public boolean contains(final int page, final int x, final int y) {
@@ -36,7 +41,7 @@ public class Exclusions {
     }
 
     public PageExclusions forPage(final int page) {
-        return exclusionsPerPage.getOrDefault(page, new PageExclusions());
+        return exclusionsPerPage.getOrDefault(page, exclusionsForAllPages);
     }
 
     public void readExclusions(final String filename) {
@@ -60,7 +65,7 @@ public class Exclusions {
 
     public void readExclusions(InputStream inputStream) {
         if (inputStream != null) {
-            try(final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+            try (final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                 readExclusions(inputStreamReader);
             } catch (IOException e) {
 
@@ -79,7 +84,11 @@ public class Exclusions {
         final List<? extends ConfigObject> exclusions = load.getObjectList("exclusions");
         exclusions.stream().map(co -> {
             final Config c = co.toConfig();
-            return new Exclusion(c.getInt("page"), c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
+            int page = -1;
+            if (c.hasPath("page")) {
+                page = c.getInt("page");
+            }
+            return new Exclusion(page, c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
         }).forEach(e -> add(e));
     }
 }
