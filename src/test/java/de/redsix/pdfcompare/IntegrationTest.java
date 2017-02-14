@@ -15,7 +15,7 @@ public class IntegrationTest {
         String file2="actual.pdf";
 
         final CompareResult result = new PdfComparator(file1, file2).compare();
-        result.writeTo("differingDocumentsAreNotEqual");
+//        result.writeTo("differingDocumentsAreNotEqual");
         assertThat(result.isNotEqual(), is(true));
     }
 
@@ -25,7 +25,7 @@ public class IntegrationTest {
         String file2="actual.pdf";
 
         final CompareResult result = new PdfComparator(file1, file2, "ignore.conf").compare();
-        result.writeTo("differingDocumentsWithIgnoreAreEqual");
+//        result.writeTo("differingDocumentsWithIgnoreAreEqual");
         assertThat(result.isEqual(), is(true));
     }
 }

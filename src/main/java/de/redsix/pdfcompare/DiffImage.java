@@ -93,7 +93,7 @@ public class DiffImage {
             }
         }
         if (differencesFound) {
-            LOG.debug("Differences found on page: {} in area, x1: {}, y1: {}, x2: {}, y2: {}", page + 1, x1, y1, x2, y2);
+            LOG.debug("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, x1, y1, x2, y2);
         }
     }
 
