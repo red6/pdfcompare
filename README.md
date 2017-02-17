@@ -34,7 +34,7 @@ The file format is JSON (or actually a superset called [HOCON](https://github.co
 ```javascript
 exclusions: [
     {
-        page: 1 // page is optional. When not given applies exclusion to all pages.
+        page: 1 // page is optional. When not given applies, the exclusion applies to all pages.
         x1: 130
         y1: 3000
         x2: 190
