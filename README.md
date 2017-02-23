@@ -20,8 +20,14 @@ Just include it as dependency. Please check for the most current version availab
 ```java
 new PdfComparator().compare("expected.pdf", "actual.pdf").writeTo("diffOutput.pdf");
 ```
-This will produce an output PDF, when the two files differ or nothing, when they are equal.
-Pixels that differ are marked in red or green. And there are markings at the edge of the paper to find areas that differ quickly.
+This will produce an output PDF which may include markings for differences found.
+Pixels that are equal are faded a bit. Pixels that differ are marked in red and green.
+Red for pixels that where expected, but didn't come.
+Green for pixels that are there, but where not expected.
+And there are markings at the edge of the paper in magenta to find areas that differ quickly.
+Ignored Areas are marked with a yellow background.
+Pages that where expected, but did not come are marked with a red border.
+Pages that appear, but where not expected are marked with a gree border.
 
 The compare-method returns a CompareResult, which can be queried:
 
@@ -31,7 +37,10 @@ if (result.isNotEqual()) {
     System.out.println("Differences found!");
 }
 if (result.isEqual()) {
-    // do nothing
+    System.out.println("No Differences found!");
+}
+if (result.hasDifferenceInExclusion()) {
+    System.out.println("Only Differences in excluded areas found!");
 }
 ```
 For convenience, writeTo also returns the equals status:
