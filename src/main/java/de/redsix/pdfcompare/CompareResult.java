@@ -39,9 +39,9 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  */
 public class CompareResult {
 
-    private Map<Integer, BufferedImage> diffImages = new TreeMap<>();
+    private final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
     private boolean isEqual = true;
-    private Collection<Integer> diffPages = new TreeSet<>();
+    private final Collection<Integer> diffPages = new TreeSet<>();
     private boolean hasDifferenceInExclusion = false;
 
     /**
@@ -50,7 +50,7 @@ public class CompareResult {
      * @param filename without pdf-Extension
      * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
-    public boolean writeTo(String filename) {
+    public synchronized boolean writeTo(String filename) {
         try (PDDocument document = new PDDocument()) {
             for (BufferedImage image : diffImages.values()) {
                 PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
@@ -67,7 +67,7 @@ public class CompareResult {
         return isEqual;
     }
 
-    public void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
+    public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         this.hasDifferenceInExclusion |= hasDifferenceInExclusion;
         if (hasDifferences) {
@@ -89,18 +89,18 @@ public class CompareResult {
         return hasDifferenceInExclusion;
     }
 
-    public BufferedImage getDiffImage(final int page) {
+    public synchronized BufferedImage getDiffImage(final int page) {
         return diffImages.get(page);
     }
 
-    public int getNumberOfPages() {
+    public synchronized int getNumberOfPages() {
         if (diffImages.isEmpty()) {
             return 0;
         }
         return Collections.max(diffImages.keySet());
     }
 
-    public Collection<Integer> getPagesThatDiffer() {
+    public synchronized Collection<Integer> getPagesThatDiffer() {
         return diffPages;
     }
 }

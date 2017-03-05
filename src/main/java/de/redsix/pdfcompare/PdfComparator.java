@@ -27,6 +27,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -70,7 +72,8 @@ public class PdfComparator<T extends CompareResult> {
         exclusions.readExclusions(ignoreFilename);
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename, final T compareResult) throws IOException {
+    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename, final T compareResult)
+            throws IOException {
         this(expectedPdfFilename, actualPdfFilename, compareResult);
         Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
         exclusions.readExclusions(ignoreFilename);
@@ -148,7 +151,8 @@ public class PdfComparator<T extends CompareResult> {
         exclusions.readExclusions(ignoreIS);
     }
 
-    public PdfComparator(InputStream expectedPdfIS, InputStream actualPdfIS, InputStream ignoreIS, final T compareResult) throws IOException {
+    public PdfComparator(InputStream expectedPdfIS, InputStream actualPdfIS, InputStream ignoreIS, final T compareResult)
+            throws IOException {
         this(expectedPdfIS, actualPdfIS, compareResult);
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
         exclusions.readExclusions(ignoreIS);
@@ -158,6 +162,7 @@ public class PdfComparator<T extends CompareResult> {
         if (expectedStreamSupplier == null && actualStreamSupplier == null) {
             return compareResult;
         }
+        final ExecutorService executorService = Executors.newWorkStealingPool();
         try (final InputStream expectedStream = expectedStreamSupplier.get()) {
             try (final InputStream actualStream = actualStreamSupplier.get()) {
                 try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
@@ -168,7 +173,7 @@ public class PdfComparator<T extends CompareResult> {
                         for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
                             BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
                             BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
-                            compare(expectedImage, actualImage, pageIndex);
+                            compare(executorService, expectedImage, actualImage, pageIndex);
                         }
                         if (expectedDocument.getNumberOfPages() > minPageCount) {
                             addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
@@ -187,6 +192,7 @@ public class PdfComparator<T extends CompareResult> {
                 LOG.warn("No files found to compare. Tried Expected: {} and Actual: {}", ex.getFile(), innerEx.getFile(), innerEx);
             }
         }
+        executorService.shutdown();
         return compareResult;
     }
 
@@ -226,9 +232,15 @@ public class PdfComparator<T extends CompareResult> {
         return expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
     }
 
-    private void compare(final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex) {
-        final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions);
-        compareResult.addPage(diffImage.differs(), diffImage.differenceInExclusion(), pageIndex, expectedImage, actualImage, diffImage.getImage());
+    private void compare(final ExecutorService executorService, final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex) {
+        final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
+        executorService.execute(() -> {
+            try {
+                diffImage.diffImages();
+            } catch (Exception e) {
+                LOG.error("Exception while diffing Images", e);
+            }
+        });
     }
 
     public T getResult() {

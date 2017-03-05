@@ -9,7 +9,7 @@ import java.awt.image.DataBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DiffImage {
+public class DiffImage<T extends CompareResult> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiffImage.class);
     private static final int MARKER_RGB = new Color(230, 0, 230).getRGB();
@@ -29,13 +29,15 @@ public class DiffImage {
     private boolean differenceInExclusion = false;
     private BufferedImage resultImage;
     private int diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2;
+    private final T compareResult;
 
-    public DiffImage(final BufferedImage expectedImage, final BufferedImage actualImage, final int page, final Exclusions exclusions) {
+    public DiffImage(final BufferedImage expectedImage, final BufferedImage actualImage, final int page, final Exclusions exclusions,
+            final T compareResult) {
         this.expectedImage = expectedImage;
         this.actualImage = actualImage;
         this.page = page;
         this.exclusions = exclusions;
-        diffImages();
+        this.compareResult = compareResult;
     }
 
     public boolean differs() {
@@ -96,6 +98,7 @@ public class DiffImage {
             LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }
+        compareResult.addPage(differs(), differenceInExclusion(), page, expectedImage, actualImage, getImage());
     }
 
     private void extendDiffArea(final int y, final int x) {
