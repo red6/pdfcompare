@@ -98,7 +98,7 @@ public class DiffImage<T extends CompareResult> {
             LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }
-        compareResult.addPage(differs(), differenceInExclusion(), page, expectedImage, actualImage, getImage());
+        compareResult.addPage(differencesFound, differenceInExclusion, page, expectedImage, actualImage, resultImage);
     }
 
     private void extendDiffArea(final int y, final int x) {

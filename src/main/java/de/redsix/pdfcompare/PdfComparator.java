@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -145,9 +146,10 @@ public class PdfComparator<T extends CompareResult> {
         }
         ExecutorService executorService = null;
         if (executor == null) {
-            executorService = Executors.newWorkStealingPool();
+            executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
             executor = executorService;
         }
+        AtomicInteger jobs = new AtomicInteger();
         try (final InputStream expectedStream = expectedStreamSupplier.get()) {
             try (final InputStream actualStream = actualStreamSupplier.get()) {
                 try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
@@ -158,7 +160,7 @@ public class PdfComparator<T extends CompareResult> {
                         for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
                             BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
                             BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
-                            compare(expectedImage, actualImage, pageIndex);
+                            compare(jobs, expectedImage, actualImage, pageIndex);
                         }
                         if (expectedDocument.getNumberOfPages() > minPageCount) {
                             addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
@@ -180,6 +182,14 @@ public class PdfComparator<T extends CompareResult> {
         if (executorService != null) {
             executorService.shutdown();
             executor = null;
+        }
+        synchronized (jobs) {
+            while (jobs.get() > 0) {
+                try {
+                    jobs.wait();
+                } catch (InterruptedException e) {
+                }
+            }
         }
         return compareResult;
     }
@@ -220,13 +230,22 @@ public class PdfComparator<T extends CompareResult> {
         return expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
     }
 
-    private void compare(final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex) {
+    private void compare(final AtomicInteger jobs, final BufferedImage expectedImage, final BufferedImage actualImage,
+            final int pageIndex) {
         final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
+        jobs.incrementAndGet();
         executor.execute(() -> {
             try {
                 diffImage.diffImages();
             } catch (Exception e) {
                 LOG.error("Exception while diffing Images", e);
+            } finally {
+                synchronized (jobs) {
+                    final int i = jobs.decrementAndGet();
+                    if (i == 0) {
+                        jobs.notify();
+                    }
+                }
             }
         });
     }
