@@ -28,7 +28,7 @@ public class DiffImage {
     private boolean differencesFound = false;
     private boolean differenceInExclusion = false;
     private BufferedImage resultImage;
-    private int x1, y1, x2, y2;
+    private int diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2;
 
     public DiffImage(final BufferedImage expectedImage, final BufferedImage actualImage, final int page, final Exclusions exclusions) {
         this.expectedImage = expectedImage;
@@ -93,18 +93,19 @@ public class DiffImage {
             }
         }
         if (differencesFound) {
-            LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, x1, y1, x2, y2);
+            LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
+                    diffAreaY2);
         }
     }
 
     private void extendDiffArea(final int y, final int x) {
         if (!differencesFound) {
-            y1 = y;
-            x1 = x;
+            diffAreaY1 = y;
+            diffAreaX1 = x;
         }
-        y2 = y;
-        x1 = Math.min(x1, x);
-        x2 = Math.max(x2, x);
+        diffAreaY2 = y;
+        diffAreaX1 = Math.min(diffAreaX1, x);
+        diffAreaX2 = Math.max(diffAreaX2, x);
     }
 
     private int getElement(final int expectedElement, final int actualElement) {

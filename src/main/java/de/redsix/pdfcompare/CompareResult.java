@@ -52,8 +52,7 @@ public class CompareResult {
      */
     public boolean writeTo(String filename) {
         try (PDDocument document = new PDDocument()) {
-            for (Entry<Integer, BufferedImage> entry : diffImages.entrySet()) {
-                final BufferedImage image = entry.getValue();
+            for (BufferedImage image : diffImages.values()) {
                 PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
                 document.addPage(page);
                 final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
