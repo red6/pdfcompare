@@ -18,32 +18,41 @@ package de.redsix.pdfcompare;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
-        String file1 = "expected.pdf";
-        String file2 = "actual.pdf";
+//        String file1 = "expected.pdf";
+//        String file2 = "actual.pdf";
+        String file1 = "/home/malte/long.pdf";
+        String file2 = "/home/malte/long 2.pdf";
 
-//        for (int i = 0; i < 100; i++) {
+        final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        for (int i = 0; i < 10; i++) {
             Instant start = Instant.now();
-            final CompareResult result = new PdfComparator(file1, file2, "ignore.conf").compare();
+            final CompareResult result = new PdfComparator(file1, file2).withIgnore("ignore.conf").withExecutor(
+                    executor).compare();
             Instant end = Instant.now();
             System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
+        }
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.MINUTES);
+//        if (result.isNotEqual()) {
+//            System.out.println("Differences found!");
 //        }
-        if (result.isNotEqual()) {
-            System.out.println("Differences found!");
-        }
-        result.writeTo("test_with_ignore");
-
-        start = Instant.now();
-        final CompareResult result2 = new PdfComparator(file1, file2).compare();
-        end = Instant.now();
-        System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
-        if (result2.isNotEqual()) {
-            System.out.println("Differences found!");
-        }
-        result2.writeTo("test");
+//        result.writeTo("test_with_ignore");
+//
+//        start = Instant.now();
+//        final CompareResult result2 = new PdfComparator(file1, file2).compare();
+//        end = Instant.now();
+//        System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
+//        if (result2.isNotEqual()) {
+//            System.out.println("Differences found!");
+//        }
+//        result2.writeTo("test");
     }
 }
