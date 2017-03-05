@@ -27,6 +27,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,6 +46,7 @@ public class PdfComparator<T extends CompareResult> {
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
+    private Executor executor;
     private final T compareResult;
 
     private PdfComparator(T compareResult) {
@@ -66,19 +68,6 @@ public class PdfComparator<T extends CompareResult> {
         }
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename) throws IOException {
-        this(expectedPdfFilename, actualPdfFilename);
-        Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
-        exclusions.readExclusions(ignoreFilename);
-    }
-
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, String ignoreFilename, final T compareResult)
-            throws IOException {
-        this(expectedPdfFilename, actualPdfFilename, compareResult);
-        Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
-        exclusions.readExclusions(ignoreFilename);
-    }
-
     public PdfComparator(final Path expectedPath, final Path actualPath) throws IOException {
         this(expectedPath, actualPath, (T) new CompareResult());
     }
@@ -91,18 +80,6 @@ public class PdfComparator<T extends CompareResult> {
             this.expectedStreamSupplier = () -> Files.newInputStream(expectedPath);
             this.actualStreamSupplier = () -> Files.newInputStream(actualPath);
         }
-    }
-
-    public PdfComparator(final Path expectedPath, final Path actualPath, final Path ignorePath) throws IOException {
-        this(expectedPath, actualPath, (T) new CompareResult());
-        Objects.requireNonNull(ignorePath, "ignorePath is null");
-        exclusions.readExclusions(ignorePath);
-    }
-
-    public PdfComparator(final Path expectedPath, final Path actualPath, final Path ignorePath, final T compareResult) throws IOException {
-        this(expectedPath, actualPath, compareResult);
-        Objects.requireNonNull(ignorePath, "ignorePath is null");
-        exclusions.readExclusions(ignorePath);
     }
 
     public PdfComparator(final File expectedFile, final File actualFile) throws IOException {
@@ -119,18 +96,6 @@ public class PdfComparator<T extends CompareResult> {
         }
     }
 
-    public PdfComparator(final File expectedFile, final File actualFile, final File ignoreFile) throws IOException {
-        this(expectedFile, actualFile);
-        Objects.requireNonNull(ignoreFile, "ignoreFile is null");
-        exclusions.readExclusions(ignoreFile);
-    }
-
-    public PdfComparator(final File expectedFile, final File actualFile, final File ignoreFile, final T compareResult) throws IOException {
-        this(expectedFile, actualFile, compareResult);
-        Objects.requireNonNull(ignoreFile, "ignoreFile is null");
-        exclusions.readExclusions(ignoreFile);
-    }
-
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS) {
         this(expectedPdfIS, actualPdfIS, (T) new CompareResult());
     }
@@ -145,24 +110,44 @@ public class PdfComparator<T extends CompareResult> {
         }
     }
 
-    public PdfComparator(InputStream expectedPdfIS, InputStream actualPdfIS, InputStream ignoreIS) throws IOException {
-        this(expectedPdfIS, actualPdfIS);
-        Objects.requireNonNull(ignoreIS, "ignoreIS is null");
-        exclusions.readExclusions(ignoreIS);
+    public PdfComparator<T> withIgnore(final String ignoreFilename) {
+        Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
+        exclusions.readExclusions(ignoreFilename);
+        return this;
     }
 
-    public PdfComparator(InputStream expectedPdfIS, InputStream actualPdfIS, InputStream ignoreIS, final T compareResult)
-            throws IOException {
-        this(expectedPdfIS, actualPdfIS, compareResult);
+    public PdfComparator<T> withIgnore(final File ignoreFile) {
+        Objects.requireNonNull(ignoreFile, "ignoreFile is null");
+        exclusions.readExclusions(ignoreFile);
+        return this;
+    }
+
+    public PdfComparator<T> withIgnore(final Path ignorePath) {
+        Objects.requireNonNull(ignorePath, "ignorePath is null");
+        exclusions.readExclusions(ignorePath);
+        return this;
+    }
+
+    public PdfComparator<T> withIgnore(InputStream ignoreIS) {
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
         exclusions.readExclusions(ignoreIS);
+        return this;
+    }
+
+    public PdfComparator<T> withExecutor(final Executor executor) {
+        this.executor = executor;
+        return this;
     }
 
     public T compare() throws IOException {
         if (expectedStreamSupplier == null && actualStreamSupplier == null) {
             return compareResult;
         }
-        final ExecutorService executorService = Executors.newWorkStealingPool();
+        ExecutorService executorService = null;
+        if (executor == null) {
+            executorService = Executors.newWorkStealingPool();
+            executor = executorService;
+        }
         try (final InputStream expectedStream = expectedStreamSupplier.get()) {
             try (final InputStream actualStream = actualStreamSupplier.get()) {
                 try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
@@ -173,7 +158,7 @@ public class PdfComparator<T extends CompareResult> {
                         for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
                             BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
                             BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
-                            compare(executorService, expectedImage, actualImage, pageIndex);
+                            compare(expectedImage, actualImage, pageIndex);
                         }
                         if (expectedDocument.getNumberOfPages() > minPageCount) {
                             addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
@@ -192,7 +177,10 @@ public class PdfComparator<T extends CompareResult> {
                 LOG.warn("No files found to compare. Tried Expected: {} and Actual: {}", ex.getFile(), innerEx.getFile(), innerEx);
             }
         }
-        executorService.shutdown();
+        if (executorService != null) {
+            executorService.shutdown();
+            executor = null;
+        }
         return compareResult;
     }
 
@@ -232,9 +220,9 @@ public class PdfComparator<T extends CompareResult> {
         return expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
     }
 
-    private void compare(final ExecutorService executorService, final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex) {
+    private void compare(final BufferedImage expectedImage, final BufferedImage actualImage, final int pageIndex) {
         final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
-        executorService.execute(() -> {
+        executor.execute(() -> {
             try {
                 diffImage.diffImages();
             } catch (Exception e) {
