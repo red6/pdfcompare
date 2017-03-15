@@ -18,8 +18,8 @@ public class Display {
 
     private ViewModel viewModel;
 
-    public Display(final CompareResultWithExpectedAndActual compareResult) {
-        viewModel = new ViewModel(compareResult);
+    public void init() {
+        viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
 
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

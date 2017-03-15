@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -37,7 +36,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  * If you also need the expected and actual Image, please use the Subclass
  * {@link CompareResultWithExpectedAndActual}
  */
-public class CompareResult {
+public class CompareResult implements ResultCollector {
 
     private final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
     private boolean isEqual = true;
@@ -67,6 +66,7 @@ public class CompareResult {
         return isEqual;
     }
 
+    @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         this.hasDifferenceInExclusion |= hasDifferenceInExclusion;

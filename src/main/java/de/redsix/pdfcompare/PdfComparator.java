@@ -141,55 +141,59 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     public T compare() throws IOException {
-        if (expectedStreamSupplier == null && actualStreamSupplier == null) {
-            return compareResult;
-        }
-        ExecutorService executorService = null;
-        if (executor == null) {
-            executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-            executor = executorService;
-        }
-        AtomicInteger jobs = new AtomicInteger();
-        try (final InputStream expectedStream = expectedStreamSupplier.get()) {
-            try (final InputStream actualStream = actualStreamSupplier.get()) {
-                try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
-                    PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
-                    try (PDDocument actualDocument = PDDocument.load(actualStream)) {
-                        PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
-                        final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
-                        for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
-                            BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
-                            BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
-                            compare(jobs, expectedImage, actualImage, pageIndex);
-                        }
-                        if (expectedDocument.getNumberOfPages() > minPageCount) {
-                            addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
-                        } else if (actualDocument.getNumberOfPages() > minPageCount) {
-                            addExtraPages(actualDocument, actualPdfRenderer, minPageCount, EXTRA_RGB, false);
+        try {
+            if (expectedStreamSupplier == null && actualStreamSupplier == null) {
+                return compareResult;
+            }
+            ExecutorService executorService = null;
+            if (executor == null) {
+                executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                executor = executorService;
+            }
+            AtomicInteger jobs = new AtomicInteger();
+            try (final InputStream expectedStream = expectedStreamSupplier.get()) {
+                try (final InputStream actualStream = actualStreamSupplier.get()) {
+                    try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
+                        PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
+                        try (PDDocument actualDocument = PDDocument.load(actualStream)) {
+                            PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
+                            final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
+                            for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
+                                BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
+                                BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
+                                compare(jobs, expectedImage, actualImage, pageIndex);
+                            }
+                            if (expectedDocument.getNumberOfPages() > minPageCount) {
+                                addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
+                            } else if (actualDocument.getNumberOfPages() > minPageCount) {
+                                addExtraPages(actualDocument, actualPdfRenderer, minPageCount, EXTRA_RGB, false);
+                            }
                         }
                     }
+                } catch (NoSuchFileException ex) {
+                    addSingleDocumentToResult(expectedStream, MISSING_RGB);
                 }
             } catch (NoSuchFileException ex) {
-                addSingleDocumentToResult(expectedStream, MISSING_RGB);
-            }
-        } catch (NoSuchFileException ex) {
-            try (final InputStream actualStream = actualStreamSupplier.get()) {
-                addSingleDocumentToResult(actualStream, EXTRA_RGB);
-            } catch (NoSuchFileException innerEx) {
-                LOG.warn("No files found to compare. Tried Expected: {} and Actual: {}", ex.getFile(), innerEx.getFile(), innerEx);
-            }
-        }
-        if (executorService != null) {
-            executorService.shutdown();
-            executor = null;
-        }
-        synchronized (jobs) {
-            while (jobs.get() > 0) {
-                try {
-                    jobs.wait();
-                } catch (InterruptedException e) {
+                try (final InputStream actualStream = actualStreamSupplier.get()) {
+                    addSingleDocumentToResult(actualStream, EXTRA_RGB);
+                } catch (NoSuchFileException innerEx) {
+                    LOG.warn("No files found to compare. Tried Expected: {} and Actual: {}", ex.getFile(), innerEx.getFile(), innerEx);
                 }
             }
+            if (executorService != null) {
+                executorService.shutdown();
+                executor = null;
+            }
+            synchronized (jobs) {
+                while (jobs.get() > 0) {
+                    try {
+                        jobs.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        } finally {
+            compareResult.done();
         }
         return compareResult;
     }
