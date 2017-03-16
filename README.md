@@ -72,3 +72,19 @@ exclusions: [
     }
 ]
 ```
+
+### Internals
+
+It is good to know a few internals, when using the PdfCompare.
+Here is in a nutshell, what PdfCompare does, when it compares two PDFs.
+
+PdfCompare uses the Apache PdfBox Library to read and write Pdfs.
+
+- The Two Pdfs to compare are opend with PdfBox.
+- A page from each Pdf is read and rendered into a BufferedImage at 300dpi.
+- A new empty BufferedImage is created to take the result of the comparion. It has the maximum size of the expected and the actual image.
+- When the comparison is finished, the new BufferedImage, which holds the result of the comparison, is kept in memory in a CompareResult object. Holding on to the CompareResult means, that the images are also kept in memory.
+- After all pages are compared, a new Pdf is created and the images are written page by page into the new Pdf.
+
+Comparing large Pdfs can use up a lot of memory.
+I didn't yet find a way to write the difference Pdf page by page incrementally with PdfBox.
