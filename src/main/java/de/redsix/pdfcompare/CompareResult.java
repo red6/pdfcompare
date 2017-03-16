@@ -71,8 +71,6 @@ public class CompareResult implements ResultCollector {
     /**
      * As a default, the writeTo method removes the images from the map after writing, to conserve memory.
      * Subclasses can overwrite this behaviour to retain images for later use.
-     * @param pageNr
-     * @return
      */
     protected BufferedImage getBufferedImage(final Integer pageNr) {
         return diffImages.remove(pageNr);
