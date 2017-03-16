@@ -11,7 +11,7 @@ Just include it as dependency. Please check for the most current version availab
   <dependency>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.4</version>
+    <version>1.1.6</version>
   </dependency>
 </dependencies>
 ```
