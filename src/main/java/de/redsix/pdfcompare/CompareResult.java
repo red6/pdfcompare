@@ -17,11 +17,9 @@ package de.redsix.pdfcompare;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -38,20 +36,24 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  */
 public class CompareResult implements ResultCollector {
 
-    private final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
+    protected final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
     private boolean isEqual = true;
-    private final Collection<Integer> diffPages = new TreeSet<>();
     private boolean hasDifferenceInExclusion = false;
 
     /**
-     * Write the result to a file.
+     * Write the result Pdf to a file. Warning: This will remove the diffImages from memory!
+     * Writing can only be done once.
      *
      * @param filename without pdf-Extension
      * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
     public synchronized boolean writeTo(String filename) {
+        if (diffImages.isEmpty()) {
+            return isEqual;
+        }
         try (PDDocument document = new PDDocument()) {
-            for (BufferedImage image : diffImages.values()) {
+            for (Integer pageNr : diffImages.keySet()) {
+                final BufferedImage image = getBufferedImage(pageNr);
                 PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
                 document.addPage(page);
                 final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
@@ -66,13 +68,22 @@ public class CompareResult implements ResultCollector {
         return isEqual;
     }
 
+    /**
+     * As a default, the writeTo method removes the images from the map after writing, to conserve memory.
+     * Subclasses can overwrite this behaviour to retain images for later use.
+     * @param pageNr
+     * @return
+     */
+    protected BufferedImage getBufferedImage(final Integer pageNr) {
+        return diffImages.remove(pageNr);
+    }
+
     @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         this.hasDifferenceInExclusion |= hasDifferenceInExclusion;
         if (hasDifferences) {
             isEqual = false;
-            diffPages.add(pageIndex);
         }
         diffImages.put(pageIndex, diffImage);
     }
@@ -89,18 +100,10 @@ public class CompareResult implements ResultCollector {
         return hasDifferenceInExclusion;
     }
 
-    public synchronized BufferedImage getDiffImage(final int page) {
-        return diffImages.get(page);
-    }
-
     public synchronized int getNumberOfPages() {
         if (diffImages.isEmpty()) {
             return 0;
         }
         return Collections.max(diffImages.keySet());
-    }
-
-    public synchronized Collection<Integer> getPagesThatDiffer() {
-        return diffPages;
     }
 }
