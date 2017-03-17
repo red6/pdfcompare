@@ -147,7 +147,7 @@ public class PdfComparator<T extends CompareResult> {
             }
             ExecutorService executorService = null;
             if (executor == null) {
-                executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                executorService = Executors.newSingleThreadExecutor();
                 executor = executorService;
             }
             AtomicInteger jobs = new AtomicInteger();
