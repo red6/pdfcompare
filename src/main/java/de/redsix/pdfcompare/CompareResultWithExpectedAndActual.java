@@ -20,8 +20,9 @@ public class CompareResultWithExpectedAndActual extends CompareResult {
         actualImages.put(pageIndex, actualImage);
     }
 
-    protected BufferedImage getBufferedImage(final Integer pageNr) {
-        return diffImages.get(pageNr);
+    @Override
+    protected boolean keepImages() {
+        return true;
     }
 
     public synchronized BufferedImage getDiffImage(final int page) {

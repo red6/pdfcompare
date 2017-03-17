@@ -111,7 +111,6 @@ class ImagePanel extends JPanel implements Scrollable {
         if (zoom < zoomStages[zoomStages.length - 1]) {
             int i = 0;
             for (; i < zoomStages.length && zoomStages[i] <= zoom; i++) {
-                ;
             }
             zoom = zoomStages[i];
             revalidate();
@@ -125,7 +124,6 @@ class ImagePanel extends JPanel implements Scrollable {
             oldHeight = getZoomHeight();
             int i = 0;
             for (; i < zoomStages.length && zoomStages[i] < zoom; i++) {
-                ;
             }
             zoom = zoomStages[i - 1];
             revalidate();

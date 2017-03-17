@@ -32,14 +32,6 @@ public class Exclusions {
         }
     }
 
-    public boolean contains(final int page, final int x, final int y) {
-        final PageExclusions exclusionsThisPage = exclusionsPerPage.get(page);
-        if (exclusionsThisPage != null) {
-            return exclusionsThisPage.contains(x, y);
-        }
-        return false;
-    }
-
     public PageExclusions forPage(final int page) {
         return exclusionsPerPage.getOrDefault(page, exclusionsForAllPages);
     }

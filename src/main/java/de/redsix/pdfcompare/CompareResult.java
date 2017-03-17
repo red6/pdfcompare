@@ -18,7 +18,10 @@ package de.redsix.pdfcompare;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -52,15 +55,7 @@ public class CompareResult implements ResultCollector {
             return isEqual;
         }
         try (PDDocument document = new PDDocument()) {
-            for (Integer pageNr : diffImages.keySet()) {
-                final BufferedImage image = getBufferedImage(pageNr);
-                PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
-                document.addPage(page);
-                final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
-                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                    contentStream.drawImage(imageXObject, 0, 0);
-                }
-            }
+            addImagesToDocument(document);
             document.save(filename + ".pdf");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -68,22 +63,46 @@ public class CompareResult implements ResultCollector {
         return isEqual;
     }
 
-    /**
-     * As a default, the writeTo method removes the images from the map after writing, to conserve memory.
-     * Subclasses can overwrite this behaviour to retain images for later use.
-     */
-    protected BufferedImage getBufferedImage(final Integer pageNr) {
-        return diffImages.remove(pageNr);
+    private void addImagesToDocument(final PDDocument document) throws IOException {
+        final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Entry<Integer, BufferedImage> entry = iterator.next();
+            if (!keepImages()) {
+                iterator.remove();
+            }
+            addPageToDocument(document, entry.getValue());
+        }
+    }
+
+    private void addPageToDocument(final PDDocument document, final BufferedImage image) throws IOException {
+        PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+        document.addPage(page);
+        final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
+        try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            contentStream.drawImage(imageXObject, 0, 0);
+        }
+    }
+
+    protected boolean keepImages() {
+        return false;
     }
 
     @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+        Objects.requireNonNull(expectedImage, "expectedImage is null");
+        Objects.requireNonNull(actualImage, "actualImage is null");
+        Objects.requireNonNull(diffImage, "diffImage is null");
         this.hasDifferenceInExclusion |= hasDifferenceInExclusion;
         if (hasDifferences) {
             isEqual = false;
         }
         diffImages.put(pageIndex, diffImage);
+    }
+
+    @Override
+    public void noPagesFound() {
+        isEqual = false;
     }
 
     public boolean isEqual() {
