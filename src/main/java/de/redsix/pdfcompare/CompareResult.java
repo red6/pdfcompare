@@ -40,8 +40,8 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 public class CompareResult implements ResultCollector {
 
     protected final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
-    private boolean isEqual = true;
-    private boolean hasDifferenceInExclusion = false;
+    protected boolean isEqual = true;
+    protected boolean hasDifferenceInExclusion = false;
 
     /**
      * Write the result Pdf to a file. Warning: This will remove the diffImages from memory!
@@ -51,7 +51,7 @@ public class CompareResult implements ResultCollector {
      * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
     public synchronized boolean writeTo(String filename) {
-        if (diffImages.isEmpty()) {
+        if (!hasImages()) {
             return isEqual;
         }
         try (PDDocument document = new PDDocument()) {
@@ -63,7 +63,11 @@ public class CompareResult implements ResultCollector {
         return isEqual;
     }
 
-    private void addImagesToDocument(final PDDocument document) throws IOException {
+    protected boolean hasImages() {
+        return !diffImages.isEmpty();
+    }
+
+    protected void addImagesToDocument(final PDDocument document) throws IOException {
         final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
         while (iterator.hasNext()) {
             final Entry<Integer, BufferedImage> entry = iterator.next();
@@ -74,7 +78,7 @@ public class CompareResult implements ResultCollector {
         }
     }
 
-    private void addPageToDocument(final PDDocument document, final BufferedImage image) throws IOException {
+    protected void addPageToDocument(final PDDocument document, final BufferedImage image) throws IOException {
         PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
         document.addPage(page);
         final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
@@ -118,7 +122,7 @@ public class CompareResult implements ResultCollector {
     }
 
     public synchronized int getNumberOfPages() {
-        if (diffImages.isEmpty()) {
+        if (!hasImages()) {
             return 0;
         }
         return Collections.max(diffImages.keySet());
