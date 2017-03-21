@@ -35,15 +35,15 @@ public class Main {
 //        CompareResult result = null;
 
         final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        for (int i = 0; i < 100; i++) {
+//        for (int i = 0; i < 100; i++) {
             Instant start = Instant.now();
 //            result =
-            final CompareResult result1 = new CompareResult();
+            final CompareResult result1 = new DiskUsingCompareResult();
             new PdfComparator(file1, file2, result1).withIgnore("ignore.conf").withExecutor(
-                    executor).compare();
+                    executor).compare().writeTo("out");
             Instant end = Instant.now();
             System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
-        }
+//        }
         executor.shutdown();
         executor.awaitTermination(10, TimeUnit.MINUTES);
         System.out.println("Total Memory: " + Runtime.getRuntime().totalMemory());
