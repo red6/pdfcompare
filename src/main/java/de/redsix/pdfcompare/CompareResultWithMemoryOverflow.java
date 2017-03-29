@@ -8,7 +8,7 @@ package de.redsix.pdfcompare;
  */
 public class CompareResultWithMemoryOverflow extends AbstractCompareResultWithSwap {
 
-    private long maxMemoryUsage = Math.max(Math.round(Runtime.getRuntime().maxMemory() * 0.7), 200 * 1024 * 1024);
+    private long maxMemoryUsage = Math.min(Math.round(Runtime.getRuntime().maxMemory() * 0.7), Runtime.getRuntime().maxMemory() - 200 * 1024 * 1024);
 
     public CompareResultWithMemoryOverflow() {
     }
