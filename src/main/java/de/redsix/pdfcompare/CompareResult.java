@@ -67,7 +67,7 @@ public class CompareResult implements ResultCollector {
         return !diffImages.isEmpty();
     }
 
-    protected void addImagesToDocument(final PDDocument document) throws IOException {
+    protected synchronized void addImagesToDocument(final PDDocument document) throws IOException {
         final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
         while (iterator.hasNext()) {
             final Entry<Integer, BufferedImage> entry = iterator.next();

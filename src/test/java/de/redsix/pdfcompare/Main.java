@@ -16,9 +16,9 @@
 package de.redsix.pdfcompare;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,25 +29,28 @@ public class Main {
 
 //        String file1 = "expected.pdf";
 //        String file2 = "actual.pdf";
-        String file1 = "/home/malte/long.pdf";
-        String file2 = "/home/malte/long 2.pdf";
+//        String file1 = "/home/malte/projects/Testcases/HML/DirektRente/8257926_1/8257926_1_004.pdf";
+//        String file2 = "/home/malte/projects/Testcases/HML/DirektRente/8257926_1/x.pdf";
+        String file1 = "/home/malte/long_chethan.pdf";
+        String file2 = "/home/malte/long_chethan_2.pdf";
 
 //        CompareResult result = null;
 
-        final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        for (int i = 0; i < 100; i++) {
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+//        final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        for (int i = 0; i < 1; i++) {
             Instant start = Instant.now();
-//            result =
-            final CompareResult result1 = new DiskUsingCompareResult();
-            new PdfComparator(file1, file2, result1).withIgnore("ignore.conf").withExecutor(
-                    executor).compare().writeTo("out");
+//            final CompareResult result = new DiskUsingCompareResult();
+            final CompareResult result = new CompareResultWithDiskOverflow();
+            new PdfComparator(file1, file2, result).withIgnore("ignore.conf")
+                    .withExecutor(executor)
+                    .compare().writeTo("out");
             Instant end = Instant.now();
             System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
-//        }
+        }
         executor.shutdown();
         executor.awaitTermination(10, TimeUnit.MINUTES);
-        System.out.println("Total Memory: " + Runtime.getRuntime().totalMemory());
-        System.out.println("Free Memory:  " + Runtime.getRuntime().freeMemory());
+//        printMemory("finished");
 //        if (result.isNotEqual()) {
 //            System.out.println("Differences found!");
 //        }
@@ -61,5 +64,27 @@ public class Main {
 //            System.out.println("Differences found!");
 //        }
 //        result2.writeTo("test");
+    }
+
+
+    private static long oldTotal;
+    private static long oldFree;
+
+    public static void printMemory(final String s) {
+        final long totalMemory = Runtime.getRuntime().totalMemory();
+        final long freeMemory = Runtime.getRuntime().freeMemory();
+        final long consumed = totalMemory - freeMemory;
+        System.out.println("==========================================================================");
+        System.out.println("Memory " + s);
+        System.out.printf("Total Memory: %6dMB  |  %d\n", toMB(totalMemory), toMB(totalMemory - oldTotal));
+        System.out.printf("Free Memory:  %6dMB  |  %d\n", toMB(freeMemory), toMB(freeMemory - oldFree));
+        System.out.printf("Consumed:     %6dMB  |  %d\n", toMB(consumed), toMB(consumed - (oldTotal - oldFree)));
+        System.out.println("==========================================================================");
+        oldTotal = totalMemory;
+        oldFree = freeMemory;
+    }
+
+    private static long toMB(final long memory) {
+        return memory / (1024 * 1024);
     }
 }

@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -50,7 +49,7 @@ public class IntegrationTest {
 
     @Test
     public void differingDocumentsAreNotEqualUsingDisk() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new DiskUsingCompareResult()).compare();
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithDiskStorage()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
