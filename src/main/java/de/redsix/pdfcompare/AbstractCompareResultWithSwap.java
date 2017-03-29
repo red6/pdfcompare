@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.imageio.ImageIO;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -29,20 +30,26 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
     private Path tempDir;
     private boolean hasImages = false;
     private boolean swapped;
+    private ExecutorService swapExecutor = Executors.newFixedThreadPool(5);
 
     @Override
-    public synchronized boolean writeTo(final String filename) {
+    public boolean writeTo(final String filename) {
         if (!swapped) {
             return super.writeTo(filename);
         }
         swapToDisk();
+        Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap");
         try {
+            LOG.debug("Merging...");
+            Instant start = Instant.now();
             final PDFMergerUtility mergerUtility = new PDFMergerUtility();
             mergerUtility.setDestinationFileName(filename + ".pdf");
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }
             mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+            Instant end = Instant.now();
+            System.out.println("Merging took: " + Duration.between(start, end).toMillis() + "ms");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -67,35 +74,37 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
-            LOG.debug("Swapping {} pages to disk", diffImages.size());
-            Instant start = Instant.now();
-
-//            try {
-//                Path tmpDir = getTempDir();
-//                final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
-//                while (iterator.hasNext()) {
-//                    final Entry<Integer, BufferedImage> entry = iterator.next();
-//                    if (!keepImages()) {
-//                        iterator.remove();
-//                    }
-//                    ImageIO.write(entry.getValue(), "PNG", tmpDir.resolve(String.format("image_%06d", entry.getKey())).toFile());
-//                }
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-
-            final Integer minPageIndex = Collections.min(diffImages.keySet());
-            try (PDDocument document = new PDDocument()) {
-                addImagesToDocument(document);
-                final Path tempDir = getTempDir();
-                final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
-                document.save(tempFile.toFile());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            final Map<Integer, BufferedImage> images = new TreeMap<>();
+            final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
+            int previousPage = diffImages.keySet().iterator().next();
+            while (iterator.hasNext()) {
+                final Entry<Integer, BufferedImage> entry = iterator.next();
+                if (entry.getKey() <= previousPage + 1) {
+                    images.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
+                    previousPage = entry.getKey();
+                }
             }
-            Instant end = Instant.now();
-            System.out.println("Swap took: " + Duration.between(start, end).toMillis() + "ms");
-            swapped = true;
+            if (!images.isEmpty()) {
+                swapped = true;
+                swapExecutor.execute(() -> {
+                    LOG.debug("Swapping {} pages to disk", images.size());
+                    Instant start = Instant.now();
+
+                    final int minPageIndex = images.keySet().iterator().next();
+                    LOG.debug("minPageIndex: {}", minPageIndex);
+                    try (PDDocument document = new PDDocument()) {
+                        addImagesToDocument(document, images);
+                        final Path tempDir = getTempDir();
+                        final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
+                        document.save(tempFile.toFile());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Instant end = Instant.now();
+                    System.out.println("Swap took: " + Duration.between(start, end).toMillis() + "ms");
+                });
+            }
         }
     }
 

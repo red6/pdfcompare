@@ -8,6 +8,10 @@ public class CompareResultWithPageOverflow extends AbstractCompareResultWithSwap
 
     private final int maxPages;
 
+    public CompareResultWithPageOverflow() {
+        this.maxPages = 10;
+    }
+
     public CompareResultWithPageOverflow(final int maxPages) {
         this.maxPages = maxPages;
     }

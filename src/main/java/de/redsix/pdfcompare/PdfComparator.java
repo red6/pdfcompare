@@ -27,10 +27,13 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -47,8 +50,12 @@ public class PdfComparator<T extends CompareResult> {
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
-    private Executor executor;
+    private ExecutorService drawExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService parrallelDrawExecutor = Executors.newFixedThreadPool(2);
+    private BlockingQueue<DiffImage> diffQueue = new LinkedBlockingQueue<>(4);
+    private ExecutorService diffExecutor = Executors.newSingleThreadExecutor();
     private final T compareResult;
+    private boolean doneDrawing = false;
 
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
@@ -135,17 +142,11 @@ public class PdfComparator<T extends CompareResult> {
         return this;
     }
 
-    public PdfComparator<T> withExecutor(final Executor executor) {
-        this.executor = executor;
-        return this;
-    }
-
     public T compare() throws IOException {
         try {
             if (expectedStreamSupplier == null && actualStreamSupplier == null) {
                 return compareResult;
             }
-            ExecutorService executorService = getExecutorService();
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
                     try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
@@ -153,19 +154,16 @@ public class PdfComparator<T extends CompareResult> {
                         try (PDDocument actualDocument = PDDocument.load(actualStream)) {
                             PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
                             final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
+                            startComparatorThread();
                             CountDownLatch latch = new CountDownLatch(minPageCount);
                             for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
-                                compare(latch, pageIndex, expectedPdfRenderer, actualPdfRenderer);
+                                drawImage(latch, pageIndex, expectedPdfRenderer, actualPdfRenderer);
                             }
-                            try {
-                                latch.await();
-                            } catch (InterruptedException e) {
-                                LOG.warn("Latch await was interrupted!");
-                            }
-                            if (executorService != null) {
-                                executorService.shutdown();
-                                executor = null;
-                            }
+                            Utilities.await(latch, "FullCompare");
+                            doneDrawing = true;
+                            Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
+                            Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
+                            Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
                             if (expectedDocument.getNumberOfPages() > minPageCount) {
                                 addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
                             } else if (actualDocument.getNumberOfPages() > minPageCount) {
@@ -190,13 +188,53 @@ public class PdfComparator<T extends CompareResult> {
         return compareResult;
     }
 
-    private ExecutorService getExecutorService() {
-        ExecutorService executorService = null;
-        if (executor == null) {
-            executorService = Executors.newSingleThreadExecutor();
-            executor = executorService;
-        }
-        return executorService;
+    private void startComparatorThread() {
+        diffExecutor.execute(() -> {
+            while (!diffQueue.isEmpty() || !doneDrawing) {
+                try {
+                    final DiffImage diffImage = diffQueue.take();
+                    LOG.debug("Diffing page {}", diffImage);
+                    diffImage.diffImages();
+                    LOG.debug("DONE Diffing page {}", diffImage);
+                } catch (Exception e) {
+                    LOG.error("Exception while diffing Images", e);
+                }
+            }
+        });
+    }
+
+    private void drawImage(final CountDownLatch latch, final int pageIndex, final PDFRenderer expectedPdfRenderer,
+            final PDFRenderer actualPdfRenderer) {
+        drawExecutor.execute(() -> {
+            try {
+                LOG.debug("Drawing page {}", pageIndex);
+                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor.submit(() -> {
+                    return renderPageAsImage(expectedPdfRenderer, pageIndex);
+                });
+                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor.submit(() -> {
+                    return renderPageAsImage(actualPdfRenderer, pageIndex);
+                });
+                final DiffImage diffImage = new DiffImage(expectedImageFuture.get(), actualImageFuture.get(), pageIndex, exclusions, compareResult);
+                boolean successful = false;
+                do {
+                    try {
+                        LOG.debug("Enqueueing page {}. {} DiffImages in Queue", pageIndex, diffQueue.size());
+                        diffQueue.put(diffImage);
+                        successful = true;
+                    } catch (InterruptedException e) {
+                        LOG.warn("Put was interrupted");
+                    }
+                }
+                while (!successful);
+                LOG.debug("DONE drawing page {}", pageIndex);
+            } catch (InterruptedException e) {
+                LOG.error("Waiting for Future was interrupted", e);
+            } catch (ExecutionException e) {
+                LOG.error("Error while rendering page {}", pageIndex, e);
+            } finally {
+                latch.countDown();
+            }
+        });
     }
 
     private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
@@ -233,26 +271,6 @@ public class PdfComparator<T extends CompareResult> {
 
     private BufferedImage renderPageAsImage(final PDFRenderer expectedPdfRenderer, final int pageIndex) throws IOException {
         return expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
-    }
-
-    private void compare(final CountDownLatch jobCount, final int pageIndex,
-            final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
-
-        executor.execute(() -> {
-            try {
-                LOG.debug("diffImage START for Page {}", pageIndex);
-                BufferedImage expectedImage = renderPageAsImage(expectedPdfRenderer, pageIndex);
-                BufferedImage actualImage = renderPageAsImage(actualPdfRenderer, pageIndex);
-
-                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
-                diffImage.diffImages();
-            } catch (Exception e) {
-                LOG.error("Exception while diffing Images", e);
-            } finally {
-                jobCount.countDown();
-                LOG.debug("diffImage DONE for Page {}", pageIndex);
-            }
-        });
     }
 
     public T getResult() {

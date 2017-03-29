@@ -168,4 +168,11 @@ public class DiffImage {
             image.setElem(i + yOffset, markerRGB);
         }
     }
+
+    @Override
+    public String toString() {
+        return "DiffImage{" +
+                "page=" + page +
+                '}';
+    }
 }

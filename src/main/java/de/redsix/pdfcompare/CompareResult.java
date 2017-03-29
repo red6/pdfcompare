@@ -50,7 +50,7 @@ public class CompareResult implements ResultCollector {
      * @param filename without pdf-Extension
      * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
-    public synchronized boolean writeTo(String filename) {
+    public boolean writeTo(String filename) {
         if (!hasImages()) {
             return isEqual;
         }
@@ -67,8 +67,12 @@ public class CompareResult implements ResultCollector {
         return !diffImages.isEmpty();
     }
 
-    protected synchronized void addImagesToDocument(final PDDocument document) throws IOException {
-        final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
+    protected void addImagesToDocument(final PDDocument document) throws IOException {
+        addImagesToDocument(document, diffImages);
+    }
+
+    protected void addImagesToDocument(final PDDocument document, final Map<Integer, BufferedImage> images) throws IOException {
+        final Iterator<Entry<Integer, BufferedImage>> iterator = images.entrySet().iterator();
         while (iterator.hasNext()) {
             final Entry<Integer, BufferedImage> entry = iterator.next();
             if (!keepImages()) {

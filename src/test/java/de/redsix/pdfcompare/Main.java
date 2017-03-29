@@ -35,20 +35,16 @@ public class Main {
 
 //        CompareResult result = null;
 
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-//        final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         for (int i = 0; i < 1; i++) {
             Instant start = Instant.now();
 //            final CompareResult result = new DiskUsingCompareResult();
-            final CompareResult result = new CompareResultWithPageOverflow(20);
-            new PdfComparator(file1, file2, result).withIgnore("ignore.conf")
-                    .withExecutor(executor)
+            final CompareResult result = new CompareResultWithPageOverflow();
+            new PdfComparator(file1, file2, result)
+//                    .withIgnore("ignore.conf")
                     .compare().writeTo("out");
             Instant end = Instant.now();
             System.out.println("Duration: " + Duration.between(start, end).toMillis() + "ms");
         }
-        executor.shutdown();
-        executor.awaitTermination(10, TimeUnit.MINUTES);
 //        printMemory("finished");
 //        if (result.isNotEqual()) {
 //            System.out.println("Differences found!");
