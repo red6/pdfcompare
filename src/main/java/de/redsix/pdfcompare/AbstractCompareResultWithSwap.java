@@ -3,8 +3,13 @@ package de.redsix.pdfcompare;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.NoSuchElementException;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
+import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -18,20 +23,12 @@ import org.slf4j.LoggerFactory;
  * from memory. The threshold defaults to 70% of Runtime.maxMemory() but at least 200MB, which worked for me.
  * After swapping, a System.gc() is triggered.
  */
-public class CompareResultWithDiskOverflow extends CompareResult {
+public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CompareResultWithDiskOverflow.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractCompareResultWithSwap.class);
     private Path tempDir;
     private boolean hasImages = false;
-    private long maxMemoryUsage = Math.max(Math.round(Runtime.getRuntime().maxMemory() * 0.7), 200 * 1024 * 1024);
     private boolean swapped;
-
-    public CompareResultWithDiskOverflow() {
-    }
-
-    public CompareResultWithDiskOverflow(final int approximateMaxMemoryUsageInMegaBytes) {
-        this.maxMemoryUsage = approximateMaxMemoryUsageInMegaBytes * 1024 * 1024;
-    }
 
     @Override
     public synchronized boolean writeTo(final String filename) {
@@ -57,28 +54,47 @@ public class CompareResultWithDiskOverflow extends CompareResult {
             final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
         super.addPage(hasDifferences, hasDifferenceInExclusion, pageIndex, expectedImage, actualImage, diffImage);
         hasImages = true;
-        long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        if (usedMemory >= maxMemoryUsage) {
+        if (needToSwap()) {
             swapToDisk();
-            System.gc();
+            afterSwap();
         }
     }
 
+    protected void afterSwap() {
+    }
+
+    protected abstract boolean needToSwap();
+
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
-            LOG.debug("Swapping to disk");
-            LOG.debug("DiffImages[{}]: {}", diffImages.size(), diffImages);
+            LOG.debug("Swapping {} pages to disk", diffImages.size());
+            Instant start = Instant.now();
+
+//            try {
+//                Path tmpDir = getTempDir();
+//                final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
+//                while (iterator.hasNext()) {
+//                    final Entry<Integer, BufferedImage> entry = iterator.next();
+//                    if (!keepImages()) {
+//                        iterator.remove();
+//                    }
+//                    ImageIO.write(entry.getValue(), "PNG", tmpDir.resolve(String.format("image_%06d", entry.getKey())).toFile());
+//                }
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+
             final Integer minPageIndex = Collections.min(diffImages.keySet());
             try (PDDocument document = new PDDocument()) {
                 addImagesToDocument(document);
                 final Path tempDir = getTempDir();
                 final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
                 document.save(tempFile.toFile());
-            } catch (NoSuchElementException e) {
-                LOG.error("DiffImages: {}", diffImages);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            Instant end = Instant.now();
+            System.out.println("Swap took: " + Duration.between(start, end).toMillis() + "ms");
             swapped = true;
         }
     }

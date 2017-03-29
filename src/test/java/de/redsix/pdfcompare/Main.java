@@ -18,7 +18,6 @@ package de.redsix.pdfcompare;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ public class Main {
         for (int i = 0; i < 1; i++) {
             Instant start = Instant.now();
 //            final CompareResult result = new DiskUsingCompareResult();
-            final CompareResult result = new CompareResultWithDiskOverflow();
+            final CompareResult result = new CompareResultWithPageOverflow(20);
             new PdfComparator(file1, file2, result).withIgnore("ignore.conf")
                     .withExecutor(executor)
                     .compare().writeTo("out");
