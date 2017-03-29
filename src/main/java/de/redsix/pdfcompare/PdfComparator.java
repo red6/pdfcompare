@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -190,12 +192,16 @@ public class PdfComparator<T extends CompareResult> {
 
     private void startComparatorThread() {
         diffExecutor.execute(() -> {
-            while (!diffQueue.isEmpty() || !doneDrawing) {
+            boolean interrupted = false;
+            while (!interrupted && (!diffQueue.isEmpty() || !doneDrawing)) {
                 try {
-                    final DiffImage diffImage = diffQueue.take();
+                    final DiffImage diffImage = diffQueue.poll(1, TimeUnit.MINUTES);
                     LOG.debug("Diffing page {}", diffImage);
                     diffImage.diffImages();
                     LOG.debug("DONE Diffing page {}", diffImage);
+                } catch (InterruptedException e) {
+                    LOG.warn("Comparator queue was interrupted after 1 Minute");
+                    interrupted = true;
                 } catch (Exception e) {
                     LOG.error("Exception while diffing Images", e);
                 }
@@ -208,26 +214,24 @@ public class PdfComparator<T extends CompareResult> {
         drawExecutor.execute(() -> {
             try {
                 LOG.debug("Drawing page {}", pageIndex);
-                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor.submit(() -> {
-                    return renderPageAsImage(expectedPdfRenderer, pageIndex);
-                });
-                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor.submit(() -> {
-                    return renderPageAsImage(actualPdfRenderer, pageIndex);
-                });
-                final DiffImage diffImage = new DiffImage(expectedImageFuture.get(), actualImageFuture.get(), pageIndex, exclusions, compareResult);
+                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
+                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
+                final BufferedImage expectedImage = expectedImageFuture.get(1, TimeUnit.MINUTES);
+                final BufferedImage actualImage = actualImageFuture.get(1, TimeUnit.MINUTES);
+                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
                 boolean successful = false;
                 do {
                     try {
-                        LOG.debug("Enqueueing page {}. {} DiffImages in Queue", pageIndex, diffQueue.size());
+                        LOG.debug("Enqueueing page {}.", pageIndex, diffQueue.size());
                         diffQueue.put(diffImage);
                         successful = true;
                     } catch (InterruptedException e) {
-                        LOG.warn("Put was interrupted");
+                        LOG.warn("DiffQueue.put({}) was interrupted", diffImage);
                     }
                 }
                 while (!successful);
                 LOG.debug("DONE drawing page {}", pageIndex);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException|TimeoutException e) {
                 LOG.error("Waiting for Future was interrupted", e);
             } catch (ExecutionException e) {
                 LOG.error("Error while rendering page {}", pageIndex, e);

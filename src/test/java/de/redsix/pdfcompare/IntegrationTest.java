@@ -56,6 +56,30 @@ public class IntegrationTest {
     }
 
     @Test
+    public void differingDocumentsAreNotEqualUsingPageOverflow() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithPageOverflow()).compare();
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.isEqual(), is(false));
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflow() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.isEqual(), is(false));
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsAreNotEqualUsingMemoryOverflow() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithMemoryOverflow()).compare();
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.isEqual(), is(false));
+        writeAndCompare(result);
+    }
+
+    @Test
     public void differingDocumentsWithIgnoreAreEqual() throws IOException {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore("ignore.conf").compare();
         assertThat(result.isEqual(), is(true));
