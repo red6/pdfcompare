@@ -12,6 +12,12 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This CompareResult monitors the memory the JVM consumes through Runtime.totalMemory() - Runtime.freeMemory()
+ * when a new page is added. When the consumed memory crosses a threshold, images are swapped to disk and removed
+ * from memory. The threshold defaults to 70% of Runtime.maxMemory() but at least 200MB, which worked for me.
+ * After swapping, a System.gc() is triggered.
+ */
 public class CompareResultWithDiskOverflow extends CompareResult {
 
     private static final Logger LOG = LoggerFactory.getLogger(CompareResultWithDiskOverflow.class);
