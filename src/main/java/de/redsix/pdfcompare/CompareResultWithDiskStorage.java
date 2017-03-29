@@ -3,7 +3,6 @@ package de.redsix.pdfcompare;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
