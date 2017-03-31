@@ -196,11 +196,11 @@ public class PdfComparator<T extends CompareResult> {
             while (!interrupted && (!diffQueue.isEmpty() || !doneDrawing)) {
                 try {
                     final DiffImage diffImage = diffQueue.poll(1, TimeUnit.MINUTES);
-                    LOG.debug("Diffing page {}", diffImage);
+                    LOG.trace("Diffing page {}", diffImage);
                     diffImage.diffImages();
-                    LOG.debug("DONE Diffing page {}", diffImage);
+                    LOG.trace("DONE Diffing page {}", diffImage);
                 } catch (InterruptedException e) {
-                    LOG.warn("Comparator queue was interrupted after 1 Minute");
+                    LOG.warn("Comparator queue was interrupted after one minute");
                     interrupted = true;
                 } catch (Exception e) {
                     LOG.error("Exception while diffing Images", e);
@@ -213,7 +213,7 @@ public class PdfComparator<T extends CompareResult> {
             final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
             try {
-                LOG.debug("Drawing page {}", pageIndex);
+                LOG.trace("Drawing page {}", pageIndex);
                 final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
                 final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
                 final BufferedImage expectedImage = expectedImageFuture.get(1, TimeUnit.MINUTES);
@@ -222,7 +222,7 @@ public class PdfComparator<T extends CompareResult> {
                 boolean successful = false;
                 do {
                     try {
-                        LOG.debug("Enqueueing page {}.", pageIndex, diffQueue.size());
+                        LOG.trace("Enqueueing page {}.", pageIndex, diffQueue.size());
                         diffQueue.put(diffImage);
                         successful = true;
                     } catch (InterruptedException e) {
@@ -230,9 +230,9 @@ public class PdfComparator<T extends CompareResult> {
                     }
                 }
                 while (!successful);
-                LOG.debug("DONE drawing page {}", pageIndex);
+                LOG.trace("DONE drawing page {}", pageIndex);
             } catch (InterruptedException|TimeoutException e) {
-                LOG.error("Waiting for Future was interrupted", e);
+                LOG.error("Waiting for Future was interrupted after one minute", e);
             } catch (ExecutionException e) {
                 LOG.error("Error while rendering page {}", pageIndex, e);
             } finally {
