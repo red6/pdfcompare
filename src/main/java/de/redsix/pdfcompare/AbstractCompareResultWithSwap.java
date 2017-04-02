@@ -40,7 +40,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
         swapToDisk();
         Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap");
         try {
-            LOG.debug("Merging...");
+            LOG.trace("Merging...");
             Instant start = Instant.now();
             final PDFMergerUtility mergerUtility = new PDFMergerUtility();
             mergerUtility.setDestinationFileName(filename + ".pdf");
@@ -49,7 +49,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             }
             mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
             Instant end = Instant.now();
-            System.out.println("Merging took: " + Duration.between(start, end).toMillis() + "ms");
+            LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -88,11 +88,11 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             if (!images.isEmpty()) {
                 swapped = true;
                 swapExecutor.execute(() -> {
-                    LOG.debug("Swapping {} pages to disk", images.size());
+                    LOG.trace("Swapping {} pages to disk", images.size());
                     Instant start = Instant.now();
 
                     final int minPageIndex = images.keySet().iterator().next();
-                    LOG.debug("minPageIndex: {}", minPageIndex);
+                    LOG.trace("minPageIndex: {}", minPageIndex);
                     try (PDDocument document = new PDDocument()) {
                         addImagesToDocument(document, images);
                         final Path tempDir = getTempDir();
@@ -102,7 +102,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
                         throw new RuntimeException(e);
                     }
                     Instant end = Instant.now();
-                    System.out.println("Swap took: " + Duration.between(start, end).toMillis() + "ms");
+                    LOG.trace("Swapping took: " + Duration.between(start, end).toMillis() + "ms");
                 });
             }
         }
