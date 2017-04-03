@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
@@ -31,7 +32,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
     private Path tempDir;
     private boolean hasImages = false;
     private boolean swapped;
-    private ExecutorService swapExecutor = blockingExecutor(3, 3);
+    private ExecutorService swapExecutor;
 
     @Override
     public boolean writeTo(final String filename) {
@@ -73,6 +74,13 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     protected abstract boolean needToSwap();
 
+    private synchronized Executor getExecutor() {
+        if (swapExecutor == null) {
+            swapExecutor = blockingExecutor("Swap", 0,3, 2);
+        }
+        return swapExecutor;
+    }
+
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
             final Map<Integer, BufferedImage> images = new TreeMap<>();
@@ -88,7 +96,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             }
             if (!images.isEmpty()) {
                 swapped = true;
-                swapExecutor.execute(() -> {
+                getExecutor().execute(() -> {
                     LOG.trace("Swapping {} pages to disk", images.size());
                     Instant start = Instant.now();
 
@@ -119,5 +127,12 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             tempDir = FileUtils.createTempDir("PdfCompare");
         }
         return tempDir;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (swapExecutor != null) {
+            swapExecutor.shutdown();
+        }
     }
 }

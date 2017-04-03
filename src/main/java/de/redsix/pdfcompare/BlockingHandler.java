@@ -10,8 +10,10 @@ public class BlockingHandler implements RejectedExecutionHandler {
         boolean success = false;
         do {
             try {
-                executor.getQueue().put(r);
-                success = true;
+                if (!executor.isShutdown()) {
+                    executor.getQueue().put(r);
+                    success = true;
+                }
             } catch (InterruptedException e) {
                 // ignore and retry
             }

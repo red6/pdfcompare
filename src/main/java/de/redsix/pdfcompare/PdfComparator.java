@@ -52,9 +52,9 @@ public class PdfComparator<T extends CompareResult> {
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
-    private ExecutorService drawExecutor = Executors.newSingleThreadExecutor();
-    private ExecutorService parrallelDrawExecutor = blockingExecutor(2, 4);
-    private ExecutorService diffExecutor = blockingExecutor(1, 3);
+    private ExecutorService drawExecutor = blockingExecutor("Draw", 1, 50);
+    private ExecutorService parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4);
+    private ExecutorService diffExecutor = blockingExecutor("Diff", 1, 3);
     private final T compareResult;
 
     private PdfComparator(T compareResult) {
@@ -195,8 +195,8 @@ public class PdfComparator<T extends CompareResult> {
                         .submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
                 final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor
                         .submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
-                final BufferedImage expectedImage = expectedImageFuture.get(1, TimeUnit.MINUTES);
-                final BufferedImage actualImage = actualImageFuture.get(1, TimeUnit.MINUTES);
+                final BufferedImage expectedImage = expectedImageFuture.get(2, TimeUnit.MINUTES);
+                final BufferedImage actualImage = actualImageFuture.get(2, TimeUnit.MINUTES);
                 final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
