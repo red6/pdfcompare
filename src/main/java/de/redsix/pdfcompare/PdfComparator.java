@@ -15,6 +15,8 @@
  */
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.Utilities.blockingExecutor;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -27,13 +29,11 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -53,11 +53,9 @@ public class PdfComparator<T extends CompareResult> {
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
     private ExecutorService drawExecutor = Executors.newSingleThreadExecutor();
-    private ExecutorService parrallelDrawExecutor = Executors.newFixedThreadPool(2);
-    private BlockingQueue<DiffImage> diffQueue = new LinkedBlockingQueue<>(4);
-    private ExecutorService diffExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService parrallelDrawExecutor = blockingExecutor(2, 4);
+    private ExecutorService diffExecutor = blockingExecutor(1, 3);
     private final T compareResult;
-    private boolean doneDrawing = false;
 
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
@@ -156,13 +154,11 @@ public class PdfComparator<T extends CompareResult> {
                         try (PDDocument actualDocument = PDDocument.load(actualStream)) {
                             PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
                             final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
-                            startComparatorThread();
                             CountDownLatch latch = new CountDownLatch(minPageCount);
                             for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
                                 drawImage(latch, pageIndex, expectedPdfRenderer, actualPdfRenderer);
                             }
                             Utilities.await(latch, "FullCompare");
-                            doneDrawing = true;
                             Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
                             Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
                             Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
@@ -190,48 +186,26 @@ public class PdfComparator<T extends CompareResult> {
         return compareResult;
     }
 
-    private void startComparatorThread() {
-        diffExecutor.execute(() -> {
-            boolean interrupted = false;
-            while (!interrupted && (!diffQueue.isEmpty() || !doneDrawing)) {
-                try {
-                    final DiffImage diffImage = diffQueue.poll(1, TimeUnit.MINUTES);
-                    LOG.trace("Diffing page {}", diffImage);
-                    diffImage.diffImages();
-                    LOG.trace("DONE Diffing page {}", diffImage);
-                } catch (InterruptedException e) {
-                    LOG.warn("Comparator queue was interrupted after one minute");
-                    interrupted = true;
-                } catch (Exception e) {
-                    LOG.error("Exception while diffing Images", e);
-                }
-            }
-        });
-    }
-
     private void drawImage(final CountDownLatch latch, final int pageIndex, final PDFRenderer expectedPdfRenderer,
             final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
             try {
                 LOG.trace("Drawing page {}", pageIndex);
-                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
-                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor.submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
+                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor
+                        .submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
+                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor
+                        .submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
                 final BufferedImage expectedImage = expectedImageFuture.get(1, TimeUnit.MINUTES);
                 final BufferedImage actualImage = actualImageFuture.get(1, TimeUnit.MINUTES);
                 final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
-                boolean successful = false;
-                do {
-                    try {
-                        LOG.trace("Enqueueing page {}.", pageIndex, diffQueue.size());
-                        diffQueue.put(diffImage);
-                        successful = true;
-                    } catch (InterruptedException e) {
-                        LOG.warn("DiffQueue.put({}) was interrupted", diffImage);
-                    }
-                }
-                while (!successful);
+                LOG.trace("Enqueueing page {}.", pageIndex);
+                diffExecutor.execute(() -> {
+                    LOG.trace("Diffing page {}", diffImage);
+                    diffImage.diffImages();
+                    LOG.trace("DONE Diffing page {}", diffImage);
+                });
                 LOG.trace("DONE drawing page {}", pageIndex);
-            } catch (InterruptedException|TimeoutException e) {
+            } catch (InterruptedException | TimeoutException e) {
                 LOG.error("Waiting for Future was interrupted after one minute", e);
             } catch (ExecutionException e) {
                 LOG.error("Error while rendering page {}", pageIndex, e);

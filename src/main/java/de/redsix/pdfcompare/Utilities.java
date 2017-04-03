@@ -2,6 +2,8 @@ package de.redsix.pdfcompare;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -10,6 +12,11 @@ import org.slf4j.LoggerFactory;
 public class Utilities {
 
     private static final Logger LOG = LoggerFactory.getLogger(Utilities.class);
+
+    public static ExecutorService blockingExecutor(int threads, int queueCapacity) {
+        return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MINUTES,
+                new LinkedBlockingQueue<>(queueCapacity), new BlockingHandler());
+    }
 
     public static void shutdownAndAwaitTermination(final ExecutorService executor, final String executorName) {
         executor.shutdown();

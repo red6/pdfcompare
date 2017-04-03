@@ -1,5 +1,7 @@
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.Utilities.blockingExecutor;
+
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -10,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -30,7 +31,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
     private Path tempDir;
     private boolean hasImages = false;
     private boolean swapped;
-    private ExecutorService swapExecutor = Executors.newFixedThreadPool(5);
+    private ExecutorService swapExecutor = blockingExecutor(3, 3);
 
     @Override
     public boolean writeTo(final String filename) {
@@ -102,7 +103,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
                         throw new RuntimeException(e);
                     }
                     Instant end = Instant.now();
-                    LOG.trace("Swapping took: " + Duration.between(start, end).toMillis() + "ms");
+                    LOG.trace("Swapping took: {}ms", Duration.between(start, end).toMillis());
                 });
             }
         }
