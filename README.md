@@ -112,3 +112,8 @@ A different CompareResult implementation can be used as follows:
 ```java
 new PdfComparator("expected.pdf", "actual.pdf", new CompareResultWithPageOverflow()).compare();
 ```
+
+### Acknowledgements
+
+Big thanks to Chethan Rao <meetchethan@gmail.com> for helping me diagnose out of memory problems and providing
+the idea of partial writes and merging of the generated PDFs.
