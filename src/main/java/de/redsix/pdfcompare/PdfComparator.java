@@ -32,11 +32,11 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
@@ -49,6 +49,7 @@ public class PdfComparator<T extends CompareResult> {
     private static final int EXTRA_RGB = new Color(0, 160, 0).getRGB();
     private static final int MISSING_RGB = new Color(220, 0, 0).getRGB();
     public static final int MARKER_WIDTH = 20;
+    public static final int MAX_MEMORY = 200 * 1024 * 1024;
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
@@ -149,9 +150,9 @@ public class PdfComparator<T extends CompareResult> {
             }
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
-                    try (PDDocument expectedDocument = PDDocument.load(expectedStream)) {
+                    try (PDDocument expectedDocument = PDDocument.load(expectedStream, MemoryUsageSetting.setupMainMemoryOnly(MAX_MEMORY))) {
                         PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
-                        try (PDDocument actualDocument = PDDocument.load(actualStream)) {
+                        try (PDDocument actualDocument = PDDocument.load(actualStream, MemoryUsageSetting.setupMainMemoryOnly(MAX_MEMORY))) {
                             PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
                             final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
                             CountDownLatch latch = new CountDownLatch(minPageCount);
