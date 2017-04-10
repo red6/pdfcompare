@@ -37,6 +37,7 @@ public class IntegrationTest {
     @Before
     public void before() throws IOException, InterruptedException {
         outDir = tempFolder.getRoot().toPath();
+//        outDir = Paths.get("test");
     }
 
     @Test

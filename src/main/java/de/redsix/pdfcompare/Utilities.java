@@ -1,5 +1,6 @@
 package de.redsix.pdfcompare;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -8,12 +9,17 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Utilities {
 
     private static final Logger LOG = LoggerFactory.getLogger(Utilities.class);
+
+    public static MemoryUsageSetting getMemorySettings(final int bytes) throws IOException {
+        return MemoryUsageSetting.setupMixed(bytes).setTempDir(FileUtils.createTempDir("PdfBox").toFile());
+    }
 
     static class NamedThreadFactory implements ThreadFactory {
 

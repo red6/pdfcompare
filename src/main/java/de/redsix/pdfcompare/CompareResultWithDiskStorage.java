@@ -1,5 +1,7 @@
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.PdfComparator.DPI;
+
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,14 +19,15 @@ public class CompareResultWithDiskStorage extends CompareResult {
     @Override
     protected void addImagesToDocument(final PDDocument document) throws IOException {
         for (Path path : FileUtils.getPaths(getTempDir(), "image_*")) {
-            addPageToDocument(document, ImageIO.read(path.toFile()));
+            final BufferedImage bufferedImage = ImageIO.read(path.toFile());
+            addPageToDocument(document, new ImageWithDimension(bufferedImage, bufferedImage.getWidth()/DPI*72, bufferedImage.getHeight()/DPI*72));
         }
         FileUtils.removeTempDir(getTempDir());
     }
 
     @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
-            final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         Objects.requireNonNull(expectedImage, "expectedImage is null");
         Objects.requireNonNull(actualImage, "actualImage is null");
         Objects.requireNonNull(diffImage, "diffImage is null");
@@ -41,10 +44,10 @@ public class CompareResultWithDiskStorage extends CompareResult {
         return hasImages;
     }
 
-    private void storeImage(final int pageIndex, final BufferedImage diffImage) {
+    private void storeImage(final int pageIndex, final ImageWithDimension diffImage) {
         try {
             Path tmpDir = getTempDir();
-            ImageIO.write(diffImage, "PNG", tmpDir.resolve(String.format("image_%06d", pageIndex)).toFile());
+            ImageIO.write(diffImage.bufferedImage, "PNG", tmpDir.resolve(String.format("image_%06d", pageIndex)).toFile());
         } catch (IOException e) {
             throw new RuntimeException("Could not write image to Temp Dir", e);
         }

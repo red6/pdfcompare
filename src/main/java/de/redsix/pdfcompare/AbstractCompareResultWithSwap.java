@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
@@ -49,7 +48,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }
-            mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+            mergerUtility.mergeDocuments(Utilities.getMemorySettings(Environment.getMergeCacheSize()));
             Instant end = Instant.now();
             LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
         } catch (IOException e) {
@@ -60,7 +59,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
-            final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         super.addPage(hasDifferences, hasDifferenceInExclusion, pageIndex, expectedImage, actualImage, diffImage);
         hasImages = true;
         if (needToSwap()) {
@@ -76,18 +75,18 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     private synchronized Executor getExecutor() {
         if (swapExecutor == null) {
-            swapExecutor = blockingExecutor("Swap", 0,3, 2);
+            swapExecutor = blockingExecutor("Swap", 0,2, 1);
         }
         return swapExecutor;
     }
 
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
-            final Map<Integer, BufferedImage> images = new TreeMap<>();
-            final Iterator<Entry<Integer, BufferedImage>> iterator = diffImages.entrySet().iterator();
+            final Map<Integer, ImageWithDimension> images = new TreeMap<>();
+            final Iterator<Entry<Integer, ImageWithDimension>> iterator = diffImages.entrySet().iterator();
             int previousPage = diffImages.keySet().iterator().next();
             while (iterator.hasNext()) {
-                final Entry<Integer, BufferedImage> entry = iterator.next();
+                final Entry<Integer, ImageWithDimension> entry = iterator.next();
                 if (entry.getKey() <= previousPage + 1) {
                     images.put(entry.getKey(), entry.getValue());
                     iterator.remove();
@@ -102,7 +101,8 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
                     final int minPageIndex = images.keySet().iterator().next();
                     LOG.trace("minPageIndex: {}", minPageIndex);
-                    try (PDDocument document = new PDDocument()) {
+                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(Environment.getSwapCacheSize()))) {
+                        document.setResourceCache(new ResourceCacheWithLimitedImages());
                         addImagesToDocument(document, images);
                         final Path tempDir = getTempDir();
                         final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));

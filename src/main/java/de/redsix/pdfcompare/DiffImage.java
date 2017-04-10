@@ -13,8 +13,8 @@ public class DiffImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiffImage.class);
     private static final int MARKER_RGB = new Color(230, 0, 230).getRGB();
-    private final BufferedImage expectedImage;
-    private final BufferedImage actualImage;
+    private final ImageWithDimension expectedImage;
+    private final ImageWithDimension actualImage;
     private final int page;
     private final Exclusions exclusions;
     private DataBuffer expectedBuffer;
@@ -31,8 +31,8 @@ public class DiffImage {
     private int diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2;
     private final ResultCollector compareResult;
 
-    public DiffImage(final BufferedImage expectedImage, final BufferedImage actualImage, final int page, final Exclusions exclusions,
-            final ResultCollector compareResult) {
+    public DiffImage(final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final int page,
+            final Exclusions exclusions, final ResultCollector compareResult) {
         this.expectedImage = expectedImage;
         this.actualImage = actualImage;
         this.page = page;
@@ -53,17 +53,19 @@ public class DiffImage {
     }
 
     public void diffImages() {
-        expectedBuffer = expectedImage.getRaster().getDataBuffer();
-        actualBuffer = actualImage.getRaster().getDataBuffer();
+        BufferedImage expectBuffImage = this.expectedImage.bufferedImage;
+        BufferedImage actualBuffImage = this.actualImage.bufferedImage;
+        expectedBuffer = expectBuffImage.getRaster().getDataBuffer();
+        actualBuffer = actualBuffImage.getRaster().getDataBuffer();
 
-        expectedImageWidth = expectedImage.getWidth();
-        expectedImageHeight = expectedImage.getHeight();
-        actualImageWidth = actualImage.getWidth();
-        actualImageHeight = actualImage.getHeight();
+        expectedImageWidth = expectBuffImage.getWidth();
+        expectedImageHeight = expectBuffImage.getHeight();
+        actualImageWidth = actualBuffImage.getWidth();
+        actualImageHeight = actualBuffImage.getHeight();
 
         resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
         resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
-        resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualImage.getType());
+        resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
         DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
         int expectedElement;
@@ -98,7 +100,9 @@ public class DiffImage {
             LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }
-        compareResult.addPage(differencesFound, differenceInExclusion, page, expectedImage, actualImage, resultImage);
+        final float maxWidth = Math.max(expectedImage.width, actualImage.width);
+        final float maxHeight = Math.max(expectedImage.height, actualImage.height);
+        compareResult.addPage(differencesFound, differenceInExclusion, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
     }
 
     private void extendDiffArea(final int y, final int x) {

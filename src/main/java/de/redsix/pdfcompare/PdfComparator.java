@@ -36,8 +36,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +45,16 @@ import org.slf4j.LoggerFactory;
 public class PdfComparator<T extends CompareResult> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
-    private static final int DPI = 300;
+    public static final int DPI = 300;
     private static final int EXTRA_RGB = new Color(0, 160, 0).getRGB();
     private static final int MISSING_RGB = new Color(220, 0, 0).getRGB();
     public static final int MARKER_WIDTH = 20;
-    public static final int MAX_MEMORY = 200 * 1024 * 1024;
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
     private ExecutorService drawExecutor = blockingExecutor("Draw", 1, 50);
     private ExecutorService parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4);
-    private ExecutorService diffExecutor = blockingExecutor("Diff", 1, 3);
+    private ExecutorService diffExecutor = blockingExecutor("Diff", 1, 2);
     private final T compareResult;
 
     private PdfComparator(T compareResult) {
@@ -150,14 +149,22 @@ public class PdfComparator<T extends CompareResult> {
             }
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
-                    try (PDDocument expectedDocument = PDDocument.load(expectedStream, MemoryUsageSetting.setupMainMemoryOnly(MAX_MEMORY))) {
+                    try (PDDocument expectedDocument = PDDocument
+                            .load(expectedStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                        expectedDocument.setResourceCache(new ResourceCacheWithLimitedImages());
                         PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
-                        try (PDDocument actualDocument = PDDocument.load(actualStream, MemoryUsageSetting.setupMainMemoryOnly(MAX_MEMORY))) {
+                        try (PDDocument actualDocument = PDDocument
+                                .load(actualStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                            actualDocument.setResourceCache(new ResourceCacheWithLimitedImages());
                             PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
                             final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
                             CountDownLatch latch = new CountDownLatch(minPageCount);
                             for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
-                                drawImage(latch, pageIndex, expectedPdfRenderer, actualPdfRenderer);
+                                final float width = Math.max(actualDocument.getPage(pageIndex).getMediaBox().getWidth(),
+                                        expectedDocument.getPage(pageIndex).getMediaBox().getWidth());
+                                final float height = Math.max(actualDocument.getPage(pageIndex).getMediaBox().getHeight(),
+                                        actualDocument.getPage(pageIndex).getMediaBox().getHeight());
+                                drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
                             }
                             Utilities.await(latch, "FullCompare");
                             Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
@@ -187,17 +194,18 @@ public class PdfComparator<T extends CompareResult> {
         return compareResult;
     }
 
-    private void drawImage(final CountDownLatch latch, final int pageIndex, final PDFRenderer expectedPdfRenderer,
-            final PDFRenderer actualPdfRenderer) {
+    private void drawImage(final CountDownLatch latch, final int pageIndex,
+            final PDDocument expectedDocument, final PDDocument actualDocument,
+            final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
             try {
                 LOG.trace("Drawing page {}", pageIndex);
-                final Future<BufferedImage> expectedImageFuture = parrallelDrawExecutor
-                        .submit(() -> renderPageAsImage(expectedPdfRenderer, pageIndex));
-                final Future<BufferedImage> actualImageFuture = parrallelDrawExecutor
-                        .submit(() -> renderPageAsImage(actualPdfRenderer, pageIndex));
-                final BufferedImage expectedImage = expectedImageFuture.get(2, TimeUnit.MINUTES);
-                final BufferedImage actualImage = actualImageFuture.get(2, TimeUnit.MINUTES);
+                final Future<ImageWithDimension> expectedImageFuture = parrallelDrawExecutor
+                        .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex));
+                final Future<ImageWithDimension> actualImageFuture = parrallelDrawExecutor
+                        .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex));
+                final ImageWithDimension expectedImage = expectedImageFuture.get(2, TimeUnit.MINUTES);
+                final ImageWithDimension actualImage = actualImageFuture.get(2, TimeUnit.MINUTES);
                 final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
@@ -226,14 +234,14 @@ public class PdfComparator<T extends CompareResult> {
     private void addExtraPages(final PDDocument document, final PDFRenderer pdfRenderer, final int minPageCount,
             final int color, final boolean expected) throws IOException {
         for (int pageIndex = minPageCount; pageIndex < document.getNumberOfPages(); pageIndex++) {
-            BufferedImage image = renderPageAsImage(pdfRenderer, pageIndex);
-            final DataBuffer dataBuffer = image.getRaster().getDataBuffer();
-            for (int i = 0; i < image.getWidth() * MARKER_WIDTH; i++) {
+            ImageWithDimension image = renderPageAsImage(document, pdfRenderer, pageIndex);
+            final DataBuffer dataBuffer = image.bufferedImage.getRaster().getDataBuffer();
+            for (int i = 0; i < image.bufferedImage.getWidth() * MARKER_WIDTH; i++) {
                 dataBuffer.setElem(i, color);
             }
-            for (int i = 0; i < image.getHeight(); i++) {
+            for (int i = 0; i < image.bufferedImage.getHeight(); i++) {
                 for (int j = 0; j < MARKER_WIDTH; j++) {
-                    dataBuffer.setElem(i * image.getWidth() + j, color);
+                    dataBuffer.setElem(i * image.bufferedImage.getWidth() + j, color);
                 }
             }
             if (expected) {
@@ -244,12 +252,15 @@ public class PdfComparator<T extends CompareResult> {
         }
     }
 
-    private static BufferedImage blank(final BufferedImage image) {
-        return new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+    private static ImageWithDimension blank(final ImageWithDimension image) {
+        return new ImageWithDimension(new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()), image.width, image.height);
     }
 
-    private BufferedImage renderPageAsImage(final PDFRenderer expectedPdfRenderer, final int pageIndex) throws IOException {
-        return expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
+    private ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex)
+            throws IOException {
+        final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
+        final PDRectangle mediaBox = document.getPage(pageIndex).getMediaBox();
+        return new ImageWithDimension(bufferedImage, mediaBox.getWidth(), mediaBox.getHeight());
     }
 
     public T getResult() {

@@ -39,7 +39,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  */
 public class CompareResult implements ResultCollector {
 
-    protected final Map<Integer, BufferedImage> diffImages = new TreeMap<>();
+    protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<>();
     protected boolean isEqual = true;
     protected boolean hasDifferenceInExclusion = false;
 
@@ -71,10 +71,10 @@ public class CompareResult implements ResultCollector {
         addImagesToDocument(document, diffImages);
     }
 
-    protected void addImagesToDocument(final PDDocument document, final Map<Integer, BufferedImage> images) throws IOException {
-        final Iterator<Entry<Integer, BufferedImage>> iterator = images.entrySet().iterator();
+    protected void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images) throws IOException {
+        final Iterator<Entry<Integer, ImageWithDimension>> iterator = images.entrySet().iterator();
         while (iterator.hasNext()) {
-            final Entry<Integer, BufferedImage> entry = iterator.next();
+            final Entry<Integer, ImageWithDimension> entry = iterator.next();
             if (!keepImages()) {
                 iterator.remove();
             }
@@ -82,12 +82,12 @@ public class CompareResult implements ResultCollector {
         }
     }
 
-    protected void addPageToDocument(final PDDocument document, final BufferedImage image) throws IOException {
-        PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+    protected void addPageToDocument(final PDDocument document, final ImageWithDimension image) throws IOException {
+        PDPage page = new PDPage(new PDRectangle(image.width, image.height));
         document.addPage(page);
-        final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image);
+        final PDImageXObject imageXObject = LosslessFactory.createFromImage(document, image.bufferedImage);
         try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-            contentStream.drawImage(imageXObject, 0, 0);
+            contentStream.drawImage(imageXObject, 0, 0, image.width, image.height);
         }
     }
 
@@ -97,7 +97,7 @@ public class CompareResult implements ResultCollector {
 
     @Override
     public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
-            final BufferedImage expectedImage, final BufferedImage actualImage, final BufferedImage diffImage) {
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         Objects.requireNonNull(expectedImage, "expectedImage is null");
         Objects.requireNonNull(actualImage, "actualImage is null");
         Objects.requireNonNull(diffImage, "diffImage is null");
