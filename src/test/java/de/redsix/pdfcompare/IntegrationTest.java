@@ -27,13 +27,6 @@ public class IntegrationTest {
     public TestName testName = new TestName();
     private Path outDir;
 
-//    @BeforeClass
-//    public static void w() throws InterruptedException {
-//        System.out.println("sleeping...");
-//        Thread.sleep(10000);
-//        System.out.println("continuing...");
-//    }
-
     @Before
     public void before() throws IOException, InterruptedException {
         outDir = tempFolder.getRoot().toPath();
@@ -43,14 +36,6 @@ public class IntegrationTest {
     @Test
     public void differingDocumentsAreNotEqual() throws IOException {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
-        assertThat(result.isNotEqual(), is(true));
-        assertThat(result.isEqual(), is(false));
-        writeAndCompare(result);
-    }
-
-    @Test
-    public void differingDocumentsAreNotEqualUsingDisk() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithDiskStorage()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
