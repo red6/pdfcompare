@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public class DiffImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiffImage.class);
-    private static final int MARKER_RGB = new Color(230, 0, 230).getRGB();
+    /*package*/ static final int MARKER_RGB = color(230, 0, 230);
     private final ImageWithDimension expectedImage;
     private final ImageWithDimension actualImage;
     private final int page;
@@ -120,9 +120,9 @@ public class DiffImage {
             int expectedDarkness = calcCombinedIntensity(expectedElement);
             int actualDarkness = calcCombinedIntensity(actualElement);
             if (expectedDarkness > actualDarkness) {
-                return new Color(levelIntensity(expectedDarkness, 210), 0, 0).getRGB();
+                return color(levelIntensity(expectedDarkness, 210), 0, 0);
             } else {
-                return new Color(0, levelIntensity(actualDarkness, 180), 0).getRGB();
+                return color(0, levelIntensity(actualDarkness, 180), 0);
             }
         } else {
             return ImageTools.fadeElement(expectedElement);
@@ -171,6 +171,10 @@ public class DiffImage {
             image.setElem(x + i * imageWidth, markerRGB);
             image.setElem(i + yOffset, markerRGB);
         }
+    }
+
+    public static int color(final int r, final int g, final int b) {
+        return new Color(r, g, b).getRGB();
     }
 
     @Override

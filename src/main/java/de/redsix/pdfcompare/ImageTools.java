@@ -7,10 +7,11 @@ public class ImageTools {
 
     public static final int EXCLUDED_BACKGROUND_RGB = new Color(255, 255, 100).getRGB();
 
-    public static void blankImage(final BufferedImage image) {
+    public static BufferedImage blankImage(final BufferedImage image) {
         Graphics2D graphics = image.createGraphics();
         graphics.setPaint(Color.white);
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+        return image;
     }
 
     public static int fadeElement(final int i) {
