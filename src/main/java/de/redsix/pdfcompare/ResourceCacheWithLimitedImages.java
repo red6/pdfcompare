@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.pdmodel.DefaultResourceCache;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,12 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
         if (length > Environment.getMaxImageSize()) {
             LOG.trace("Not caching image with Size: {}", length);
             return;
+        }
+        if (xobject instanceof PDImageXObject) {
+            PDImageXObject imageObj = (PDImageXObject) xobject;
+            if (imageObj.getWidth() * imageObj.getHeight() > Environment.getMaxImageSize()) {
+                return;
+            }
         }
         this.xobjects.put(indirect, new SoftReference(xobject));
     }
