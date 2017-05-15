@@ -64,6 +64,7 @@ public class Utilities {
                 executor.awaitTermination(10, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
                 LOG.warn("Awaiting Shutdown of Executor '{}' was interrupted", executorName);
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -73,6 +74,7 @@ public class Utilities {
             latch.await();
         } catch (InterruptedException e) {
             LOG.warn("Awaiting Latch '{}' was interrupted", latchName);
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -214,8 +214,11 @@ public class PdfComparator<T extends CompareResult> {
                     LOG.trace("DONE Diffing page {}", diffImage);
                 });
                 LOG.trace("DONE drawing page {}", pageIndex);
-            } catch (InterruptedException | TimeoutException e) {
-                LOG.error("Waiting for Future was interrupted after one minute", e);
+            } catch (InterruptedException e) {
+                LOG.warn("Waiting for Future was interrupted", e);
+                Thread.currentThread().interrupt();
+            } catch (TimeoutException e) {
+                LOG.error("Waiting for Future timed out after two minutes", e);
             } catch (ExecutionException e) {
                 LOG.error("Error while rendering page {}", pageIndex, e);
             } finally {
