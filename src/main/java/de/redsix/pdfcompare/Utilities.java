@@ -61,7 +61,11 @@ public class Utilities {
         if (executor != null) {
             executor.shutdown();
             try {
-                executor.awaitTermination(10, TimeUnit.MINUTES);
+                final int timeout = 15;
+                final TimeUnit unit = TimeUnit.MINUTES;
+                if (executor.awaitTermination(timeout, unit)) {
+                    LOG.error("Awaiting Shutdown of Executor '{}' timed out after {} {}", executorName, timeout, unit);
+                };
             } catch (InterruptedException e) {
                 LOG.warn("Awaiting Shutdown of Executor '{}' was interrupted", executorName);
                 Thread.currentThread().interrupt();
@@ -71,7 +75,11 @@ public class Utilities {
 
     public static void await(final CountDownLatch latch, final String latchName) {
         try {
-            latch.await();
+            final int timeout = 15;
+            final TimeUnit unit = TimeUnit.MINUTES;
+            if (!latch.await(timeout, unit)) {
+                LOG.error("Awaiting Latch '{}' timed out after {} {}", latchName, timeout, unit);
+            };
         } catch (InterruptedException e) {
             LOG.warn("Awaiting Latch '{}' was interrupted", latchName);
             Thread.currentThread().interrupt();

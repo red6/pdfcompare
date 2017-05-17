@@ -194,14 +194,16 @@ public class PdfComparator<T extends CompareResult> {
             final PDDocument expectedDocument, final PDDocument actualDocument,
             final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
+            final int timeout = 3;
+            final TimeUnit unit = TimeUnit.MINUTES;
             try {
                 LOG.trace("Drawing page {}", pageIndex);
                 final Future<ImageWithDimension> expectedImageFuture = parrallelDrawExecutor
                         .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex));
                 final Future<ImageWithDimension> actualImageFuture = parrallelDrawExecutor
                         .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex));
-                final ImageWithDimension expectedImage = expectedImageFuture.get(2, TimeUnit.MINUTES);
-                final ImageWithDimension actualImage = actualImageFuture.get(2, TimeUnit.MINUTES);
+                final ImageWithDimension expectedImage = expectedImageFuture.get(timeout, unit);
+                final ImageWithDimension actualImage = actualImageFuture.get(timeout, unit);
                 final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
@@ -214,7 +216,7 @@ public class PdfComparator<T extends CompareResult> {
                 LOG.warn("Waiting for Future was interrupted", e);
                 Thread.currentThread().interrupt();
             } catch (TimeoutException e) {
-                LOG.error("Waiting for Future timed out after two minutes", e);
+                LOG.error("Waiting for Future timed out after {} {}", timeout, unit, e);
             } catch (ExecutionException e) {
                 LOG.error("Error while rendering page {}", pageIndex, e);
             } finally {
