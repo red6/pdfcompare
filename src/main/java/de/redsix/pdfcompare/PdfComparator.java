@@ -160,10 +160,6 @@ public class PdfComparator<T extends CompareResult> {
                             final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
                             CountDownLatch latch = new CountDownLatch(minPageCount);
                             for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
-                                final float width = Math.max(actualDocument.getPage(pageIndex).getMediaBox().getWidth(),
-                                        expectedDocument.getPage(pageIndex).getMediaBox().getWidth());
-                                final float height = Math.max(actualDocument.getPage(pageIndex).getMediaBox().getHeight(),
-                                        actualDocument.getPage(pageIndex).getMediaBox().getHeight());
                                 drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
                             }
                             Utilities.await(latch, "FullCompare");
