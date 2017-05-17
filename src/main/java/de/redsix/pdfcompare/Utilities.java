@@ -63,7 +63,7 @@ public class Utilities {
             try {
                 final int timeout = 15;
                 final TimeUnit unit = TimeUnit.MINUTES;
-                if (executor.awaitTermination(timeout, unit)) {
+                if (!executor.awaitTermination(timeout, unit)) {
                     LOG.error("Awaiting Shutdown of Executor '{}' timed out after {} {}", executorName, timeout, unit);
                 };
             } catch (InterruptedException e) {
