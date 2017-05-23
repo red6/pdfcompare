@@ -103,7 +103,6 @@ I didn't yet find a way to write the difference Pdf page by page incrementally w
 #### CompareResults with Overflow
 
 There are currently three different CompareResults, that have different strategies for swapping pages to disk and thereby limiting memory consumption.
-- CompareResultWithDiskStorage - stores the result page by page into images. Memory consumption is rather low. Performance suffers.
 - CompareResultWithPageOverflow - stores a bunch of pages into a partial Pdf and merges the resulting Pdfs in the end. The default is to swap every 10 pages, which is a good balance between memory usage and performance.
 - CompareResultWithMemoryOverflow - tries to keep as many images in memory as possible and swaps, when a critical amount of memory is consumed by the JVM. As a default, pages are swapped, when 70% of the maximum available heap is filled.
 
