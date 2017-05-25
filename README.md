@@ -102,7 +102,7 @@ I didn't yet find a way to write the difference Pdf page by page incrementally w
 
 #### CompareResults with Overflow
 
-There are currently three different CompareResults, that have different strategies for swapping pages to disk and thereby limiting memory consumption.
+There are currently two different CompareResults, that have different strategies for swapping pages to disk and thereby limiting memory consumption.
 - CompareResultWithPageOverflow - stores a bunch of pages into a partial Pdf and merges the resulting Pdfs in the end. The default is to swap every 10 pages, which is a good balance between memory usage and performance.
 - CompareResultWithMemoryOverflow - tries to keep as many images in memory as possible and swaps, when a critical amount of memory is consumed by the JVM. As a default, pages are swapped, when 70% of the maximum available heap is filled.
 
@@ -111,6 +111,18 @@ A different CompareResult implementation can be used as follows:
 ```java
 new PdfComparator("expected.pdf", "actual.pdf", new CompareResultWithPageOverflow()).compare();
 ```
+
+Also there are some internal settings for memory limits, that can be changed.
+Just add a file called "application.conf" to the root of the classpath. This file can have some or all of the following settings to overwrite the defaults given here:
+
+imageCacheSizeCount=30 # How many images are cached by PdfBox
+maxImageSizeInCache=100000 # A rough maximum size of images that are cached, to prevent very big images from being cached
+mergeCacheSizeMB=100 # When Pdfs are partially written and later merged, this is the memory cache that is configured for the PdfBox instance that does the merge.
+swapCacheSizeMB=100 # When Pdfs are partially written, this is the memory cache that is configured for the PdfBox instance that does the partial writes. 
+documentCacheSizeMB=200 # This is the cache size configured in PdfBox for the loading of documents to compare.
+
+So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
+I have good experience with granting a 2GB heap space to the JVM.
 
 ### Acknowledgements
 
