@@ -115,11 +115,21 @@ new PdfComparator("expected.pdf", "actual.pdf", new CompareResultWithPageOverflo
 Also there are some internal settings for memory limits, that can be changed.
 Just add a file called "application.conf" to the root of the classpath. This file can have some or all of the following settings to overwrite the defaults given here:
 
-imageCacheSizeCount=30 # How many images are cached by PdfBox
-maxImageSizeInCache=100000 # A rough maximum size of images that are cached, to prevent very big images from being cached
-mergeCacheSizeMB=100 # When Pdfs are partially written and later merged, this is the memory cache that is configured for the PdfBox instance that does the merge.
-swapCacheSizeMB=100 # When Pdfs are partially written, this is the memory cache that is configured for the PdfBox instance that does the partial writes. 
-documentCacheSizeMB=200 # This is the cache size configured in PdfBox for the loading of documents to compare.
+- imageCacheSizeCount=30
+
+    How many images are cached by PdfBox
+- maxImageSizeInCache=100000 
+
+    A rough maximum size of images that are cached, to prevent very big images from being cached
+- mergeCacheSizeMB=100
+
+    When Pdfs are partially written and later merged, this is the memory cache that is configured for the PdfBox instance that does the merge.
+- swapCacheSizeMB=100
+    
+    When Pdfs are partially written, this is the memory cache that is configured for the PdfBox instance that does the partial writes. 
+- documentCacheSizeMB=200
+
+    This is the cache size configured for the PdfBox instance, that loads the documents that are compared.
 
 So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
 I have good experience with granting a 2GB heap space to the JVM.
