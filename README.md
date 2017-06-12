@@ -11,7 +11,7 @@ Just include it as dependency. Please check for the most current version availab
   <dependency>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.17</version>
+    <version>1.1.18</version>
   </dependency>
 </dependencies>
 ```
@@ -130,6 +130,9 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 - documentCacheSizeMB=200
 
     This is the cache size configured for the PdfBox instance, that loads the documents that are compared.
+- parallelProcessing=false
+
+    Disable alle parallel processing and process everything in a single thread.
 
 So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
 I have good experience with granting a 2GB heap space to the JVM.

@@ -36,7 +36,7 @@ public class Utilities {
 
         @Override
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r,namePrefix + threadNumber.getAndIncrement());
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement());
             if (t.isDaemon()) {
                 t.setDaemon(false);
             }
@@ -48,13 +48,21 @@ public class Utilities {
     }
 
     public static ExecutorService blockingExecutor(final String name, int coreThreads, int maxThreads, int queueCapacity) {
-        return new ThreadPoolExecutor(coreThreads, maxThreads, 3, TimeUnit.MINUTES,
-                new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
+        if (Environment.useParallelProcessing()) {
+            return new ThreadPoolExecutor(coreThreads, maxThreads, 3, TimeUnit.MINUTES,
+                    new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
+        } else {
+            return new InThreadExecutorService();
+        }
     }
 
     public static ExecutorService blockingExecutor(final String name, int threads, int queueCapacity) {
-        return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MINUTES,
-                new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
+        if (Environment.useParallelProcessing()) {
+            return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MINUTES,
+                    new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
+        } else {
+            return new InThreadExecutorService();
+        }
     }
 
     public static void shutdownAndAwaitTermination(final ExecutorService executor, final String executorName) {
@@ -65,7 +73,7 @@ public class Utilities {
                 final TimeUnit unit = TimeUnit.MINUTES;
                 if (!executor.awaitTermination(timeout, unit)) {
                     LOG.error("Awaiting Shutdown of Executor '{}' timed out after {} {}", executorName, timeout, unit);
-                };
+                }
             } catch (InterruptedException e) {
                 LOG.warn("Awaiting Shutdown of Executor '{}' was interrupted", executorName);
                 Thread.currentThread().interrupt();
@@ -79,7 +87,7 @@ public class Utilities {
             final TimeUnit unit = TimeUnit.MINUTES;
             if (!latch.await(timeout, unit)) {
                 LOG.error("Awaiting Latch '{}' timed out after {} {}", latchName, timeout, unit);
-            };
+            }
         } catch (InterruptedException e) {
             LOG.warn("Awaiting Latch '{}' was interrupted", latchName);
             Thread.currentThread().interrupt();

@@ -55,4 +55,8 @@ public final class Environment {
     private static Config loadConfig() {
         return ConfigFactory.systemEnvironment().withFallback(ConfigFactory.load());
     }
+
+    public static boolean useParallelProcessing() {
+        return config.getBoolean("parallelProcessing");
+    }
 }
