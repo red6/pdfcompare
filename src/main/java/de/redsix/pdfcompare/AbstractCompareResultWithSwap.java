@@ -2,7 +2,6 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -53,6 +52,10 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (tempDir != null) {
+                FileUtils.removeTempDir(tempDir);
+            }
         }
         return isEqual;
     }
@@ -75,7 +78,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     private synchronized Executor getExecutor() {
         if (swapExecutor == null) {
-            swapExecutor = blockingExecutor("Swap", 0,2, 1);
+            swapExecutor = blockingExecutor("Swap", 0, 2, 1);
         }
         return swapExecutor;
     }
