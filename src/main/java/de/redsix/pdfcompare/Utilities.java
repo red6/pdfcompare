@@ -1,6 +1,9 @@
 package de.redsix.pdfcompare;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +96,23 @@ public class Utilities {
         } catch (InterruptedException e) {
             LOG.warn("Awaiting Latch '{}' was interrupted", latchName);
             Thread.currentThread().interrupt();
+        }
+    }
+
+    public static ImageWithDimension renderPage(final Path document, final int page) throws IOException {
+        try (InputStream documentIS = Files.newInputStream(document)) {
+            return renderPage(documentIS, page);
+        }
+    }
+
+    public static ImageWithDimension renderPage(final InputStream documentIS, final int page) throws IOException {
+        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+            if (page >= pdDocument.getNumberOfPages()) {
+                throw new IllegalArgumentException("Page out of range. Last page is: " + pdDocument.getNumberOfPages());
+            }
+            pdDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+            PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
+            return PdfComparator.renderPageAsImage(pdDocument, pdfRenderer, page);
         }
     }
 }

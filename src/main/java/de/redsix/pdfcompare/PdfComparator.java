@@ -56,6 +56,8 @@ public class PdfComparator<T extends CompareResult> {
     private ExecutorService parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4);
     private ExecutorService diffExecutor = blockingExecutor("Diff", 1, 2);
     private final T compareResult;
+    private final int timeout = 3;
+    private final TimeUnit unit = TimeUnit.MINUTES;
 
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
@@ -194,16 +196,14 @@ public class PdfComparator<T extends CompareResult> {
             final PDDocument expectedDocument, final PDDocument actualDocument,
             final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
-            final int timeout = 3;
-            final TimeUnit unit = TimeUnit.MINUTES;
             try {
                 LOG.trace("Drawing page {}", pageIndex);
                 final Future<ImageWithDimension> expectedImageFuture = parrallelDrawExecutor
                         .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex));
                 final Future<ImageWithDimension> actualImageFuture = parrallelDrawExecutor
                         .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex));
-                final ImageWithDimension expectedImage = expectedImageFuture.get(timeout, unit);
-                final ImageWithDimension actualImage = actualImageFuture.get(timeout, unit);
+                final ImageWithDimension expectedImage = getImage(expectedImageFuture, pageIndex, "expected document");
+                final ImageWithDimension actualImage = getImage(actualImageFuture, pageIndex, "actual document");
                 final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
@@ -212,17 +212,25 @@ public class PdfComparator<T extends CompareResult> {
                     LOG.trace("DONE Diffing page {}", diffImage);
                 });
                 LOG.trace("DONE drawing page {}", pageIndex);
-            } catch (InterruptedException e) {
-                LOG.warn("Waiting for Future was interrupted", e);
-                Thread.currentThread().interrupt();
-            } catch (TimeoutException e) {
-                LOG.error("Waiting for Future timed out after {} {}", timeout, unit, e);
-            } catch (ExecutionException e) {
-                LOG.error("Error while rendering page {}", pageIndex, e);
+            } catch (RenderingException e) {
             } finally {
                 latch.countDown();
             }
         });
+    }
+
+    private ImageWithDimension getImage(final Future<ImageWithDimension> imageFuture, final int pageIndex, final String type) {
+        try {
+            return imageFuture.get(timeout, unit);
+        } catch (InterruptedException e) {
+            LOG.warn("Waiting for Future was interrupted while rendering page {} for {}", pageIndex, type, e);
+            Thread.currentThread().interrupt();
+        } catch (TimeoutException e) {
+            LOG.error("Waiting for Future timed out after {} {} while rendering page {} for {}", timeout, unit, pageIndex, type, e);
+        } catch (ExecutionException e) {
+            LOG.error("Error while rendering page {} for {}", pageIndex, type, e);
+        }
+        throw new RenderingException();
     }
 
     private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
@@ -257,7 +265,7 @@ public class PdfComparator<T extends CompareResult> {
         return new ImageWithDimension(new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()), image.width, image.height);
     }
 
-    private ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex)
+    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex)
             throws IOException {
         final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
         final PDRectangle mediaBox = document.getPage(pageIndex).getMediaBox();
