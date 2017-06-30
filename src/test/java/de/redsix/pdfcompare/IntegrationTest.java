@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +44,7 @@ public class IntegrationTest {
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithPageOverflow()).compare();
+        final CompareResult result = new PdfComparator(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
@@ -51,7 +52,7 @@ public class IntegrationTest {
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
@@ -128,6 +129,18 @@ public class IntegrationTest {
 
     private InputStream r(final String s) {
         return getClass().getResourceAsStream(s);
+    }
+
+    private File f(final String s) {
+        return new File(getClass().getResource(s).getFile());
+    }
+
+    private Path p(final String s) {
+        try {
+            return Paths.get(getClass().getResource(s).toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void writeAndCompare(final CompareResult result) throws IOException {
