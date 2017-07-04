@@ -5,6 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,7 +32,7 @@ public class IntegrationTest {
     @Before
     public void before() throws IOException, InterruptedException {
         outDir = tempFolder.getRoot().toPath();
-//        outDir = Paths.get("test");
+//        outDir = Paths.get("src/test");
     }
 
     @Test
@@ -71,6 +72,15 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore("ignore.conf").compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
+        assertThat(result.hasDifferenceInExclusion(), is(true));
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsWithFullPageIgnoreAreEqual() throws IOException {
+        final ByteArrayInputStream ignoreIS = new ByteArrayInputStream("exclusions: [{page:1}, {page:2}]".getBytes());
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore(ignoreIS).compare();
+        assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
         writeAndCompare(result);
     }
