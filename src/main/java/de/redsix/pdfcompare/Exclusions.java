@@ -77,11 +77,13 @@ public class Exclusions {
         final List<? extends ConfigObject> exclusions = load.getObjectList("exclusions");
         exclusions.stream().map(co -> {
             final Config c = co.toConfig();
-            int page = -1;
-            if (c.hasPath("page")) {
-                page = c.getInt("page");
+            if (!c.hasPath("x1") && !c.hasPath("y1") && !c.hasPath("x2") && !c.hasPath("y2")) {
+                return new Exclusion(c.getInt("page"));
             }
-            return new Exclusion(page, c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
+            if (c.hasPath("page")) {
+                return new Exclusion(c.getInt("page"), c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
+            }
+            return new Exclusion(c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
         }).forEach(e -> add(e));
     }
 }

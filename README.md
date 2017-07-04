@@ -57,18 +57,22 @@ The file format is JSON (or actually a superset called [HOCON](https://github.co
 ```javascript
 exclusions: [
     {
-        page: 1 // page is optional. When not given, the exclusion applies to all pages.
+        page: 2
+        x1: 300
+        y1: 1000
+        x2: 550
+        y2: 1300
+    },
+    {
+        // page is optional. When not given, the exclusion applies to all pages.
         x1: 130
         y1: 3000
         x2: 190
         y2: 3500
     },
     {
-        page: 2
-        x1: 300
-        y1: 1000
-        x2: 550
-        y2: 1300
+        page: 7
+        // coordinates are optional. When not given, the whole page is excluded.
     }
 ]
 ```
