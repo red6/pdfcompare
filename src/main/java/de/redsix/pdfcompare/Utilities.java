@@ -88,7 +88,7 @@ public class Utilities {
 
     public static void await(final CountDownLatch latch, final String latchName) {
         try {
-            final int timeout = 15;
+            final int timeout = Environment.getOverallTimeout();
             final TimeUnit unit = TimeUnit.MINUTES;
             if (!latch.await(timeout, unit)) {
                 LOG.error("Awaiting Latch '{}' timed out after {} {}", latchName, timeout, unit);

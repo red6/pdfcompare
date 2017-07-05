@@ -43,6 +43,10 @@ public final class Environment {
         return config.getInt("maxImageSizeInCache");
     }
 
+    public static int getOverallTimeout() {
+        return config.getInt("overallTimeoutInMinutes");
+    }
+
     private static int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }
