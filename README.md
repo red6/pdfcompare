@@ -11,12 +11,16 @@ Just include it as dependency. Please check for the most current version availab
   <dependency>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.21</version>
+    <version>1.1.22</version>
   </dependency>
 </dependencies>
 ```
 
 ### Simple Usage
+
+There is a simple interactive UI, when you start the Class de.redsix.pdfcompare.ui.DisplayMain.
+But the focus of PdfCompare is on embedded usage as a library.
+
 ```java
 new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput.pdf");
 ```
