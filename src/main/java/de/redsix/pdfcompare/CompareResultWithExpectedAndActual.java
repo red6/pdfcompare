@@ -26,14 +26,18 @@ public class CompareResultWithExpectedAndActual extends CompareResult {
     }
 
     public synchronized BufferedImage getDiffImage(final int page) {
-        return diffImages.get(page).bufferedImage;
+        return getBufferedImageOrNull(diffImages.get(page));
     }
 
     public BufferedImage getExpectedImage(final int page) {
-        return expectedImages.get(page).bufferedImage;
+        return getBufferedImageOrNull(expectedImages.get(page));
     }
 
     public BufferedImage getActualImage(final int page) {
-        return actualImages.get(page).bufferedImage;
+        return getBufferedImageOrNull(actualImages.get(page));
+    }
+
+    private BufferedImage getBufferedImageOrNull(final ImageWithDimension imageWithDimension) {
+        return imageWithDimension == null ? null : imageWithDimension.bufferedImage;
     }
 }
