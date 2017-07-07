@@ -99,6 +99,18 @@ public class Utilities {
         }
     }
 
+    public static int getNumberOfPages(final Path document) throws IOException {
+        try (InputStream documentIS = Files.newInputStream(document)) {
+            return getNumberOfPages(documentIS);
+        }
+    }
+
+    private static int getNumberOfPages(final InputStream documentIS) throws IOException {
+        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+            return pdDocument.getNumberOfPages();
+        }
+    }
+
     public static ImageWithDimension renderPage(final Path document, final int page) throws IOException {
         try (InputStream documentIS = Files.newInputStream(document)) {
             return renderPage(documentIS, page);
