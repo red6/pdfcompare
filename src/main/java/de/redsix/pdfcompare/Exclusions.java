@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -85,5 +86,10 @@ public class Exclusions {
             }
             return new Exclusion(c.getInt("x1"), c.getInt("y1"), c.getInt("x2"), c.getInt("y2"));
         }).forEach(e -> add(e));
+    }
+
+    public void forEach(final Consumer<Exclusion> exclusionConsumer) {
+        exclusionsForAllPages.forEach(exclusionConsumer);
+        exclusionsPerPage.values().forEach(pe -> pe.forEach(exclusionConsumer));
     }
 }

@@ -70,7 +70,7 @@ public class DiffImage {
 
         int expectedElement;
         int actualElement;
-        final PageExclusions pageExclusions = exclusions.forPage(page);
+        final PageExclusions pageExclusions = exclusions.forPage(page + 1);
 
         for (int y = 0; y < resultImageHeight; y++) {
             final int expectedLineOffset = y * expectedImageWidth;
