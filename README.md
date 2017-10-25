@@ -62,17 +62,17 @@ The file format is JSON (or actually a superset called [HOCON](https://github.co
 exclusions: [
     {
         page: 2
-        x1: 300
+        x1: 300 // entries without a unit are in pixels, when Pdf is rendered at 300DPI
         y1: 1000
         x2: 550
         y2: 1300
     },
     {
         // page is optional. When not given, the exclusion applies to all pages.
-        x1: 130
-        y1: 3000
-        x2: 190
-        y2: 3500
+        x1: 130.5mm // entries can also be given in units of cm, mm or pt (DTP-Point definied as 1/72 Inches)
+        y1: 3.3cm
+        x2: 190mm
+        y2: 3.7cm
     },
     {
         page: 7
