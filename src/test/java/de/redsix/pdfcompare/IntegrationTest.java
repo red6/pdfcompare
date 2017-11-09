@@ -2,8 +2,8 @@ package de.redsix.pdfcompare;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -15,24 +15,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import de.redsix.junitextensions.TempDirectory;
+import de.redsix.junitextensions.TempDirectoryExtension;
+
+@ExtendWith(TempDirectoryExtension.class)
 public class IntegrationTest {
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder(new File("."));
-    @Rule
-    public TestName testName = new TestName();
+    private String testName;
     private Path outDir;
 
-    @Before
-    public void before() throws IOException, InterruptedException {
-        outDir = tempFolder.getRoot().toPath();
-//        outDir = Paths.get("src/test");
+    @BeforeEach
+    public void before(TestInfo testInfo, @TempDirectory(parentPath = ".") Path outDir) throws IOException, InterruptedException {
+        testName = testInfo.getTestMethod().get().getName();
+        this.outDir = outDir;
     }
 
     @Test
@@ -155,9 +155,9 @@ public class IntegrationTest {
 
     private void writeAndCompare(final CompareResult result) throws IOException {
         if (System.getenv().get("pdfCompareInTest") != null || System.getProperty("pdfCompareInTest") != null) {
-            final String filename = outDir.resolve(testName.getMethodName()).toString();
+            final String filename = outDir.resolve(testName).toString();
             result.writeTo(filename);
-            try (final InputStream expectedPdf = getClass().getResourceAsStream(testName.getMethodName() + ".pdf")) {
+            try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
                 if (expectedPdf != null) {
                     assertTrue(new PdfComparator(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
                 } else {

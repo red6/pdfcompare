@@ -12,8 +12,8 @@ import static org.mockito.Mockito.verify;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -31,7 +31,7 @@ public class DiffImageTest {
     private final ImageWithDimension actualImage = new ImageWithDimension(actual, 1.0f, 1.0f);
     private final Exclusions exclusions = new Exclusions().add(new Exclusion(35, 35, 37, 37));
 
-    @Before
+    @BeforeEach
     public void before() {
         MockitoAnnotations.initMocks(this);
     }

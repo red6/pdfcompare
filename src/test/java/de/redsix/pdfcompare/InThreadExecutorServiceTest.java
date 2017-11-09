@@ -1,13 +1,13 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import de.redsix.pdfcompare.InThreadExecutorService.ImmediateFuture;
 
@@ -25,9 +25,10 @@ public class InThreadExecutorServiceTest {
         assertThat(future.get(), is("Test"));
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void immediateFutureWithException() throws ExecutionException, InterruptedException {
         final ImmediateFuture future = new ImmediateFuture(new Exception());
-        future.get();
+        assertThrows(Exception.class, () ->
+                future.get());
     }
 }

@@ -2,12 +2,13 @@ package de.redsix.pdfcompare;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Paths;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.typesafe.config.ConfigException;
 
@@ -53,24 +54,28 @@ public class ExclusionsTest {
         assertThat(exclusions.forPage(3).contains(300, 400), is(true));
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void missingCoordinateIsRejected() {
-        exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 450, y3: 420}]".getBytes()));
+        assertThrows(ConfigException.class, () ->
+                exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 450, y3: 420}]".getBytes())));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void coordinateBelowZeroAreRejected() {
-        exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 450, y2: -1}]".getBytes()));
+        assertThrows(IllegalArgumentException.class, () ->
+                exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 450, y2: -1}]".getBytes())));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void pageBelowOneAreRejected() {
-        exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 0, x1: 230, y1: 350, x2: 450, y2: 600}]".getBytes()));
+        assertThrows(IllegalArgumentException.class, () ->
+                exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 0, x1: 230, y1: 350, x2: 450, y2: 600}]".getBytes())));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void wrongCoordinateOrderIsRejected() {
-        exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 150, y2: 600}]".getBytes()));
+        assertThrows(IllegalArgumentException.class, () ->
+                exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 230, y1: 350, x2: 150, y2: 600}]".getBytes())));
     }
 
     @Test
