@@ -52,12 +52,22 @@ public class TempDirectoryExtension implements AfterEachCallback, ParameterResol
     private Path createTempDirectory(final String parentPath, ExtensionContext context) {
         try {
             if (parentPath.length() > 0) {
-                return Files.createTempDirectory(Paths.get(parentPath), context.getDisplayName());
+                return Files.createTempDirectory(Paths.get(parentPath), getDirName(context));
             } else {
-                return Files.createTempDirectory(context.getDisplayName());
+                return Files.createTempDirectory(getDirName(context));
             }
         } catch (IOException e) {
             throw new ParameterResolutionException("Could not create temp directory", e);
+        }
+    }
+
+    private String getDirName(ExtensionContext context) {
+        if (context.getTestMethod().isPresent()) {
+            return context.getTestMethod().get().getName();
+        } else if (context.getTestClass().isPresent()) {
+            return context.getTestClass().get().getName();
+        } else {
+            return context.getDisplayName();
         }
     }
 
