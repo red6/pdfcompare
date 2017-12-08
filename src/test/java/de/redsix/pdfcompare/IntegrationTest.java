@@ -40,6 +40,9 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.hasOnlyExpected(), is(false));
+        assertThat(result.hasOnlyOneDoc(), is(false));
+        assertThat(result.hasOnlyActual(), is(false));
         writeAndCompare(result);
     }
 
@@ -108,6 +111,9 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(target.toString(), "doesNotExist.pdf").compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.hasOnlyExpected(), is(true));
+        assertThat(result.hasOnlyOneDoc(), is(true));
+        assertThat(result.hasOnlyActual(), is(false));
         writeAndCompare(result);
     }
 
@@ -118,6 +124,9 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator("doesNotExist.pdf", target.toString()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.hasOnlyExpected(), is(false));
+        assertThat(result.hasOnlyOneDoc(), is(true));
+        assertThat(result.hasOnlyActual(), is(true));
         writeAndCompare(result);
     }
 

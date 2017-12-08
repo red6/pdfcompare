@@ -177,10 +177,12 @@ public class PdfComparator<T extends CompareResult> {
                     }
                 } catch (NoSuchFileException ex) {
                     addSingleDocumentToResult(expectedStream, MISSING_RGB);
+                    compareResult.expectedOnly();
                 }
             } catch (NoSuchFileException ex) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
                     addSingleDocumentToResult(actualStream, EXTRA_RGB);
+                    compareResult.actualOnly();
                 } catch (NoSuchFileException innerEx) {
                     LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
                     compareResult.noPagesFound();

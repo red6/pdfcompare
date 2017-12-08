@@ -42,6 +42,8 @@ public class CompareResult implements ResultCollector {
     protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<>();
     protected boolean isEqual = true;
     protected boolean hasDifferenceInExclusion = false;
+    private boolean expectedOnly;
+    private boolean actualOnly;
 
     /**
      * Write the result Pdf to a file. Warning: This will remove the diffImages from memory!
@@ -125,10 +127,30 @@ public class CompareResult implements ResultCollector {
         return hasDifferenceInExclusion;
     }
 
+    public boolean hasOnlyExpected() {
+        return expectedOnly;
+    }
+
+    public boolean hasOnlyActual() {
+        return actualOnly;
+    }
+
+    public boolean hasOnlyOneDoc() {
+        return expectedOnly || actualOnly;
+    }
+
     public synchronized int getNumberOfPages() {
         if (!hasImages()) {
             return 0;
         }
         return Collections.max(diffImages.keySet());
+    }
+
+    public void expectedOnly() {
+        this.expectedOnly = true;
+    }
+
+    public void actualOnly() {
+        this.actualOnly = true;
     }
 }
