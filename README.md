@@ -11,11 +11,10 @@ Just include it as dependency. Please check for the most current version availab
   <dependency>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.28</version>
+    <version>![Maven Central Version](https://img.shields.io/maven-central/v/de.redsix/pdfcompare.svg)</version>
   </dependency>
 </dependencies>
 ```
-[xx](http://search.maven.org/solrsearch/select?q=g:%22de.redsix%22%20AND%20a:%22pdfcompare%22%20AND%20p:%22jar%22&rows=20&wt=json)
 
 ### Simple Usage
 
