@@ -2,7 +2,7 @@
 A simple Java library to compare two PDF files.
 Files are rendered and compared pixel by pixel.
 
-### Usage with Maven ![Build Status](https://travis-ci.org/red6/pdfcompare.svg?branch=master)
+### Usage with Maven
 
 Just include it as dependency. Please check for the most current version available:
 
@@ -11,7 +11,7 @@ Just include it as dependency. Please check for the most current version availab
   <dependency>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.27</version>
+    <version>1.1.28</version>
   </dependency>
 </dependencies>
 ```
