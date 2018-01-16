@@ -153,26 +153,9 @@ public class PdfComparator<T extends CompareResult> {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
                     try (PDDocument expectedDocument = PDDocument
                             .load(expectedStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
-                        expectedDocument.setResourceCache(new ResourceCacheWithLimitedImages());
-                        PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
                         try (PDDocument actualDocument = PDDocument
                                 .load(actualStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
-                            actualDocument.setResourceCache(new ResourceCacheWithLimitedImages());
-                            PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
-                            final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
-                            CountDownLatch latch = new CountDownLatch(minPageCount);
-                            for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
-                                drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
-                            }
-                            Utilities.await(latch, "FullCompare");
-                            Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
-                            Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
-                            Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
-                            if (expectedDocument.getNumberOfPages() > minPageCount) {
-                                addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
-                            } else if (actualDocument.getNumberOfPages() > minPageCount) {
-                                addExtraPages(actualDocument, actualPdfRenderer, minPageCount, EXTRA_RGB, false);
-                            }
+                            compare(expectedDocument, actualDocument);
                         }
                     }
                 } catch (NoSuchFileException ex) {
@@ -192,6 +175,29 @@ public class PdfComparator<T extends CompareResult> {
             compareResult.done();
         }
         return compareResult;
+    }
+
+    private void compare(final PDDocument expectedDocument, final PDDocument actualDocument) throws IOException {
+        expectedDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+        PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
+
+        actualDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+        PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
+
+        final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
+        CountDownLatch latch = new CountDownLatch(minPageCount);
+        for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
+            drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
+        }
+        Utilities.await(latch, "FullCompare");
+        Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
+        Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
+        Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
+        if (expectedDocument.getNumberOfPages() > minPageCount) {
+            addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
+        } else if (actualDocument.getNumberOfPages() > minPageCount) {
+            addExtraPages(actualDocument, actualPdfRenderer, minPageCount, EXTRA_RGB, false);
+        }
     }
 
     private void drawImage(final CountDownLatch latch, final int pageIndex,
