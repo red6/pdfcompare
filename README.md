@@ -69,7 +69,7 @@ exclusions: [
     },
     {
         // page is optional. When not given, the exclusion applies to all pages.
-        x1: 130.5mm // entries can also be given in units of cm, mm or pt (DTP-Point definied as 1/72 Inches)
+        x1: 130.5mm // entries can also be given in units of cm, mm or pt (DTP-Point defined as 1/72 Inches)
         y1: 3.3cm
         x2: 190mm
         y2: 3.7cm
@@ -101,7 +101,7 @@ PdfCompare uses the Apache PdfBox Library to read and write Pdfs.
 
 - The Two Pdfs to compare are opened with PdfBox.
 - A page from each Pdf is read and rendered into a BufferedImage at 300dpi.
-- A new empty BufferedImage is created to take the result of the comparion. It has the maximum size of the expected and the actual image.
+- A new empty BufferedImage is created to take the result of the comparison. It has the maximum size of the expected and the actual image.
 - When the comparison is finished, the new BufferedImage, which holds the result of the comparison, is kept in memory in a CompareResult object. Holding on to the CompareResult means, that the images are also kept in memory. If memory consumption is a problem, a DiskUsingCompareResult can be used. This class does not store images in memory, but stores them in a temporary folder on disk.
 - After all pages are compared, a new Pdf is created and the images are written page by page into the new Pdf.
 
@@ -140,7 +140,7 @@ Just add a file called "application.conf" to the root of the classpath. This fil
     This is the cache size configured for the PdfBox instance, that loads the documents that are compared.
 - parallelProcessing=false
 
-    Disable alle parallel processing and process everything in a single thread.
+    Disable all parallel processing and process everything in a single thread.
 - overallTimeoutInMinutes=15
 
     Set the overall timeout. This is a safety measure to detect possible deadlocks. Complex comparisons might take longer, so this value might have to be increased.
