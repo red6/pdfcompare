@@ -57,7 +57,7 @@ public class InThreadExecutorService implements ExecutorService {
         } catch (Exception e) {
             return new ImmediateFuture<>(e);
         }
-        return new ImmediateFuture<T>(result);
+        return new ImmediateFuture<>(result);
     }
 
     @Override
