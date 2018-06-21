@@ -21,7 +21,7 @@ public class InThreadExecutorServiceTest {
 
     @Test
     public void immediateFutureWithResult() throws ExecutionException, InterruptedException {
-        final ImmediateFuture future = new ImmediateFuture("Test");
+        final ImmediateFuture future = new ImmediateFuture<>("Test");
         assertThat(future.get(), is("Test"));
     }
 

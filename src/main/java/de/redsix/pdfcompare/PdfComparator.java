@@ -146,7 +146,7 @@ public class PdfComparator<T extends CompareResult> {
 
     public T compare() throws IOException {
         try {
-            if (expectedStreamSupplier == null && actualStreamSupplier == null) {
+            if (expectedStreamSupplier == null || actualStreamSupplier == null) {
                 return compareResult;
             }
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {

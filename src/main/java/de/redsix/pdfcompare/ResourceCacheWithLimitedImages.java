@@ -46,6 +46,6 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
                 return;
             }
         }
-        this.xobjects.put(indirect, new SoftReference(xobject));
+        this.xobjects.put(indirect, new SoftReference<>(xobject));
     }
 }

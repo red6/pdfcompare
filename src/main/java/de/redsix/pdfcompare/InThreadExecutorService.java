@@ -44,9 +44,9 @@ public class InThreadExecutorService implements ExecutorService {
     @Override
     public <T> Future<T> submit(final Callable<T> task) {
         try {
-            return new ImmediateFuture(task.call());
+            return new ImmediateFuture<>(task.call());
         } catch (Exception e) {
-            return new ImmediateFuture(e);
+            return new ImmediateFuture<>(e);
         }
     }
 
@@ -55,9 +55,9 @@ public class InThreadExecutorService implements ExecutorService {
         try {
             task.run();
         } catch (Exception e) {
-            return new ImmediateFuture(e);
+            return new ImmediateFuture<>(e);
         }
-        return new ImmediateFuture<T>(result);
+        return new ImmediateFuture<>(result);
     }
 
     @Override
