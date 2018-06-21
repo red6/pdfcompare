@@ -87,6 +87,18 @@ Exclusions are provided in the code as follows:
 new PdfComparator("expected.pdf", "actual.pdf").withIgnore("ignore.conf").compare();
 ```
 
+### Allow for a difference in percent per page
+
+If for some reason your rendering is a little off or you allow for some error margin, you can configure a percentage of pixels that are ignored during comparison.
+That way a difference is only reported, when more than the given percentage of pixels differ. The percentage is calculated per page.
+
+To use this feature, just add a file called "application.conf" to the root of the classpath.
+In that file you can add a setting:
+
+- allowedDifferenceInPercentPerPage=0.2
+
+Percent of pixels that may differ per page. Default is 0.
+
 ### Different CompareResult Implementations
 
 There are a few different Implementations of CompareResults with different characteristics.

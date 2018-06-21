@@ -92,7 +92,7 @@ public class DiffImageTest {
                 actualImage,
                 1, exclusions, resultMock);
         diffImage.diffImages();
-        verify(resultMock).addPage(eq(hasDifferences), eq(hasDifferencesInExclusion), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
+        verify(resultMock).addPage(eq(new PageDiffCalculator(hasDifferences, hasDifferencesInExclusion)), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
         return captor.getValue().bufferedImage;
     }
 

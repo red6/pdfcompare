@@ -25,11 +25,10 @@ public class DiffImage {
     private int actualImageHeight;
     private int resultImageWidth;
     private int resultImageHeight;
-    private boolean differencesFound = false;
-    private boolean differenceInExclusion = false;
     private BufferedImage resultImage;
     private int diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2;
     private final ResultCollector compareResult;
+    private PageDiffCalculator diffCalculator;
 
     public DiffImage(final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final int page,
             final Exclusions exclusions, final ResultCollector compareResult) {
@@ -38,14 +37,6 @@ public class DiffImage {
         this.page = page;
         this.exclusions = exclusions;
         this.compareResult = compareResult;
-    }
-
-    public boolean differs() {
-        return differencesFound;
-    }
-
-    public boolean differenceInExclusion() {
-        return differenceInExclusion;
     }
 
     public BufferedImage getImage() {
@@ -68,6 +59,8 @@ public class DiffImage {
         resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
         DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
+        diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, Environment.getAllowedDiffInPercent());
+
         int expectedElement;
         int actualElement;
         final PageExclusions pageExclusions = exclusions.forPage(page + 1);
@@ -83,12 +76,12 @@ public class DiffImage {
                 if (pageExclusions.contains(x, y)) {
                     element = ImageTools.fadeExclusion(element);
                     if (expectedElement != actualElement) {
-                        differenceInExclusion = true;
+                        diffCalculator.diffFoundInExclusion();
                     }
                 } else {
                     if (expectedElement != actualElement) {
                         extendDiffArea(y, x);
-                        differencesFound = true;
+                        diffCalculator.diffFound();
                         LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
                         mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
                     }
@@ -96,17 +89,17 @@ public class DiffImage {
                 resultBuffer.setElem(x + resultLineOffset, element);
             }
         }
-        if (differencesFound) {
+        if (diffCalculator.differencesFound()) {
             LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }
         final float maxWidth = Math.max(expectedImage.width, actualImage.width);
         final float maxHeight = Math.max(expectedImage.height, actualImage.height);
-        compareResult.addPage(differencesFound, differenceInExclusion, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
+        compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
     }
 
     private void extendDiffArea(final int y, final int x) {
-        if (!differencesFound) {
+        if (!diffCalculator.differencesFound()) {
             diffAreaY1 = y;
             diffAreaX1 = x;
         }

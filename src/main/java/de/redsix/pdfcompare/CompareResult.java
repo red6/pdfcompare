@@ -98,13 +98,13 @@ public class CompareResult implements ResultCollector {
     }
 
     @Override
-    public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
+    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
             final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         Objects.requireNonNull(expectedImage, "expectedImage is null");
         Objects.requireNonNull(actualImage, "actualImage is null");
         Objects.requireNonNull(diffImage, "diffImage is null");
-        this.hasDifferenceInExclusion |= hasDifferenceInExclusion;
-        if (hasDifferences) {
+        this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
+        if (diffCalculator.differencesFound()) {
             isEqual = false;
         }
         diffImages.put(pageIndex, diffImage);

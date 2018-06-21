@@ -262,9 +262,9 @@ public class PdfComparator<T extends CompareResult> {
                 }
             }
             if (expected) {
-                compareResult.addPage(true, false, pageIndex, image, blank(image), image);
+                compareResult.addPage(new PageDiffCalculator(true, false), pageIndex, image, blank(image), image);
             } else {
-                compareResult.addPage(true, false, pageIndex, blank(image), image, image);
+                compareResult.addPage(new PageDiffCalculator(true, false), pageIndex, blank(image), image, image);
             }
         }
     }

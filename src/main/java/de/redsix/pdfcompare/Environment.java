@@ -63,4 +63,11 @@ public final class Environment {
     public static boolean useParallelProcessing() {
         return config.getBoolean("parallelProcessing");
     }
+
+    public static double getAllowedDiffInPercent() {
+        if (config.hasPath("allowedDifferenceInPercentPerPage")) {
+            return config.getDouble("allowedDifferenceInPercentPerPage");
+        }
+        return 0;
+    }
 }

@@ -61,9 +61,9 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
     }
 
     @Override
-    public synchronized void addPage(final boolean hasDifferences, final boolean hasDifferenceInExclusion, final int pageIndex,
+    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
             final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
-        super.addPage(hasDifferences, hasDifferenceInExclusion, pageIndex, expectedImage, actualImage, diffImage);
+        super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
         hasImages = true;
         if (needToSwap()) {
             swapToDisk();
