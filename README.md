@@ -87,6 +87,15 @@ Exclusions are provided in the code as follows:
 new PdfComparator("expected.pdf", "actual.pdf").withIgnore("ignore.conf").compare();
 ```
 
+Alternatively an Exclusion can be added via the API as follows:
+
+```java
+new PdfComparator("expected.pdf", "actual.pdf")
+	.with(new Exclusion(1, 230, 350, 450, 420))
+	.with(new Exclusion(2))
+	.compare();
+```
+
 ### Allow for a difference in percent per page
 
 If for some reason your rendering is a little off or you allow for some error margin, you can configure a percentage of pixels that are ignored during comparison.
@@ -138,15 +147,15 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 - imageCacheSizeCount=30
 
     How many images are cached by PdfBox
-- maxImageSizeInCache=100000 
+- maxImageSizeInCache=100000
 
     A rough maximum size of images that are cached, to prevent very big images from being cached
 - mergeCacheSizeMB=100
 
     When Pdfs are partially written and later merged, this is the memory cache that is configured for the PdfBox instance that does the merge.
 - swapCacheSizeMB=100
-    
-    When Pdfs are partially written, this is the memory cache that is configured for the PdfBox instance that does the partial writes. 
+
+    When Pdfs are partially written, this is the memory cache that is configured for the PdfBox instance that does the partial writes.
 - documentCacheSizeMB=200
 
     This is the cache size configured for the PdfBox instance, that loads the documents that are compared.
