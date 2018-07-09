@@ -89,6 +89,17 @@ public class IntegrationTest {
     }
 
     @Test
+    public void exclusionsCanBeAddedViaAPI() throws IOException {
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"))
+                .with(new Exclusion(1, 230, 350, 450, 420))
+                .with(new Exclusion(2, 1750, 240, 2000, 300))
+                .compare();
+        assertThat(result.isEqual(), is(true));
+        assertThat(result.hasDifferenceInExclusion(), is(true));
+        writeAndCompare(result);
+    }
+
+    @Test
     public void aShorterDocumentActualIsNotEqual() throws IOException {
         final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("short.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));

@@ -138,9 +138,15 @@ public class PdfComparator<T extends CompareResult> {
         return this;
     }
 
-    public PdfComparator<T> withIgnore(InputStream ignoreIS) {
+    public PdfComparator<T> withIgnore(final InputStream ignoreIS) {
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
         exclusions.readExclusions(ignoreIS);
+        return this;
+    }
+
+    public PdfComparator<T> with(final Exclusion exclusion) {
+        Objects.requireNonNull(exclusion, "exclusion is null");
+        exclusions.add(exclusion);
         return this;
     }
 
