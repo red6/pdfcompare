@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 
+import de.redsix.pdfcompare.env.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ public class DiffImage {
     private final ImageWithDimension expectedImage;
     private final ImageWithDimension actualImage;
     private final int page;
+    private final Environment environment;
     private final Exclusions exclusions;
     private DataBuffer expectedBuffer;
     private DataBuffer actualBuffer;
@@ -31,10 +33,11 @@ public class DiffImage {
     private PageDiffCalculator diffCalculator;
 
     public DiffImage(final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final int page,
-            final Exclusions exclusions, final ResultCollector compareResult) {
+                     final Environment environment, final Exclusions exclusions, final ResultCollector compareResult) {
         this.expectedImage = expectedImage;
         this.actualImage = actualImage;
         this.page = page;
+        this.environment = environment;
         this.exclusions = exclusions;
         this.compareResult = compareResult;
     }
@@ -59,7 +62,7 @@ public class DiffImage {
         resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
         DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
-        diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, Environment.getAllowedDiffInPercent());
+        diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, environment.getAllowedDiffInPercent());
 
         int expectedElement;
         int actualElement;

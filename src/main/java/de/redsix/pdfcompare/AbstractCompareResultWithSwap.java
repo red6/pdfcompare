@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
+import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }
-            mergerUtility.mergeDocuments(Utilities.getMemorySettings(Environment.getMergeCacheSize()));
+            mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
             LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
         } catch (IOException e) {
@@ -76,9 +77,9 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
 
     protected abstract boolean needToSwap();
 
-    private synchronized Executor getExecutor() {
+    private synchronized Executor getExecutor(Environment environment) {
         if (swapExecutor == null) {
-            swapExecutor = blockingExecutor("Swap", 0, 2, 1);
+            swapExecutor = blockingExecutor("Swap", 0, 2, 1, environment);
         }
         return swapExecutor;
     }
@@ -98,14 +99,14 @@ public abstract class AbstractCompareResultWithSwap extends CompareResult {
             }
             if (!images.isEmpty()) {
                 swapped = true;
-                getExecutor().execute(() -> {
+                getExecutor(environment).execute(() -> {
                     LOG.trace("Swapping {} pages to disk", images.size());
                     Instant start = Instant.now();
 
                     final int minPageIndex = images.keySet().iterator().next();
                     LOG.trace("minPageIndex: {}", minPageIndex);
-                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(Environment.getSwapCacheSize()))) {
-                        document.setResourceCache(new ResourceCacheWithLimitedImages());
+                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
+                        document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
                         final Path tempDir = getTempDir();
                         final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));

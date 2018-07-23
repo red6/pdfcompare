@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 
+import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -39,6 +40,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  */
 public class CompareResult implements ResultCollector {
 
+    protected Environment environment;
     protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<>();
     protected boolean isEqual = true;
     protected boolean hasDifferenceInExclusion = false;
@@ -152,5 +154,9 @@ public class CompareResult implements ResultCollector {
 
     public void actualOnly() {
         this.actualOnly = true;
+    }
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 }
