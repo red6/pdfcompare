@@ -58,6 +58,8 @@ public class PdfComparator<T extends CompareResult> {
     private final T compareResult;
     private final int timeout = 3;
     private final TimeUnit unit = TimeUnit.MINUTES;
+    private String expectedPassword = "";
+    private String actualPassword = "";
 
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
@@ -150,6 +152,18 @@ public class PdfComparator<T extends CompareResult> {
         return this;
     }
 
+    public PdfComparator<T> withExpectedPassword(final String password) {
+        Objects.requireNonNull(password, "password is null");
+        expectedPassword = password;
+        return this;
+    }
+
+    public PdfComparator<T> withActualPassword(final String password) {
+        Objects.requireNonNull(password, "password is null");
+        actualPassword = password;
+        return this;
+    }
+
     public T compare() throws IOException {
         try {
             if (expectedStreamSupplier == null || actualStreamSupplier == null) {
@@ -158,9 +172,9 @@ public class PdfComparator<T extends CompareResult> {
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
                     try (PDDocument expectedDocument = PDDocument
-                            .load(expectedStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                            .load(expectedStream, expectedPassword, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
                         try (PDDocument actualDocument = PDDocument
-                                .load(actualStream, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                                .load(actualStream, actualPassword, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
                             compare(expectedDocument, actualDocument);
                         }
                     }

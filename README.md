@@ -95,6 +95,16 @@ new PdfComparator("expected.pdf", "actual.pdf")
 	.with(new Exclusion(2))
 	.compare();
 ```
+### Encrypted PDF files
+
+When you want to compare password protected PDF files, you can give the password to the Comparator through the withExpectedPassword(String password) or withActualPassword(String password) methods respectively.
+
+```java
+new PdfComparator("expected.pdf", "actual.pdf")
+    .withExpectedPassword("somePwd")
+    .withActualPassword("anotherPwd")
+    .compare();
+```
 
 ### Allow for a difference in percent per page
 
