@@ -80,7 +80,7 @@ public class DiffImage {
                     }
                 } else {
                     if (expectedElement != actualElement) {
-                        extendDiffArea(y, x);
+                        extendDiffArea(x, y);
                         diffCalculator.diffFound();
                         LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
                         mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
@@ -98,14 +98,15 @@ public class DiffImage {
         compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
     }
 
-    private void extendDiffArea(final int y, final int x) {
+    private void extendDiffArea(final int x, final int y) {
         if (!diffCalculator.differencesFound()) {
-            diffAreaY1 = y;
             diffAreaX1 = x;
+            diffAreaY1 = y;
         }
-        diffAreaY2 = y;
         diffAreaX1 = Math.min(diffAreaX1, x);
         diffAreaX2 = Math.max(diffAreaX2, x);
+        diffAreaY1 = Math.min(diffAreaY1, y);
+        diffAreaY2 = Math.max(diffAreaY2, y);
     }
 
     private int getElement(final int expectedElement, final int actualElement) {
