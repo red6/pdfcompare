@@ -36,6 +36,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import de.redsix.pdfcompare.env.DefaultEnvironment;
+import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -49,12 +51,13 @@ public class PdfComparator<T extends CompareResult> {
     private static final int EXTRA_RGB = new Color(0, 160, 0).getRGB();
     private static final int MISSING_RGB = new Color(220, 0, 0).getRGB();
     public static final int MARKER_WIDTH = 20;
+    private Environment environment;
     private final Exclusions exclusions = new Exclusions();
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
-    private ExecutorService drawExecutor = blockingExecutor("Draw", 1, 50);
-    private ExecutorService parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4);
-    private ExecutorService diffExecutor = blockingExecutor("Diff", 1, 2);
+    private ExecutorService drawExecutor;
+    private ExecutorService parrallelDrawExecutor;
+    private ExecutorService diffExecutor;
     private final T compareResult;
     private final int timeout = 3;
     private final TimeUnit unit = TimeUnit.MINUTES;
@@ -122,6 +125,10 @@ public class PdfComparator<T extends CompareResult> {
         }
     }
 
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
+
     public PdfComparator<T> withIgnore(final String ignoreFilename) {
         Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
         exclusions.readExclusions(ignoreFilename);
@@ -164,17 +171,29 @@ public class PdfComparator<T extends CompareResult> {
         return this;
     }
 
+    private void buildEnvironment() {
+        if (environment == null) {
+            environment = DefaultEnvironment.create();
+        }
+        compareResult.setEnvironment(environment);
+
+        drawExecutor = blockingExecutor("Draw", 1, 50, environment);
+        parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4, environment);
+        diffExecutor = blockingExecutor("Diff", 1, 2, environment);
+    }
+
     public T compare() throws IOException {
         try {
             if (expectedStreamSupplier == null || actualStreamSupplier == null) {
                 return compareResult;
             }
+            buildEnvironment();
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
                     try (PDDocument expectedDocument = PDDocument
-                            .load(expectedStream, expectedPassword, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                            .load(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
                         try (PDDocument actualDocument = PDDocument
-                                .load(actualStream, actualPassword, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+                                .load(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
                             compare(expectedDocument, actualDocument);
                         }
                     }
@@ -198,10 +217,10 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     private void compare(final PDDocument expectedDocument, final PDDocument actualDocument) throws IOException {
-        expectedDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+        expectedDocument.setResourceCache(new ResourceCacheWithLimitedImages(environment));
         PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
 
-        actualDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+        actualDocument.setResourceCache(new ResourceCacheWithLimitedImages(environment));
         PDFRenderer actualPdfRenderer = new PDFRenderer(actualDocument);
 
         final int minPageCount = Math.min(expectedDocument.getNumberOfPages(), actualDocument.getNumberOfPages());
@@ -209,7 +228,7 @@ public class PdfComparator<T extends CompareResult> {
         for (int pageIndex = 0; pageIndex < minPageCount; pageIndex++) {
             drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
         }
-        Utilities.await(latch, "FullCompare");
+        Utilities.await(latch, "FullCompare", environment);
         Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
         Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
         Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
@@ -232,7 +251,7 @@ public class PdfComparator<T extends CompareResult> {
                         .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex));
                 final ImageWithDimension expectedImage = getImage(expectedImageFuture, pageIndex, "expected document");
                 final ImageWithDimension actualImage = getImage(actualImageFuture, pageIndex, "actual document");
-                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, exclusions, compareResult);
+                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, environment, exclusions, compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
                     LOG.trace("Diffing page {}", diffImage);

@@ -12,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -52,8 +53,8 @@ public class Utilities {
         }
     }
 
-    public static ExecutorService blockingExecutor(final String name, int coreThreads, int maxThreads, int queueCapacity) {
-        if (Environment.useParallelProcessing()) {
+    public static ExecutorService blockingExecutor(final String name, int coreThreads, int maxThreads, int queueCapacity, Environment environment) {
+        if (environment.useParallelProcessing()) {
             return new ThreadPoolExecutor(coreThreads, maxThreads, 3, TimeUnit.MINUTES,
                     new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
         } else {
@@ -61,8 +62,8 @@ public class Utilities {
         }
     }
 
-    public static ExecutorService blockingExecutor(final String name, int threads, int queueCapacity) {
-        if (Environment.useParallelProcessing()) {
+    public static ExecutorService blockingExecutor(final String name, int threads, int queueCapacity, Environment environment) {
+        if (environment.useParallelProcessing()) {
             return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MINUTES,
                     new LinkedBlockingQueue<>(queueCapacity), new NamedThreadFactory(name), new BlockingHandler());
         } else {
@@ -86,9 +87,9 @@ public class Utilities {
         }
     }
 
-    public static void await(final CountDownLatch latch, final String latchName) {
+    public static void await(final CountDownLatch latch, final String latchName, Environment environment) {
         try {
-            final int timeout = Environment.getOverallTimeout();
+            final int timeout = environment.getOverallTimeout();
             final TimeUnit unit = TimeUnit.MINUTES;
             if (!latch.await(timeout, unit)) {
                 LOG.error("Awaiting Latch '{}' timed out after {} {}", latchName, timeout, unit);
@@ -99,30 +100,30 @@ public class Utilities {
         }
     }
 
-    public static int getNumberOfPages(final Path document) throws IOException {
+    public static int getNumberOfPages(final Path document, Environment environment) throws IOException {
         try (InputStream documentIS = Files.newInputStream(document)) {
-            return getNumberOfPages(documentIS);
+            return getNumberOfPages(documentIS, environment);
         }
     }
 
-    private static int getNumberOfPages(final InputStream documentIS) throws IOException {
-        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+    private static int getNumberOfPages(final InputStream documentIS, Environment environment) throws IOException {
+        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
             return pdDocument.getNumberOfPages();
         }
     }
 
-    public static ImageWithDimension renderPage(final Path document, final int page) throws IOException {
+    public static ImageWithDimension renderPage(final Path document, final int page, Environment environment) throws IOException {
         try (InputStream documentIS = Files.newInputStream(document)) {
-            return renderPage(documentIS, page);
+            return renderPage(documentIS, page, environment);
         }
     }
 
-    public static ImageWithDimension renderPage(final InputStream documentIS, final int page) throws IOException {
-        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(Environment.getDocumentCacheSize()))) {
+    public static ImageWithDimension renderPage(final InputStream documentIS, final int page, Environment environment) throws IOException {
+        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
             if (page >= pdDocument.getNumberOfPages()) {
                 throw new IllegalArgumentException("Page out of range. Last page is: " + pdDocument.getNumberOfPages());
             }
-            pdDocument.setResourceCache(new ResourceCacheWithLimitedImages());
+            pdDocument.setResourceCache(new ResourceCacheWithLimitedImages(environment));
             PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
             return PdfComparator.renderPageAsImage(pdDocument, pdfRenderer, page);
         }

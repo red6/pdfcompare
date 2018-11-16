@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+import de.redsix.pdfcompare.env.DefaultEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -90,7 +91,7 @@ public class DiffImageTest {
         final DiffImage diffImage = new DiffImage(
                 expectedImage,
                 actualImage,
-                1, exclusions, resultMock);
+                1, DefaultEnvironment.create(), exclusions, resultMock);
         diffImage.diffImages();
         verify(resultMock).addPage(eq(new PageDiffCalculator(hasDifferences, hasDifferencesInExclusion)), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
         return captor.getValue().bufferedImage;
