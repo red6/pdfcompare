@@ -126,6 +126,7 @@ public class SimpleEnvironment implements Environment {
         this.overallTimeout = overallTimeout;
     }
 
+    @Override
     public boolean useParallelProcessing() {
         if (parallelProcessing != null) {
             return parallelProcessing;
