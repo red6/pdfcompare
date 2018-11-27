@@ -39,6 +39,7 @@ import java.util.concurrent.TimeoutException;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
@@ -315,8 +316,12 @@ public class PdfComparator<T extends CompareResult> {
     public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex)
             throws IOException {
         final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
-        final PDRectangle mediaBox = document.getPage(pageIndex).getMediaBox();
-        return new ImageWithDimension(bufferedImage, mediaBox.getWidth(), mediaBox.getHeight());
+        final PDPage page = document.getPage(pageIndex);
+        final PDRectangle mediaBox = page.getMediaBox();
+        if (page.getRotation() == 90 || page.getRotation() == 270)
+            return new ImageWithDimension(bufferedImage, mediaBox.getHeight(), mediaBox.getWidth());
+        else
+            return new ImageWithDimension(bufferedImage, mediaBox.getWidth(), mediaBox.getHeight());
     }
 
     public T getResult() {
