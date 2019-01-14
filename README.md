@@ -135,7 +135,7 @@ PdfCompare uses the Apache PdfBox Library to read and write Pdfs.
 - The Two Pdfs to compare are opened with PdfBox.
 - A page from each Pdf is read and rendered into a BufferedImage at 300dpi.
 - A new empty BufferedImage is created to take the result of the comparison. It has the maximum size of the expected and the actual image.
-- When the comparison is finished, the new BufferedImage, which holds the result of the comparison, is kept in memory in a CompareResult object. Holding on to the CompareResult means, that the images are also kept in memory. If memory consumption is a problem, a DiskUsingCompareResult can be used. This class does not store images in memory, but stores them in a temporary folder on disk.
+- When the comparison is finished, the new BufferedImage, which holds the result of the comparison, is kept in memory in a CompareResult object. Holding on to the CompareResult means, that the images are also kept in memory. If memory consumption is a problem, a CompareResultWithPageOverflow or a CompareResultWithMemoryOverflow can be used. Those classes store images to a temporary folder on disk, when certain thresholds are reached.
 - After all pages are compared, a new Pdf is created and the images are written page by page into the new Pdf.
 
 So comparing large Pdfs can use up a lot of memory.

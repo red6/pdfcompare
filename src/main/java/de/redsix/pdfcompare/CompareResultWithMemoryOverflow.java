@@ -10,9 +10,16 @@ public class CompareResultWithMemoryOverflow extends AbstractCompareResultWithSw
 
     private long maxMemoryUsage = Math.min(Math.round(Runtime.getRuntime().maxMemory() * 0.7), Runtime.getRuntime().maxMemory() - 200 * 1024 * 1024);
 
+    /**
+     * Defaults to 70% of the available maxMemory reported by the JVM.
+     */
     public CompareResultWithMemoryOverflow() {
     }
 
+    /**
+     * Stores images to disk, when the used memory is higher than the given theshold in megabytes.
+     * @param approximateMaxMemoryUsageInMegaBytes
+     */
     public CompareResultWithMemoryOverflow(final int approximateMaxMemoryUsageInMegaBytes) {
         this.maxMemoryUsage = approximateMaxMemoryUsageInMegaBytes * 1024 * 1024;
     }
