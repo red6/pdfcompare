@@ -35,7 +35,7 @@ public class Main {
         for (int i = 0; i < 1; i++) {
             Instant start = Instant.now();
 //            final CompareResult result = new DiskUsingCompareResult();
-            final CompareResult result = new CompareResultWithPageOverflow();
+            final CompareResultImpl result = new CompareResultWithPageOverflow();
             new PdfComparator(file1, file2, result)
 //                    .withIgnore("ignore.conf")
                     .compare().writeTo("out");

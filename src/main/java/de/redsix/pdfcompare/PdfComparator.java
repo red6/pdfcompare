@@ -45,7 +45,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PdfComparator<T extends CompareResult> {
+public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
     public static final int DPI = 300;
@@ -71,7 +71,7 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     public PdfComparator(String expectedPdfFilename, String actualPdfFilename) throws IOException {
-        this(expectedPdfFilename, actualPdfFilename, (T) new CompareResult());
+        this(expectedPdfFilename, actualPdfFilename, (T) new CompareResultImpl());
     }
 
     public PdfComparator(String expectedPdfFilename, String actualPdfFilename, T compareResult) throws IOException {
@@ -85,7 +85,7 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     public PdfComparator(final Path expectedPath, final Path actualPath) throws IOException {
-        this(expectedPath, actualPath, (T) new CompareResult());
+        this(expectedPath, actualPath, (T) new CompareResultImpl());
     }
 
     public PdfComparator(final Path expectedPath, final Path actualPath, final T compareResult) throws IOException {
@@ -99,7 +99,7 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     public PdfComparator(final File expectedFile, final File actualFile) throws IOException {
-        this(expectedFile, actualFile, (T) new CompareResult());
+        this(expectedFile, actualFile, (T) new CompareResultImpl());
     }
 
     public PdfComparator(final File expectedFile, final File actualFile, final T compareResult) throws IOException {
@@ -113,7 +113,7 @@ public class PdfComparator<T extends CompareResult> {
     }
 
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS) {
-        this(expectedPdfIS, actualPdfIS, (T) new CompareResult());
+        this(expectedPdfIS, actualPdfIS, (T) new CompareResultImpl());
     }
 
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS, final T compareResult) {
@@ -154,7 +154,7 @@ public class PdfComparator<T extends CompareResult> {
         return this;
     }
 
-    public PdfComparator<T> with(final Exclusion exclusion) {
+    public PdfComparator<T> with(final PageArea exclusion) {
         Objects.requireNonNull(exclusion, "exclusion is null");
         exclusions.add(exclusion);
         return this;
@@ -183,7 +183,7 @@ public class PdfComparator<T extends CompareResult> {
         diffExecutor = blockingExecutor("Diff", 1, 2, environment);
     }
 
-    public T compare() throws IOException {
+    public CompareResult compare() throws IOException {
         try {
             if (expectedStreamSupplier == null || actualStreamSupplier == null) {
                 return compareResult;

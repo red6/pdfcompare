@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 public class PageExclusions {
 
-    private final Collection<Exclusion> exclusions = new ArrayList<>();
+    private final Collection<PageArea> exclusions = new ArrayList<>();
     private final PageExclusions delegate;
 
     public PageExclusions() {
@@ -17,12 +17,12 @@ public class PageExclusions {
         this.delegate = delegate;
     }
 
-    public void add(final Exclusion exclusion) {
+    public void add(final PageArea exclusion) {
         exclusions.add(exclusion);
     }
 
     public boolean contains(final int x, final int y) {
-        for (Exclusion exclusion : exclusions) {
+        for (PageArea exclusion : exclusions) {
             if (exclusion.contains(x, y)) {
                 return true;
             }
@@ -33,7 +33,7 @@ public class PageExclusions {
         return false;
     }
 
-    public void forEach(final Consumer<Exclusion> exclusionConsumer) {
+    public void forEach(final Consumer<PageArea> exclusionConsumer) {
         exclusions.forEach(exclusionConsumer);
     }
 }

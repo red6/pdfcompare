@@ -44,8 +44,9 @@ if (result.isEqual()) {
     System.out.println("No Differences found!");
 }
 if (result.hasDifferenceInExclusion()) {
-    System.out.println("Only Differences in excluded areas found!");
+    System.out.println("Differences in excluded areas found!");
 }
+result.getDifferences(); // returns page areas, where differences were found
 ```
 For convenience, writeTo also returns the equals status:
 ```java

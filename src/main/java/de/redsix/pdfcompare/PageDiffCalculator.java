@@ -8,6 +8,7 @@ public class PageDiffCalculator {
     private final double allowedDiffInPercent;
     private int diffsFound = 0;
     private int diffsFoundInExclusion = 0;
+    private PageArea diffArea;
 
     public PageDiffCalculator(final int totalPixels, final double allowedDiffInPercent) {
         this.totalPixels = totalPixels;
@@ -54,5 +55,13 @@ public class PageDiffCalculator {
     @Override
     public int hashCode() {
         return Objects.hash(diffsFound, diffsFoundInExclusion);
+    }
+
+    public void addDiffArea(final PageArea diffArea) {
+        this.diffArea = diffArea;
+    }
+
+    public PageArea getDiffArea() {
+        return diffArea;
     }
 }

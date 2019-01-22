@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare;
 
-public class Exclusion {
+public class PageArea {
 
     final int page;
     private final int x1;
@@ -8,7 +8,7 @@ public class Exclusion {
     private final int x2;
     private final int y2;
 
-    public Exclusion(final int page) {
+    public PageArea(final int page) {
         this.page = page;
         this.x1 = -1;
         this.y1 = -1;
@@ -16,7 +16,7 @@ public class Exclusion {
         this.y2 = -1;
     }
 
-    public Exclusion(final int x1, final int y1, final int x2, final int y2) {
+    public PageArea(final int x1, final int y1, final int x2, final int y2) {
         checkCoordinates(x1, y1, x2, y2);
         this.page = -1;
         this.x1 = x1;
@@ -25,7 +25,7 @@ public class Exclusion {
         this.y2 = y2;
     }
 
-    public Exclusion(final int page, final int x1, final int y1, final int x2, final int y2) {
+    public PageArea(final int page, final int x1, final int y1, final int x2, final int y2) {
         checkCoordinates(x1, y1, x2, y2);
         if (page < 1) {
             throw new IllegalArgumentException("Page has to be greater or equal to 1");

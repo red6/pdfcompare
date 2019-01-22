@@ -7,7 +7,7 @@ import java.util.TreeMap;
 /**
  * A CompareResult, that also stores the expected and actual Image and also keeps diffImages in memory for later display.
  */
-public class CompareResultWithExpectedAndActual extends CompareResult {
+public class CompareResultWithExpectedAndActual extends CompareResultImpl {
 
     private final Map<Integer, ImageWithDimension> expectedImages = new TreeMap<>();
     private final Map<Integer, ImageWithDimension> actualImages = new TreeMap<>();

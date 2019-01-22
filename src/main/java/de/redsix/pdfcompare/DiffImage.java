@@ -93,6 +93,7 @@ public class DiffImage {
             }
         }
         if (diffCalculator.differencesFound()) {
+            diffCalculator.addDiffArea(new PageArea(page + 1, diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2));
             LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }

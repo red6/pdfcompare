@@ -34,7 +34,7 @@ public class Exclusions {
     private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<>();
     private final PageExclusions exclusionsForAllPages = new PageExclusions();
 
-    public Exclusions add(final Exclusion exclusion) {
+    public Exclusions add(final PageArea exclusion) {
         if (exclusion.page < 0) {
             exclusionsForAllPages.add(exclusion);
         } else {
@@ -88,12 +88,12 @@ public class Exclusions {
         exclusions.stream().map(co -> {
             final Config c = co.toConfig();
             if (!c.hasPath("x1") && !c.hasPath("y1") && !c.hasPath("x2") && !c.hasPath("y2")) {
-                return new Exclusion(c.getInt("page"));
+                return new PageArea(c.getInt("page"));
             }
             if (c.hasPath("page")) {
-                return new Exclusion(c.getInt("page"), toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
+                return new PageArea(c.getInt("page"), toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
             }
-            return new Exclusion(toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
+            return new PageArea(toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
         }).forEach(e -> add(e));
     }
 
@@ -119,7 +119,7 @@ public class Exclusions {
         }
     }
 
-    public void forEach(final Consumer<Exclusion> exclusionConsumer) {
+    public void forEach(final Consumer<PageArea> exclusionConsumer) {
         exclusionsForAllPages.forEach(exclusionConsumer);
         exclusionsPerPage.values().forEach(pe -> pe.forEach(exclusionConsumer));
     }

@@ -79,7 +79,9 @@ public class Display {
                     final File actualFile = fileChooser.getSelectedFile();
                     try {
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        viewModel = new ViewModel(new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare());
+                        final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual)
+                                new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare();
+                        viewModel = new ViewModel(compareResult);
                         leftPanel.setImage(viewModel.getLeftImage());
                         resultPanel.setImage(viewModel.getDiffImage());
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

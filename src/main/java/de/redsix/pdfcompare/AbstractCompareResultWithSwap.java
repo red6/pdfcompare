@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * from memory. The threshold defaults to 70% of Runtime.maxMemory() but at least 200MB, which worked for me.
  * After swapping, a System.gc() is triggered.
  */
-public abstract class AbstractCompareResultWithSwap extends CompareResult {
+public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractCompareResultWithSwap.class);
     private Path tempDir;

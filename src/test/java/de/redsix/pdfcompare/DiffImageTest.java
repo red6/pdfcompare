@@ -30,7 +30,7 @@ public class DiffImageTest {
     private final BufferedImage actual = blankImage(new BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB));
     private final ImageWithDimension expectedImage = new ImageWithDimension(expected, 1.0f, 1.0f);
     private final ImageWithDimension actualImage = new ImageWithDimension(actual, 1.0f, 1.0f);
-    private final Exclusions exclusions = new Exclusions().add(new Exclusion(35, 35, 37, 37));
+    private final Exclusions exclusions = new Exclusions().add(new PageArea(35, 35, 37, 37));
 
     @BeforeEach
     public void before() {

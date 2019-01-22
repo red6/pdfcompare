@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +14,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,23 @@ public class IntegrationTest {
         assertThat(result.hasOnlyExpected(), is(false));
         assertThat(result.hasOnlyOneDoc(), is(false));
         assertThat(result.hasOnlyActual(), is(false));
+
+        final Collection<PageArea> differences = result.getDifferences();
+        assertThat(differences, hasSize(2));
+        final Iterator<PageArea> diffIter = differences.iterator();
+        final PageArea diff1 = diffIter.next();
+        assertThat(diff1.getPage(), is(1));
+        assertThat(diff1.getX1(), is(237));
+        assertThat(diff1.getY1(), is(363));
+        assertThat(diff1.getX2(), is(421));
+        assertThat(diff1.getY2(), is(408));
+
+        final PageArea diff2 = diffIter.next();
+        assertThat(diff2.getPage(), is(2));
+        assertThat(diff2.getX1(), is(1776));
+        assertThat(diff2.getY1(), is(248));
+        assertThat(diff2.getX2(), is(1960));
+        assertThat(diff2.getY2(), is(293));
         writeAndCompare(result);
     }
 
@@ -76,6 +95,7 @@ public class IntegrationTest {
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.hasDifferenceInExclusion(), is(true));
+        assertThat(result.getDifferences(), hasSize(0));
         writeAndCompare(result);
     }
 
@@ -91,8 +111,8 @@ public class IntegrationTest {
     @Test
     public void exclusionsCanBeAddedViaAPI() throws IOException {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
-                .with(new Exclusion(1, 230, 350, 450, 420))
-                .with(new Exclusion(2, 1750, 240, 2000, 300))
+                .with(new PageArea(1, 230, 350, 450, 420))
+                .with(new PageArea(2, 1750, 240, 2000, 300))
                 .compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
