@@ -50,6 +50,8 @@ public interface CompareResult {
      */
     boolean hasOnlyOneDoc();
 
+    int getNumberOfPages();
+
     /**
      * Gives a PageArea, that shows the area of a page, where differences where found.
      * There is only one PageArea per page, which contains all differences of the page.

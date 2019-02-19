@@ -49,6 +49,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     private boolean expectedOnly;
     private boolean actualOnly;
     private Collection<PageArea> diffAreas = new ArrayList<>();
+    private int pages = 0;
 
     @Override
     public boolean writeTo(String filename) {
@@ -67,15 +68,15 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     /**
      * checks, whether this CompareResult has stored images.
      */
-    protected boolean hasImages() {
+    protected synchronized boolean hasImages() {
         return !diffImages.isEmpty();
     }
 
-    protected void addImagesToDocument(final PDDocument document) throws IOException {
+    protected synchronized void addImagesToDocument(final PDDocument document) throws IOException {
         addImagesToDocument(document, diffImages);
     }
 
-    protected void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images) throws IOException {
+    protected synchronized void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images) throws IOException {
         final Iterator<Entry<Integer, ImageWithDimension>> iterator = images.entrySet().iterator();
         while (iterator.hasNext()) {
             final Entry<Integer, ImageWithDimension> entry = iterator.next();
@@ -111,6 +112,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
             diffAreas.add(diffCalculator.getDiffArea());
         }
         diffImages.put(pageIndex, diffImage);
+        pages++;
     }
 
     @Override
@@ -148,11 +150,9 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         return expectedOnly || actualOnly;
     }
 
-    public synchronized int getNumberOfPages() {
-        if (!hasImages()) {
-            return 0;
-        }
-        return Collections.max(diffImages.keySet());
+    @Override
+    public int getNumberOfPages() {
+        return pages;
     }
 
     @Override

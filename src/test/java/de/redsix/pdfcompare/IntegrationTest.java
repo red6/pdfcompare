@@ -1,7 +1,11 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,6 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +50,7 @@ public class IntegrationTest {
         assertThat(result.hasOnlyExpected(), is(false));
         assertThat(result.hasOnlyOneDoc(), is(false));
         assertThat(result.hasOnlyActual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
 
         final Collection<PageArea> differences = result.getDifferences();
         assertThat(differences, hasSize(2));
@@ -70,6 +76,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -78,6 +85,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -86,6 +94,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithMemoryOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -96,6 +105,7 @@ public class IntegrationTest {
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.hasDifferenceInExclusion(), is(true));
         assertThat(result.getDifferences(), hasSize(0));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -105,6 +115,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore(ignoreIS).compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -124,6 +135,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("short.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -132,6 +144,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator(r("short.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -145,6 +158,7 @@ public class IntegrationTest {
         assertThat(result.hasOnlyExpected(), is(true));
         assertThat(result.hasOnlyOneDoc(), is(true));
         assertThat(result.hasOnlyActual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -158,6 +172,7 @@ public class IntegrationTest {
         assertThat(result.hasOnlyExpected(), is(false));
         assertThat(result.hasOnlyOneDoc(), is(true));
         assertThat(result.hasOnlyActual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
     }
 
@@ -174,6 +189,7 @@ public class IntegrationTest {
         final CompareResult result = new PdfComparator("whatever.pdf", "whatever.pdf").compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(0));
         writeAndCompare(result);
     }
 

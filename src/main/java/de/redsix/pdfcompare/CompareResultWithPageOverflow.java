@@ -24,7 +24,7 @@ public class CompareResultWithPageOverflow extends AbstractCompareResultWithSwap
     }
 
     @Override
-    protected boolean needToSwap() {
+    protected synchronized boolean needToSwap() {
         return diffImages.size() >= maxPages;
     }
 }
