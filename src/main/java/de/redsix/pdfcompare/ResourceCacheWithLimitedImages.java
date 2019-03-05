@@ -20,7 +20,12 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
     private final Environment environment;
     private final Map<COSObject, SoftReference<PDXObject>> xobjects = new LinkedHashMap<COSObject, SoftReference<PDXObject>>() {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 3895067084718344201L;
+
+		@Override
         protected boolean removeEldestEntry(final Entry<COSObject, SoftReference<PDXObject>> eldest) {
             return size() > environment.getNrOfImagesToCache();
         }
@@ -52,6 +57,6 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
                 return;
             }
         }
-        this.xobjects.put(indirect, new SoftReference<>(xobject));
+        this.xobjects.put(indirect, new SoftReference<PDXObject>(xobject));
     }
 }

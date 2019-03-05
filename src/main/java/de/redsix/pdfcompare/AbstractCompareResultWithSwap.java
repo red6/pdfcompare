@@ -2,22 +2,25 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
-import de.redsix.pdfcompare.env.Environment;
+import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.joda.time.Duration;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import de.redsix.pdfcompare.env.Environment;
+import lombok.Cleanup;
+import lombok.val;
 
 /**
  * This CompareResult monitors the memory the JVM consumes through Runtime.totalMemory() - Runtime.freeMemory()
@@ -28,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractCompareResultWithSwap.class);
-    private Path tempDir;
+    private File tempDir;
     private boolean hasImages = false;
     private boolean swapped;
     private ExecutorService swapExecutor;
@@ -45,12 +48,12 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             Instant start = Instant.now();
             final PDFMergerUtility mergerUtility = new PDFMergerUtility();
             mergerUtility.setDestinationFileName(filename + ".pdf");
-            for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
-                mergerUtility.addSource(path.toFile());
+            for (val path : FileUtils.getPaths(getTempDir(), "partial_*")) {
+                mergerUtility.addSource(path);
             }
             mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
-            LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
+            LOG.trace("Merging took: " + new Duration(start, end).getMillis() + "ms");
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -86,7 +89,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
-            final Map<Integer, ImageWithDimension> images = new TreeMap<>();
+            val images = new TreeMap<Integer, ImageWithDimension>();
             final Iterator<Entry<Integer, ImageWithDimension>> iterator = diffImages.entrySet().iterator();
             int previousPage = diffImages.keySet().iterator().next();
             while (iterator.hasNext()) {
@@ -99,24 +102,29 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             }
             if (!images.isEmpty()) {
                 swapped = true;
-                getExecutor(environment).execute(() -> {
-                    LOG.trace("Swapping {} pages to disk", images.size());
-                    Instant start = Instant.now();
+                getExecutor(environment).execute(new Runnable() {
+					@Override
+					public void run() {
+					    LOG.trace("Swapping {} pages to disk", images.size());
+					    Instant start = Instant.now();
 
-                    final int minPageIndex = images.keySet().iterator().next();
-                    LOG.trace("minPageIndex: {}", minPageIndex);
-                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
-                        document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
-                        addImagesToDocument(document, images);
-                        final Path tempDir = getTempDir();
-                        final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
-                        document.save(tempFile.toFile());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Instant end = Instant.now();
-                    LOG.trace("Swapping took: {}ms", Duration.between(start, end).toMillis());
-                });
+					    final int minPageIndex = images.keySet().iterator().next();
+					    LOG.trace("minPageIndex: {}", minPageIndex);
+					    try 
+					    	 {
+					    	@Cleanup val document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()));
+					    	document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
+					        addImagesToDocument(document, images);
+					        val tempDir = getTempDir();
+					        val tempFile = tempDir.list(new NameFileFilter(String.format("partial_%06d.pdf", minPageIndex)));
+					        document.save(new File(tempFile[0]));
+					    } catch (IOException e) {
+					        throw new RuntimeException(e);
+					    }
+					    Instant end = Instant.now();
+					    LOG.trace("Swapping took: {}ms", new Duration(start, end).getMillis());
+					}
+				});
             }
         }
     }
@@ -126,7 +134,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
         return hasImages;
     }
 
-    private synchronized Path getTempDir() throws IOException {
+    private synchronized File getTempDir() throws IOException {
         if (tempDir == null) {
             tempDir = FileUtils.createTempDir("PdfCompare");
         }

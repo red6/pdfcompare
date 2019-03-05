@@ -1,18 +1,33 @@
 package de.redsix.pdfcompare.ui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.WindowConstants;
 
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
 import de.redsix.pdfcompare.PdfComparator;
+import lombok.val;
 
 public class Display {
 
@@ -21,7 +36,7 @@ public class Display {
     public void init() {
         viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
 
-        JFrame frame = new JFrame();
+        val frame = new JFrame();
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         final BorderLayout borderLayout = new BorderLayout();
         frame.setLayout(borderLayout);
@@ -31,17 +46,17 @@ public class Display {
         frame.setLocation(screenBounds.x, screenBounds.y);
         //            frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 
-        JToolBar toolBar = new JToolBar();
+        val toolBar = new JToolBar();
         toolBar.setRollover(true);
         toolBar.setFloatable(false);
         frame.add(toolBar, BorderLayout.PAGE_START);
 
-        ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
-        ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
+        val leftPanel = new ImagePanel(viewModel.getLeftImage());
+        val resultPanel = new ImagePanel(viewModel.getDiffImage());
 
-        JScrollPane expectedScrollPane = new JScrollPane(leftPanel);
+        val expectedScrollPane = new JScrollPane(leftPanel);
         expectedScrollPane.setMinimumSize(new Dimension(200, 200));
-        JScrollPane actualScrollPane = new JScrollPane(resultPanel);
+        val actualScrollPane = new JScrollPane(resultPanel);
         actualScrollPane.setMinimumSize(new Dimension(200, 200));
         actualScrollPane.getViewport().addComponentListener(new ComponentAdapter() {
 
@@ -71,96 +86,126 @@ public class Display {
 
         final JToggleButton expectedButton = new JToggleButton("Expected");
 
-        addToolBarButton(toolBar, "Open...", (event) -> {
-            JFileChooser fileChooser = new JFileChooser();
-            if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
-                final File expectedFile = fileChooser.getSelectedFile();
-                if (fileChooser.showDialog(frame, "Open actual PDF") == JFileChooser.APPROVE_OPTION) {
-                    final File actualFile = fileChooser.getSelectedFile();
-                    try {
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual)
-                                new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare();
-                        viewModel = new ViewModel(compareResult);
-                        leftPanel.setImage(viewModel.getLeftImage());
-                        resultPanel.setImage(viewModel.getDiffImage());
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        expectedButton.setSelected(true);
-                    } catch (IOException ex) {
-                        DisplayExceptionDialog(frame, ex);
-                    }
-                }
-            }
-        });
+        addToolBarButton(toolBar, "Open...", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    JFileChooser fileChooser = new JFileChooser();
+			    if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
+			        val expectedFile = fileChooser.getSelectedFile();
+			        if (fileChooser.showDialog(frame, "Open actual PDF") == JFileChooser.APPROVE_OPTION) {
+			            val actualFile = fileChooser.getSelectedFile();
+			            try {
+			                frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			                val compareResult = (CompareResultWithExpectedAndActual)
+			                        new PdfComparator<CompareResultWithExpectedAndActual>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare();
+			                viewModel = new ViewModel(compareResult);
+			                leftPanel.setImage(viewModel.getLeftImage());
+			                resultPanel.setImage(viewModel.getDiffImage());
+			                frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+			                expectedButton.setSelected(true);
+			            } catch (IOException ex) {
+			                DisplayExceptionDialog(frame, ex);
+			            }
+			        }
+			    }
+			}
+		});
 
         toolBar.addSeparator();
 
-        addToolBarButton(toolBar, "Page -", (event) -> {
-            if (viewModel.decreasePage()) {
-                leftPanel.setImage(viewModel.getLeftImage());
-                resultPanel.setImage(viewModel.getDiffImage());
-            }
-        });
+        addToolBarButton(toolBar, "Page -", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    if (viewModel.decreasePage()) {
+			        leftPanel.setImage(viewModel.getLeftImage());
+			        resultPanel.setImage(viewModel.getDiffImage());
+			    }
+			}
+		});
 
-        addToolBarButton(toolBar, "Page +", (event) -> {
-            if (viewModel.increasePage()) {
-                leftPanel.setImage(viewModel.getLeftImage());
-                resultPanel.setImage(viewModel.getDiffImage());
-            }
-        });
+        addToolBarButton(toolBar, "Page +", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    if (viewModel.increasePage()) {
+			        leftPanel.setImage(viewModel.getLeftImage());
+			        resultPanel.setImage(viewModel.getDiffImage());
+			    }
+			}
+		});
 
         toolBar.addSeparator();
 
         final JToggleButton pageZoomButton = new JToggleButton("Zoom Page");
         pageZoomButton.setSelected(true);
-        pageZoomButton.addActionListener((event) -> {
-            leftPanel.zoomPage();
-            resultPanel.zoomPage();
-        });
+        pageZoomButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    leftPanel.zoomPage();
+			    resultPanel.zoomPage();
+			}
+		});
 
-        addToolBarButton(toolBar, "Zoom -", (event) -> {
-            pageZoomButton.setSelected(false);
-            leftPanel.decreaseZoom();
-            resultPanel.decreaseZoom();
-        });
+        addToolBarButton(toolBar, "Zoom -", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    pageZoomButton.setSelected(false);
+			    leftPanel.decreaseZoom();
+			    resultPanel.decreaseZoom();
+			}
+		});
 
-        addToolBarButton(toolBar, "Zoom +", (event) -> {
-            pageZoomButton.setSelected(false);
-            leftPanel.increaseZoom();
-            resultPanel.increaseZoom();
-        });
+        addToolBarButton(toolBar, "Zoom +", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    pageZoomButton.setSelected(false);
+			    leftPanel.increaseZoom();
+			    resultPanel.increaseZoom();
+			}
+		});
 
         toolBar.add(pageZoomButton);
 
-        addToolBarButton(toolBar, "Zoom 100%", (event) -> {
-            pageZoomButton.setSelected(false);
-            leftPanel.zoom100();
-            resultPanel.zoom100();
-        });
+        addToolBarButton(toolBar, "Zoom 100%", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    pageZoomButton.setSelected(false);
+			    leftPanel.zoom100();
+			    resultPanel.zoom100();
+			}
+		});
 
         toolBar.addSeparator();
 
-        addToolBarButton(toolBar, "Center Split", (event) -> {
-            splitPane.setDividerLocation(0.5);
-            splitPane.revalidate();
-        });
+        addToolBarButton(toolBar, "Center Split", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    splitPane.setDividerLocation(0.5);
+			    splitPane.revalidate();
+			}
+		});
 
         toolBar.addSeparator();
 
         final ButtonGroup buttonGroup = new ButtonGroup();
         expectedButton.setSelected(true);
-        expectedButton.addActionListener((event) -> {
-            viewModel.showExpected();
-            leftPanel.setImage(viewModel.getLeftImage());
-        });
+        expectedButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    viewModel.showExpected();
+			    leftPanel.setImage(viewModel.getLeftImage());
+			}
+		});
         toolBar.add(expectedButton);
         buttonGroup.add(expectedButton);
 
         final JToggleButton actualButton = new JToggleButton("Actual");
-        actualButton.addActionListener((event) -> {
-            viewModel.showActual();
-            leftPanel.setImage(viewModel.getLeftImage());
-        });
+        actualButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+			    viewModel.showActual();
+			    leftPanel.setImage(viewModel.getLeftImage());
+			}
+		});
         toolBar.add(actualButton);
         buttonGroup.add(actualButton);
 

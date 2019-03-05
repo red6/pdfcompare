@@ -7,5 +7,5 @@ public interface ResultCollector {
 
     void noPagesFound();
 
-    default void done() {}
+    void done() ;
 }

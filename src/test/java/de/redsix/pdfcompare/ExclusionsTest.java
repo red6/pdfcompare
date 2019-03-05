@@ -1,16 +1,17 @@
 package de.redsix.pdfcompare;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 
 import com.typesafe.config.ConfigException;
+
+import lombok.val;
 
 public class ExclusionsTest {
 
@@ -31,12 +32,6 @@ public class ExclusionsTest {
     @Test
     public void readFromFile() {
         exclusions.readExclusions(new File("ignore.conf"));
-        assertThat(exclusions.forPage(1).contains(300, 400), is(true));
-    }
-
-    @Test
-    public void readFromPath() {
-        exclusions.readExclusions(Paths.get("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
     }
 
@@ -92,9 +87,10 @@ public class ExclusionsTest {
     @Test
     public void coordinatesInPt() {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3, x1: 21pt, y1: 1, x2: 30pt, y2: 10}]".getBytes()));
-        assertThat(exclusions.forPage(3).contains(87, 1), is(false));
-        assertThat(exclusions.forPage(3).contains(88, 1), is(true));
-        assertThat(exclusions.forPage(3).contains(125, 1), is(true));
-        assertThat(exclusions.forPage(3).contains(126, 1), is(false));
+        val ex =exclusions.forPage(3);
+        assertThat(ex.contains(87, 1), is(false));
+        assertThat(ex.contains(88, 1), is(true));
+        assertThat(ex.contains(125, 1), is(true));
+        assertThat(ex.contains(126, 1), is(false));
     }
 }

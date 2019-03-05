@@ -1,10 +1,9 @@
 package de.redsix.pdfcompare.env;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
 import java.io.Reader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -16,36 +15,30 @@ public class ConfigFileEnvironment implements Environment {
 
     private final Config config;
 
-    public ConfigFileEnvironment(Path path) {
-        Objects.requireNonNull(path, "path is null");
-
-        this.config = ConfigFactory.parseFile(path.toFile(), CONFIG_PARSE_OPTIONS);
-    }
-
     public ConfigFileEnvironment(File file) {
-        Objects.requireNonNull(file, "file is null");
+        checkNotNull(file, "file is null");
 
         this.config = ConfigFactory.parseFile(file, CONFIG_PARSE_OPTIONS);
     }
 
     public ConfigFileEnvironment(Reader reader) {
-        Objects.requireNonNull(reader, "reader is null");
+        checkNotNull(reader, "reader is null");
 
         this.config = ConfigFactory.parseReader(reader, CONFIG_PARSE_OPTIONS);
     }
 
     public ConfigFileEnvironment(Config config) {
-        Objects.requireNonNull(config, "config is null");
+        checkNotNull(config, "config is null");
 
         this.config = config;
     }
 
     @Override
-    public Path getTempDirectory() {
+    public File getTempDirectory() {
         if (config.hasPath("tempDir")) {
-            return Paths.get(config.getString("tempDir"));
+            return new File(config.getString("tempDir"));
         }
-        return Paths.get(System.getProperty("java.io.tmpdir"));
+        return new File(System.getProperty("java.io.tmpdir"));
     }
 
     @Override

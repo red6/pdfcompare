@@ -1,16 +1,16 @@
 package de.redsix.pdfcompare;
 
+import static com.google.common.collect.Maps.newTreeMap;
+
 import java.awt.image.BufferedImage;
 import java.util.Map;
-import java.util.TreeMap;
-
 /**
  * A CompareResult, that also stores the expected and actual Image and also keeps diffImages in memory for later display.
  */
 public class CompareResultWithExpectedAndActual extends CompareResultImpl {
 
-    private final Map<Integer, ImageWithDimension> expectedImages = new TreeMap<>();
-    private final Map<Integer, ImageWithDimension> actualImages = new TreeMap<>();
+    private final Map<Integer, ImageWithDimension> expectedImages = newTreeMap();
+    private final Map<Integer, ImageWithDimension> actualImages = newTreeMap();
 
     @Override
     public void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,

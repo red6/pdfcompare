@@ -1,13 +1,14 @@
 package de.redsix.pdfcompare.env;
 
-import java.nio.file.Path;
-import java.util.Objects;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.File;
 
 public class SimpleEnvironment implements Environment {
 
     private final Environment fallback;
 
-    private Path tempDirectory;
+    private File tempDirectory;
 
     private Integer nrOfImagesToCache;
 
@@ -30,13 +31,13 @@ public class SimpleEnvironment implements Environment {
     }
 
     public SimpleEnvironment(Environment fallback) {
-        Objects.requireNonNull(fallback, "fallback is null");
+        checkNotNull(fallback, "fallback is null");
 
         this.fallback = fallback;
     }
 
     @Override
-    public Path getTempDirectory() {
+    public File getTempDirectory() {
         if (tempDirectory != null) {
             return tempDirectory;
         }
@@ -44,7 +45,7 @@ public class SimpleEnvironment implements Environment {
         return fallback.getTempDirectory();
     }
 
-    public void setTempDirectory(Path tempDirectory) {
+    public void setTempDirectory(File tempDirectory) {
         this.tempDirectory = tempDirectory;
     }
 

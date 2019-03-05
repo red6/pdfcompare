@@ -1,10 +1,10 @@
 package de.redsix.pdfcompare.env;
 
-import java.nio.file.Path;
+import java.io.File;
 
 public interface Environment {
 
-    Path getTempDirectory();
+	File getTempDirectory();
 
     int getNrOfImagesToCache();
 

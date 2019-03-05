@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare;
 
-import java.util.Objects;
+import com.google.common.base.Objects;
 
 public class PageDiffCalculator {
 
@@ -54,7 +54,7 @@ public class PageDiffCalculator {
 
     @Override
     public int hashCode() {
-        return Objects.hash(diffsFound, diffsFoundInExclusion);
+        return Objects.hashCode(diffsFound, diffsFoundInExclusion);
     }
 
     public void addDiffArea(final PageArea diffArea) {

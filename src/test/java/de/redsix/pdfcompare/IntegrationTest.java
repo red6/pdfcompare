@@ -75,7 +75,7 @@ public class IntegrationTest {
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        final CompareResult result = new PdfComparator(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
