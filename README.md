@@ -1,4 +1,5 @@
 # PdfCompare  [![Build Status](https://travis-ci.org/pablonicolasdiaz/pdfcompare.svg?branch=master)](https://travis-ci.org/pablonicolasdiaz/pdfcompare) [![Maven Central Version](https://img.shields.io/maven-central/v/de.redsix/pdfcompare.svg)](http://search.maven.org/#search|gav|1|g:"de.redsix"%20AND%20a:"pdfcompare")
+[![DepShield Badge](https://depshield.sonatype.org/badges/PabloNicolasDiaz/pdfcompare/depshield.svg)](https://depshield.github.io)
 A simple Java library to compare two PDF files.
 Files are rendered and compared pixel by pixel.
 
