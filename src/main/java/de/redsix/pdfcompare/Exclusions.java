@@ -1,6 +1,5 @@
 package de.redsix.pdfcompare;
 
-import static com.google.common.collect.Maps.newHashMap;
 import static de.redsix.pdfcompare.PdfComparator.DPI;
 
 import java.io.File;
@@ -8,12 +7,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Charsets;
+import org.apache.commons.io.Charsets;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
@@ -32,7 +33,7 @@ public class Exclusions {
 	private static final Pattern NUMBER = Pattern.compile("([0-9.]+)(cm|mm|pt)");
 	private static final ConfigParseOptions configParseOptions = ConfigParseOptions.defaults()
 			.setSyntax(ConfigSyntax.CONF).setAllowMissing(true);
-	private final Map<Integer, PageExclusions> exclusionsPerPage = newHashMap();
+	private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<Integer, PageExclusions>();
 	private final PageExclusions exclusionsForAllPages = new PageExclusions();
 
 	public Exclusions add(final PageArea exclusion) {
@@ -68,6 +69,7 @@ public class Exclusions {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public void readExclusions(InputStream inputStream) {
 		if (inputStream != null) {
 			try {

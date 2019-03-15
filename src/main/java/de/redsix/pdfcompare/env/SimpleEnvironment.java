@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare.env;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.Validate.notNull;
 
 import java.io.File;
 
@@ -31,8 +31,7 @@ public class SimpleEnvironment implements Environment {
     }
 
     public SimpleEnvironment(Environment fallback) {
-        checkNotNull(fallback, "fallback is null");
-
+        notNull(fallback, "fallback is null");
         this.fallback = fallback;
     }
 
@@ -54,7 +53,6 @@ public class SimpleEnvironment implements Environment {
         if (nrOfImagesToCache != null) {
             return nrOfImagesToCache;
         }
-
         return fallback.getNrOfImagesToCache();
     }
 
@@ -67,7 +65,6 @@ public class SimpleEnvironment implements Environment {
         if (mergeCacheSize != null) {
             return mergeCacheSize;
         }
-
         return fallback.getMergeCacheSize();
     }
 
@@ -80,7 +77,6 @@ public class SimpleEnvironment implements Environment {
         if (swapCacheSize != null) {
             return swapCacheSize;
         }
-
         return fallback.getSwapCacheSize();
     }
 
@@ -93,7 +89,6 @@ public class SimpleEnvironment implements Environment {
         if (documentCacheSize != null) {
             return documentCacheSize;
         }
-
         return fallback.getDocumentCacheSize();
     }
 
@@ -106,7 +101,6 @@ public class SimpleEnvironment implements Environment {
         if (maxImageSize != null) {
             return maxImageSize;
         }
-
         return fallback.getMaxImageSize();
     }
 
@@ -119,7 +113,6 @@ public class SimpleEnvironment implements Environment {
         if (overallTimeout != null) {
             return overallTimeout;
         }
-
         return fallback.getOverallTimeout();
     }
 
@@ -132,7 +125,6 @@ public class SimpleEnvironment implements Environment {
         if (parallelProcessing != null) {
             return parallelProcessing;
         }
-
         return fallback.useParallelProcessing();
     }
 
@@ -145,7 +137,6 @@ public class SimpleEnvironment implements Environment {
         if (allowedDiffInPercent != null) {
             return allowedDiffInPercent;
         }
-
         return fallback.getAllowedDiffInPercent();
     }
 

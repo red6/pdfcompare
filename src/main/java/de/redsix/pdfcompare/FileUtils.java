@@ -1,19 +1,17 @@
 package de.redsix.pdfcompare;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Predicate;
-import com.google.common.io.Files;
 
 import lombok.val;
 
@@ -75,14 +73,9 @@ public class FileUtils {
 	}
 
 	public static List<File> getPaths(final File dir, final String glob) throws IOException {
-		List<File> paths = newArrayList();
-		val directoryStream = Files.fileTreeTraverser();
-		for (val path : directoryStream.preOrderTraversal(dir).filter(new Predicate<File>() {
-			@Override
-			public boolean apply(File input) {
-				return input.getName().contains(glob);
-			}
-		})) {
+		List<File> paths = new ArrayList<File>();
+		for (val path : org.apache.commons.io.FileUtils.listFiles(dir, new RegexFileFilter(glob),
+				TrueFileFilter.TRUE)) {
 			paths.add(path);
 		}
 		Collections.sort(paths);

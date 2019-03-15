@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare.env;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.Validate.notNull;
 
 import java.io.File;
 import java.io.Reader;
@@ -16,20 +16,17 @@ public class ConfigFileEnvironment implements Environment {
     private final Config config;
 
     public ConfigFileEnvironment(File file) {
-        checkNotNull(file, "file is null");
-
+        notNull(file, "file is null");
         this.config = ConfigFactory.parseFile(file, CONFIG_PARSE_OPTIONS);
     }
 
     public ConfigFileEnvironment(Reader reader) {
-        checkNotNull(reader, "reader is null");
-
+        notNull(reader, "reader is null");
         this.config = ConfigFactory.parseReader(reader, CONFIG_PARSE_OPTIONS);
     }
 
     public ConfigFileEnvironment(Config config) {
-        checkNotNull(config, "config is null");
-
+        notNull(config, "config is null");
         this.config = config;
     }
 

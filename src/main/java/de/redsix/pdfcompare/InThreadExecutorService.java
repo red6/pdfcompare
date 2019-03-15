@@ -1,7 +1,6 @@
 package de.redsix.pdfcompare;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +67,7 @@ public class InThreadExecutorService implements ExecutorService {
 
 	@Override
 	public <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> tasks) throws InterruptedException {
-		List<Future<T>> result = newArrayList();
+		List<Future<T>> result = new ArrayList<Future<T>>();
 		for (Callable<T> task : tasks) {
 			result.add(submit(task));
 		}

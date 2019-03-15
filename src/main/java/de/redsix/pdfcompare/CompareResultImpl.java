@@ -15,16 +15,16 @@
  */
 package de.redsix.pdfcompare;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newTreeMap;
+import static org.apache.commons.lang3.Validate.notNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -46,12 +46,12 @@ import lombok.val;
 public class CompareResultImpl implements ResultCollector, CompareResult {
 
 	protected Environment environment;
-	protected final Map<Integer, ImageWithDimension> diffImages = newTreeMap();
+	protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<Integer, ImageWithDimension>();
 	protected boolean isEqual = true;
 	protected boolean hasDifferenceInExclusion = false;
 	private boolean expectedOnly;
 	private boolean actualOnly;
-	private Collection<PageArea> diffAreas = newArrayList();
+	private Collection<PageArea> diffAreas = new ArrayList<PageArea>();
 
 	@Override
 	public boolean writeTo(String filename) {
@@ -109,9 +109,9 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 	public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
 			final ImageWithDimension expectedImage, final ImageWithDimension actualImage,
 			final ImageWithDimension diffImage) {
-		checkNotNull(expectedImage, "expectedImage is null");
-		checkNotNull(actualImage, "actualImage is null");
-		checkNotNull(diffImage, "diffImage is null");
+		notNull(expectedImage, "expectedImage is null");
+		notNull(actualImage, "actualImage is null");
+		notNull(diffImage, "diffImage is null");
 		this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
 		if (diffCalculator.differencesFound()) {
 			isEqual = false;

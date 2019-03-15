@@ -15,8 +15,8 @@
  */
 package de.redsix.pdfcompare;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
+import static org.apache.commons.lang3.Validate.notNull;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -41,8 +41,6 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Supplier;
-
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
 import lombok.Cleanup;
@@ -51,6 +49,10 @@ import lombok.val;
 
 public class PdfComparator<T extends CompareResultImpl> {
 
+	private static interface Supplier<T> {
+		public T get();
+	}
+	
 	private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
 	public static final int DPI = 300;
 	private static final int EXTRA_RGB = new Color(0, 160, 0).getRGB();
@@ -70,7 +72,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 	private String actualPassword = "";
 
 	private PdfComparator(T compareResult) {
-		checkNotNull(compareResult, "compareResult is null");
+		notNull(compareResult, "compareResult is null");
 		this.compareResult = compareResult;
 	}
 
@@ -82,8 +84,8 @@ public class PdfComparator<T extends CompareResultImpl> {
 	public PdfComparator(final String expectedPdfFilename, final String actualPdfFilename, T compareResult)
 			throws IOException {
 		this(compareResult);
-		checkNotNull(expectedPdfFilename, "expectedPdfFilename is null");
-		checkNotNull(actualPdfFilename, "actualPdfFilename is null");
+		notNull(expectedPdfFilename, "expectedPdfFilename is null");
+		notNull(actualPdfFilename, "actualPdfFilename is null");
 		if (!expectedPdfFilename.equals(actualPdfFilename)) {
 			this.expectedStreamSupplier = new Supplier<InputStream>() {
 				@Override
@@ -109,8 +111,8 @@ public class PdfComparator<T extends CompareResultImpl> {
 
 	public PdfComparator(final File expectedFile, final File actualFile, final T compareResult) throws IOException {
 		this(compareResult);
-		checkNotNull(expectedFile, "expectedFile is null");
-		checkNotNull(actualFile, "actualFile is null");
+		notNull(expectedFile, "expectedFile is null");
+		notNull(actualFile, "actualFile is null");
 		if (!expectedFile.equals(actualFile)) {
 			this.expectedStreamSupplier = new Supplier<InputStream>() {
 				@Override
@@ -136,8 +138,8 @@ public class PdfComparator<T extends CompareResultImpl> {
 
 	public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS, final T compareResult) {
 		this(compareResult);
-		checkNotNull(expectedPdfIS, "expectedPdfIS is null");
-		checkNotNull(actualPdfIS, "actualPdfIS is null");
+		notNull(expectedPdfIS, "expectedPdfIS is null");
+		notNull(actualPdfIS, "actualPdfIS is null");
 		if (!expectedPdfIS.equals(actualPdfIS)) {
 			this.expectedStreamSupplier = new Supplier<InputStream>() {
 				@Override
@@ -159,37 +161,37 @@ public class PdfComparator<T extends CompareResultImpl> {
 	}
 
 	public PdfComparator<T> withIgnore(final String ignoreFilename) {
-		checkNotNull(ignoreFilename, "ignoreFilename is null");
+		notNull(ignoreFilename, "ignoreFilename is null");
 		exclusions.readExclusions(ignoreFilename);
 		return this;
 	}
 
 	public PdfComparator<T> withIgnore(final File ignoreFile) {
-		checkNotNull(ignoreFile, "ignoreFile is null");
+		notNull(ignoreFile, "ignoreFile is null");
 		exclusions.readExclusions(ignoreFile);
 		return this;
 	}
 
 	public PdfComparator<T> withIgnore(final InputStream ignoreIS) {
-		checkNotNull(ignoreIS, "ignoreIS is null");
+		notNull(ignoreIS, "ignoreIS is null");
 		exclusions.readExclusions(ignoreIS);
 		return this;
 	}
 
 	public PdfComparator<T> with(final PageArea exclusion) {
-		checkNotNull(exclusion, "exclusion is null");
+		notNull(exclusion, "exclusion is null");
 		exclusions.add(exclusion);
 		return this;
 	}
 
 	public PdfComparator<T> withExpectedPassword(final String password) {
-		checkNotNull(password, "password is null");
+		notNull(password, "password is null");
 		expectedPassword = password;
 		return this;
 	}
 
 	public PdfComparator<T> withActualPassword(final String password) {
-		checkNotNull(password, "password is null");
+		notNull(password, "password is null");
 		actualPassword = password;
 		return this;
 	}

@@ -1,12 +1,11 @@
 package de.redsix.pdfcompare;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class PageExclusions {
 
-	private final Collection<PageArea> exclusions = newArrayList();
+	private final Collection<PageArea> exclusions = new ArrayList<PageArea>();
 	private final PageExclusions delegate;
 
 	public PageExclusions() {
