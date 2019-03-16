@@ -5,3 +5,15 @@ script:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && mvn -B deploy --settings .travis-settings.xml || mvn -B verify --settings .travis-settings.xml'
 jdk:
   - oraclejdk11
+  
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -fr plugin-maven/build/localMavenRepository/com/diffplug/spotless/
+
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+  - $HOME/.m2/
+  - plugin-maven/build/localMavenRepository/
