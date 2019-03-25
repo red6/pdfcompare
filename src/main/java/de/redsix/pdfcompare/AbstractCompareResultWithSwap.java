@@ -3,6 +3,7 @@ package de.redsix.pdfcompare;
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,11 +14,12 @@ import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
-import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import de.redsix.pdfcompare.env.Environment;
 
 /**
  * This CompareResult monitors the memory the JVM consumes through Runtime.totalMemory() - Runtime.freeMemory()
@@ -38,13 +40,27 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
         if (!swapped) {
             return super.writeTo(filename);
         }
+        final PDFMergerUtility mergerUtility = new PDFMergerUtility();
+        mergerUtility.setDestinationFileName(filename + ".pdf");
+        return writeTo(mergerUtility);
+    }
+
+    @Override
+    public boolean writeTo(final OutputStream outputStream) {
+        if (!swapped) {
+            return super.writeTo(outputStream);
+        }
+        final PDFMergerUtility mergerUtility = new PDFMergerUtility();
+        mergerUtility.setDestinationStream(outputStream);
+        return writeTo(mergerUtility);
+    }
+
+    private boolean writeTo(final PDFMergerUtility mergerUtility) {
         swapToDisk();
         Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap");
         try {
             LOG.trace("Merging...");
             Instant start = Instant.now();
-            final PDFMergerUtility mergerUtility = new PDFMergerUtility();
-            mergerUtility.setDestinationFileName(filename + ".pdf");
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }

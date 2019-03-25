@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -22,7 +23,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +72,12 @@ public class IntegrationTest {
     }
 
     @Test
+    public void differingDocumentsAreNotEqualUsingOutputStream() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
+        writeAndCompareWithOutputStream(result);
+    }
+
+    @Test
     public void differingDocumentsAreNotEqualUsingPageOverflow() throws IOException {
         final CompareResult result = new PdfComparator(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
@@ -87,6 +93,15 @@ public class IntegrationTest {
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
         writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflowUsingOutputStream() throws IOException {
+        final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.isEqual(), is(false));
+        assertThat(result.getNumberOfPages(), is(2));
+        writeAndCompareWithOutputStream(result);
     }
 
     @Test
@@ -218,6 +233,20 @@ public class IntegrationTest {
                     assertTrue(new PdfComparator(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
                 } else {
                     assertFalse(Files.exists(Paths.get(filename + ".pdf")));
+                }
+            }
+        }
+    }
+
+    private void writeAndCompareWithOutputStream(final CompareResult result) throws IOException {
+        if (System.getenv().get("pdfCompareInTest") != null || System.getProperty("pdfCompareInTest") != null) {
+            final String filename = outDir.resolve(testName).toString();
+            result.writeTo(new FileOutputStream(filename + ".pdf"));
+            try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
+                if (expectedPdf != null) {
+                    assertTrue(new PdfComparator(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
+                } else {
+                    assertThat(Files.size(Paths.get(filename + ".pdf")), is(0));
                 }
             }
         }

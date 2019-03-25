@@ -1,5 +1,6 @@
 package de.redsix.pdfcompare;
 
+import java.io.OutputStream;
 import java.util.Collection;
 
 public interface CompareResult {
@@ -7,11 +8,23 @@ public interface CompareResult {
     /**
      * Write the result Pdf to a file. Warning: This will remove the diffImages from memory!
      * Writing can only be done once.
+     * When no diff images are present, nothing is written.
      *
      * @param filename without pdf-Extension
      * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
      */
     boolean writeTo(String filename);
+
+    /**
+     * Write the result Pdf to an OutputStream. Warning: This will remove the diffImages from memory!
+     * Writing can only be done once.
+     * When no diff images are present, nothing is written.
+     * The given OutputStream will be closed when this method returns.
+     *
+     * @param outputStream to write the pdfFile to.
+     * @return a boolean indicating, whether the comparison is equal. When true, the files are equal.
+     */
+    boolean writeTo(OutputStream outputStream);
 
     /**
      * Returns, whether the compared documents are equal or not.

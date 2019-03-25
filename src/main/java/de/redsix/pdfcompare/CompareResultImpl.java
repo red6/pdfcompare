@@ -16,9 +16,9 @@
 package de.redsix.pdfcompare;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,6 +31,8 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.redsix.pdfcompare.env.Environment;
 
@@ -42,6 +44,7 @@ import de.redsix.pdfcompare.env.Environment;
  */
 public class CompareResultImpl implements ResultCollector, CompareResult {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CompareResultImpl.class);
     protected Environment environment;
     protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<>();
     protected boolean isEqual = true;
@@ -53,16 +56,35 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 
     @Override
     public boolean writeTo(String filename) {
-        if (!hasImages()) {
-            return isEqual;
-        }
-        try (PDDocument document = new PDDocument()) {
-            addImagesToDocument(document);
-            document.save(filename + ".pdf");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        return writeTo(doc -> doc.save(filename + ".pdf"));
+    }
+
+    @Override
+    public boolean writeTo(final OutputStream outputStream) {
+        Objects.requireNonNull(outputStream, "OutputStream must not be null");
+        final boolean result = writeTo(doc -> doc.save(outputStream));
+        silentlyCloseOutputStream(outputStream);
+        return result;
+    }
+
+    private boolean writeTo(ThrowingConsumer<PDDocument, IOException> saver) {
+        if (hasImages()) {
+            try (PDDocument document = new PDDocument()) {
+                addImagesToDocument(document);
+                saver.accept(document);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         return isEqual;
+    }
+
+    private void silentlyCloseOutputStream(final OutputStream outputStream) {
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+            LOG.info("Could not close OutputStream", e);
+        }
     }
 
     /**
@@ -76,7 +98,8 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         addImagesToDocument(document, diffImages);
     }
 
-    protected synchronized void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images) throws IOException {
+    protected synchronized void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images)
+            throws IOException {
         final Iterator<Entry<Integer, ImageWithDimension>> iterator = images.entrySet().iterator();
         while (iterator.hasNext()) {
             final Entry<Integer, ImageWithDimension> entry = iterator.next();
