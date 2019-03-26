@@ -18,7 +18,15 @@ Just include it as dependency. Please check for the most current version availab
 
 ### Simple Usage
 
-There is a simple interactive UI, when you start the Class de.redsix.pdfcompare.ui.DisplayMain.
+There is a simple interactive UI, when you start the Class de.redsix.pdfcompare.Main 
+without any additional arguments. Next to the UI you can provide an expected and actual 
+file as well as an optional result file by CLI.
+```
+usage: java -jar pdfcompare-x.x.x.jar [EXPECTED] [ACTUAL]
+ -h,--help              Displays this text and exit
+ -o,--output <output>   Provide an optional output file for the result
+```
+
 But the focus of PdfCompare is on embedded usage as a library.
 
 ```java
