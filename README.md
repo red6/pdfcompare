@@ -30,7 +30,7 @@ usage: java -jar pdfcompare-x.x.x.jar [EXPECTED] [ACTUAL]
 But the focus of PdfCompare is on embedded usage as a library.
 
 ```java
-new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput.pdf");
+new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput");
 ```
 This will produce an output PDF which may include markings for differences found.
 Pixels that are equal are faded a bit. Pixels that differ are marked in red and green.
@@ -58,7 +58,7 @@ result.getDifferences(); // returns page areas, where differences were found
 ```
 For convenience, writeTo also returns the equals status:
 ```java
-boolean isEquals = new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput.pdf");
+boolean isEquals = new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput");
 if (!isEquals) {
     System.out.println("Differences found!");
 }
