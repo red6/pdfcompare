@@ -13,6 +13,8 @@ import javax.swing.*;
 
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
 import de.redsix.pdfcompare.PdfComparator;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
 public class Display {
 
@@ -73,23 +75,31 @@ public class Display {
 
         addToolBarButton(toolBar, "Open...", (event) -> {
             JFileChooser fileChooser = new JFileChooser();
-            if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
-                final File expectedFile = fileChooser.getSelectedFile();
-                if (fileChooser.showDialog(frame, "Open actual PDF") == JFileChooser.APPROVE_OPTION) {
-                    final File actualFile = fileChooser.getSelectedFile();
-                    try {
+            try {
+                if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
+                    final File expectedFile = fileChooser.getSelectedFile();
+                    final JPasswordField passwordForExpectedFile = askForPassword(expectedFile);
+
+                    if (fileChooser.showDialog(frame, "Open actual PDF") == JFileChooser.APPROVE_OPTION) {
+                        final File actualFile = fileChooser.getSelectedFile();
+                        final JPasswordField passwordForActualFile = askForPassword(actualFile);
+
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                         final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual)
-                                new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual()).compare();
+                                new PdfComparator<>(expectedFile, actualFile,
+                                        new CompareResultWithExpectedAndActual())
+                                        .withExpectedPassword(String.valueOf(passwordForExpectedFile.getPassword()))
+                                        .withActualPassword(String.valueOf(passwordForActualFile.getPassword()))
+                                        .compare();
                         viewModel = new ViewModel(compareResult);
                         leftPanel.setImage(viewModel.getLeftImage());
                         resultPanel.setImage(viewModel.getDiffImage());
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         expectedButton.setSelected(true);
-                    } catch (IOException ex) {
-                        DisplayExceptionDialog(frame, ex);
                     }
                 }
+            } catch (IOException ex) {
+                DisplayExceptionDialog(frame, ex);
             }
         });
 
@@ -185,5 +195,43 @@ public class Display {
 
     private static Rectangle getDefaultScreenBounds() {
         return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+    }
+
+    private static JPasswordField askForPassword(final File file) throws IOException {
+        JPasswordField passwordForFile = new JPasswordField(10);
+        if (isInvalidPassword(file, "")) {
+            final JLabel label = new JLabel("Enter password: ");
+            label.setLabelFor(passwordForFile);
+
+            final JPanel textPane = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+            textPane.add(label);
+            textPane.add(passwordForFile);
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    textPane,
+                    "PDF is encrypted",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            label.setText("Password was invalid. Enter password: ");
+            while (isInvalidPassword(file, String.valueOf(passwordForFile.getPassword()))) {
+                passwordForFile.setText("");
+                JOptionPane.showMessageDialog(
+                        null,
+                        textPane,
+                        "PDF is encrypted",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        return passwordForFile;
+    }
+
+    private static boolean isInvalidPassword(final File file, final String password) throws IOException {
+        try {
+            PDDocument.load(file, password);
+        } catch (InvalidPasswordException e) {
+            return true;
+        }
+        return false;
     }
 }
