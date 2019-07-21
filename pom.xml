@@ -27,7 +27,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <junit-minor.version>4.0</junit-minor.version>
+        <junit-minor.version>5.1</junit-minor.version>
         <junit.version>5.${junit-minor.version}</junit.version>
     </properties>
 
