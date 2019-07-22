@@ -181,7 +181,7 @@ public class Display {
         final StringWriter stringWriter = new StringWriter();
         ex.printStackTrace(new PrintWriter(stringWriter));
         JTextArea textArea = new JTextArea(
-                "Es ist ein unerwarteter Fehler aufgetreten: " + ex.getMessage() + "\n\n" + stringWriter);
+                "An unexpected error has occurred: " + ex.getMessage() + "\n\n" + stringWriter);
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(900, 700));
         JOptionPane.showMessageDialog(frame, scrollPane);
