@@ -228,7 +228,7 @@ public class Display {
 
     private static boolean isInvalidPassword(final File file, final String password) throws IOException {
         try {
-            PDDocument.load(file, password);
+            PDDocument.load(file, password).close();
         } catch (InvalidPasswordException e) {
             return true;
         }
