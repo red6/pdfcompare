@@ -91,9 +91,15 @@ public class Display {
                                         .withExpectedPassword(String.valueOf(passwordForExpectedFile.getPassword()))
                                         .withActualPassword(String.valueOf(passwordForActualFile.getPassword()))
                                         .compare();
+
                         viewModel = new ViewModel(compareResult);
                         leftPanel.setImage(viewModel.getLeftImage());
                         resultPanel.setImage(viewModel.getDiffImage());
+
+                        if (compareResult.isEqual()) {
+                            JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
+                        }
+
                         frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         expectedButton.setSelected(true);
                     }

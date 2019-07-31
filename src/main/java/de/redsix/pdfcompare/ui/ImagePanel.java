@@ -31,15 +31,14 @@ class ImagePanel extends JPanel implements Scrollable {
 
     @Override
     public void paintComponent(final Graphics g) {
-        if (image == null) {
-            return;
-        }
         g.setColor(Color.DARK_GRAY);
         g.clearRect(0, 0, oldWidth, oldHeight);
         if (zoomPage) {
             setZoomToPage();
         }
-        g.drawImage(image, 0, 0, getZoomWidth(), getZoomHeight(), null);
+        if (image != null) {
+            g.drawImage(image, 0, 0, getZoomWidth(), getZoomHeight(), null);
+        }
     }
 
     private void setZoomToPage() {
