@@ -1,6 +1,13 @@
 #sudo: required
 
 language: java
+
+# Work around travis-ci/travis-ci/issues/6593
+sudo: true
+cache:
+  directories:
+    - $HOME/.m2
+
 script:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && mvn -B deploy --settings .travis-settings.xml || mvn -B verify --settings .travis-settings.xml'
 jdk:
