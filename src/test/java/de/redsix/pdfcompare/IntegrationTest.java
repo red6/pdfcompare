@@ -66,7 +66,7 @@ public class IntegrationTest {
         assertThat(diff2.getPage(), is(2));
         assertThat(diff2.getX1(), is(1776));
         assertThat(diff2.getY1(), is(248));
-        assertThat(diff2.getX2(), is(both(greaterThanOrEqualTo(1960)).and(lessThanOrEqualTo(1961)))); // For some reason JDK11 results in a different pixel here.
+        assertThat(diff2.getX2(), is(1961));
         assertThat(diff2.getY2(), is(293));
         writeAndCompare(result);
     }
