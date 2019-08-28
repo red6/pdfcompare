@@ -11,5 +11,5 @@ cache:
 script:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && mvn -B deploy --settings .travis-settings.xml || mvn -B verify --settings .travis-settings.xml'
 jdk:
-  - oraclejdk8
-  - oraclejdk11
+  - openjdk8
+  - openjdk11
