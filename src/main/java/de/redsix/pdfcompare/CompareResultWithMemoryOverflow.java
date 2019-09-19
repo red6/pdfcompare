@@ -20,7 +20,7 @@ public class CompareResultWithMemoryOverflow extends AbstractCompareResultWithSw
      * Stores images to disk, when the used memory is higher than the given theshold in megabytes.
      * @param approximateMaxMemoryUsageInMegaBytes the maximum memory to use in megabytes
      */
-    public CompareResultWithMemoryOverflow(final int approximateMaxMemoryUsageInMegaBytes) {
+    public CompareResultWithMemoryOverflow(final long approximateMaxMemoryUsageInMegaBytes) {
         this.maxMemoryUsage = approximateMaxMemoryUsageInMegaBytes * 1024 * 1024;
     }
 
