@@ -138,7 +138,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
     }
 
     @Override
-    protected boolean hasImages() {
+    protected synchronized boolean hasImages() {
         return hasImages;
     }
 
