@@ -137,8 +137,8 @@ public class IntegrationTest {
     @Test
     public void exclusionsCanBeAddedViaAPI() throws IOException {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
-                .with(new PageArea(1, 230, 350, 450, 420))
-                .with(new PageArea(2, 1750, 240, 2000, 300))
+                .withIgnore(new PageArea(1, 230, 350, 450, 420))
+                .withIgnore(new PageArea(2, 1750, 240, 2000, 300))
                 .compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
