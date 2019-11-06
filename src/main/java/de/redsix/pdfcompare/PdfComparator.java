@@ -17,7 +17,9 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
-import java.awt.*;
+import de.redsix.pdfcompare.env.DefaultEnvironment;
+import de.redsix.pdfcompare.env.Environment;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.io.File;
@@ -35,9 +37,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import de.redsix.pdfcompare.env.DefaultEnvironment;
-import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -167,7 +166,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      *
      * It is possible to define rectangular areas that are ignored during comparison. For that, a file needs to be created, which defines areas to ignore.
      * The file format is JSON (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) and has the following form:
-     * <pre>{@code
+     * <pre>
      * exclusions: [
      *     {
      *         page: 2
@@ -187,7 +186,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      *         page: 7
      *         // coordinates are optional. When not given, the whole page is excluded.
      *     }
-     * ]}</pre>
+     * ]</pre>
      *
      * @param ignorePath The file to read
      * @return this

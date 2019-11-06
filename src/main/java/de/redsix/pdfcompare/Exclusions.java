@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * Each area is specified through a {@link PageArea} object.
  *
  * Exclusions can be read from a file in JSON format (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) which has the following form:
- * <pre>{@code
+ * <pre>
  * exclusions: [
  *     {
  *         page: 2
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *         page: 7
  *         // coordinates are optional. When not given, the whole page is excluded.
  *     }
- * ]}</pre>
+ * ]</pre>
  *
  */
 public class Exclusions {
