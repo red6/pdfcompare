@@ -92,6 +92,8 @@ exclusions: [
 ]
 ```
 
+When the provided exclusion file is not found, it is ignored and the compare is done without the exclusions.
+
 Exclusions are provided in the code as follows:
 
 ```java
