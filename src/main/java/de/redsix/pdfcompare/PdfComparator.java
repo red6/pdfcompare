@@ -45,6 +45,14 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The PdfComparator is the entry point to use for comparing documents.
+ * It allows to specify which documents to compare and which additional features to apply, like
+ * ignores and passwords.
+ * One PdfCompare object is created for every comparison and they are not reused.
+ *
+ * @param <T> Allows to specify different CompareResults.
+ */
 public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
@@ -130,30 +138,96 @@ public class PdfComparator<T extends CompareResultImpl> {
         this.environment = environment;
     }
 
+    /**
+     * Reads a file with Exclusions.
+     * @param ignoreFilename The file to read
+     * @return this
+     * @see PdfComparator#withIgnore(Path)
+     */
     public PdfComparator<T> withIgnore(final String ignoreFilename) {
         Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
         exclusions.readExclusions(ignoreFilename);
         return this;
     }
 
+    /**
+     * Reads a file with Exclusions.
+     * @param ignoreFile The file to read
+     * @return this
+     * @see PdfComparator#withIgnore(Path)
+     */
     public PdfComparator<T> withIgnore(final File ignoreFile) {
         Objects.requireNonNull(ignoreFile, "ignoreFile is null");
         exclusions.readExclusions(ignoreFile);
         return this;
     }
 
+    /**
+     * Reads a file with Exclusions.
+     *
+     * It is possible to define rectangular areas that are ignored during comparison. For that, a file needs to be created, which defines areas to ignore.
+     * The file format is JSON (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) and has the following form:
+     * <pre>{@code
+     * exclusions: [
+     *     {
+     *         page: 2
+     *         x1: 300 // entries without a unit are in pixels, when Pdf is rendered at 300DPI
+     *         y1: 1000
+     *         x2: 550
+     *         y2: 1300
+     *     },
+     *     {
+     *         // page is optional. When not given, the exclusion applies to all pages.
+     *         x1: 130.5mm // entries can also be given in units of cm, mm or pt (DTP-Point defined as 1/72 Inches)
+     *         y1: 3.3cm
+     *         x2: 190mm
+     *         y2: 3.7cm
+     *     },
+     *     {
+     *         page: 7
+     *         // coordinates are optional. When not given, the whole page is excluded.
+     *     }
+     * ]}</pre>
+     *
+     * @param ignorePath The file to read
+     * @return this
+     */
     public PdfComparator<T> withIgnore(final Path ignorePath) {
         Objects.requireNonNull(ignorePath, "ignorePath is null");
         exclusions.readExclusions(ignorePath);
         return this;
     }
 
+    /**
+     * Reads Exclusions from an InputStream.
+     * @param ignoreIS The file to read
+     * @return this
+     * @see PdfComparator#withIgnore(Path)
+     */
     public PdfComparator<T> withIgnore(final InputStream ignoreIS) {
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
         exclusions.readExclusions(ignoreIS);
         return this;
     }
 
+    /**
+     * Allows to specify an area of a page that is excluded during the comparison.
+     * @param exclusion An area of the document, that shall be ignored.
+     * @return this
+     */
+    public PdfComparator<T> withIgnore(final PageArea exclusion) {
+        Objects.requireNonNull(exclusion, "exclusion is null");
+        exclusions.add(exclusion);
+        return this;
+    }
+
+    /**
+     * Allows to specify an area of a page that is excluded during the comparison.
+     * @deprecated Use {@link PdfComparator#withIgnore(PageArea)} instead.
+     * @param exclusion An area of the document, that shall be ignored.
+     * @return this
+     */
+    @Deprecated
     public PdfComparator<T> with(final PageArea exclusion) {
         Objects.requireNonNull(exclusion, "exclusion is null");
         exclusions.add(exclusion);

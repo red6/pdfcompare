@@ -102,8 +102,8 @@ Alternatively an Exclusion can be added via the API as follows:
 
 ```java
 new PdfComparator("expected.pdf", "actual.pdf")
-	.with(new Exclusion(1, 230, 350, 450, 420))
-	.with(new Exclusion(2))
+	.withIgnore(new PageArea(1, 230, 350, 450, 420))
+	.withIgnore(new PageArea(2))
 	.compare();
 ```
 ### Encrypted PDF files
