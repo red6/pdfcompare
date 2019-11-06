@@ -2,6 +2,12 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.PdfComparator.DPI;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigSyntax;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,19 +19,44 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigObject;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigSyntax;
-
+/**
+ * Exclusions collect rectangular areas of the document, that shall be ignored during comparison.
+ * Each area is specified through a {@link PageArea} object.
+ *
+ * Exclusions can be read from a file in JSON format (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) which has the following form:
+ * <pre>{@code
+ * exclusions: [
+ *     {
+ *         page: 2
+ *         x1: 300 // entries without a unit are in pixels, when Pdf is rendered at 300DPI
+ *         y1: 1000
+ *         x2: 550
+ *         y2: 1300
+ *     },
+ *     {
+ *         // page is optional. When not given, the exclusion applies to all pages.
+ *         x1: 130.5mm // entries can also be given in units of cm, mm or pt (DTP-Point defined as 1/72 Inches)
+ *         y1: 3.3cm
+ *         x2: 190mm
+ *         y2: 3.7cm
+ *     },
+ *     {
+ *         page: 7
+ *         // coordinates are optional. When not given, the whole page is excluded.
+ *     }
+ * ]}</pre>
+ *
+ */
 public class Exclusions {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Exclusions.class);
     private static final float CM_TO_PIXEL = 1 / 2.54f * DPI;
     private static final float MM_TO_PIXEL = CM_TO_PIXEL / 10;
     private static final float PT_TO_PIXEL = 300f / 72f;
@@ -48,39 +79,42 @@ public class Exclusions {
     }
 
     public void readExclusions(final String filename) {
-        if (filename != null) {
-            readExclusions(new File(filename));
-        }
+        Objects.requireNonNull(filename, "filename must not be null");
+        readExclusions(new File(filename));
     }
 
     public void readExclusions(final Path path) {
-        if (path != null && Files.exists(path)) {
+        Objects.requireNonNull(path, "path must not be null");
+        if (Files.exists(path)) {
             readExclusions(path.toFile());
+        } else {
+            LOG.info("Ignore-file at '{}' not found. Continuing without ignores.", path);
         }
     }
 
     public void readExclusions(final File file) {
-        if (file != null && file.exists()) {
+        Objects.requireNonNull(file, "file must not be null");
+        if (file.exists()) {
             final Config config = ConfigFactory.parseFile(file, configParseOptions);
             readFromConfig(config);
+        } else {
+            LOG.info("Ignore-file at '{}' not found. Continuing without ignores.", file);
         }
     }
 
     public void readExclusions(InputStream inputStream) {
-        if (inputStream != null) {
+        Objects.requireNonNull(inputStream, "inputStream must not be null");
             try (final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                 readExclusions(inputStreamReader);
             } catch (IOException e) {
-
+                LOG.warn("Could not read ignores from InputStream. Continuing without ignores.", e);
             }
-        }
     }
 
     public void readExclusions(Reader reader) {
-        if (reader != null) {
-            final Config config = ConfigFactory.parseReader(reader, configParseOptions);
-            readFromConfig(config);
-        }
+        Objects.requireNonNull(reader, "reader must not be null");
+        final Config config = ConfigFactory.parseReader(reader, configParseOptions);
+        readFromConfig(config);
     }
 
     private void readFromConfig(final Config load) {
