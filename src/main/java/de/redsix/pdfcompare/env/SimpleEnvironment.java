@@ -1,5 +1,6 @@
 package de.redsix.pdfcompare.env;
 
+import java.awt.*;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -8,22 +9,16 @@ public class SimpleEnvironment implements Environment {
     private final Environment fallback;
 
     private Path tempDirectory;
-
     private Integer nrOfImagesToCache;
-
     private Integer mergeCacheSize;
-
     private Integer swapCacheSize;
-
     private Integer documentCacheSize;
-
     private Integer maxImageSize;
-
     private Integer overallTimeout;
-
     private Boolean parallelProcessing;
-
     private Double allowedDiffInPercent;
+    private Color expectedColor;
+    private Color actualColor;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -146,6 +141,22 @@ public class SimpleEnvironment implements Environment {
         }
 
         return fallback.getAllowedDiffInPercent();
+    }
+
+    @Override
+    public Color getExpectedColor() {
+        if (expectedColor != null) {
+            return expectedColor;
+        }
+        return fallback.getExpectedColor();
+    }
+
+    @Override
+    public Color getActualColor() {
+        if (actualColor != null) {
+            return actualColor;
+        }
+        return fallback.getExpectedColor();
     }
 
     public void setAllowedDiffInPercent(double allowedDiffInPercent) {

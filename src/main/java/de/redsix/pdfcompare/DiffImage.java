@@ -115,12 +115,14 @@ public class DiffImage {
 
     private int getElement(final int expectedElement, final int actualElement) {
         if (expectedElement != actualElement) {
-            int expectedDarkness = calcCombinedIntensity(expectedElement);
-            int actualDarkness = calcCombinedIntensity(actualElement);
-            if (expectedDarkness > actualDarkness) {
-                return color(levelIntensity(expectedDarkness, 210), 0, 0);
+            int expectedIntensity = calcCombinedIntensity(expectedElement);
+            int actualIntensity = calcCombinedIntensity(actualElement);
+            if (expectedIntensity > actualIntensity) {
+                Color color = environment.getActualColor();
+                return color(levelIntensity(expectedIntensity, color.getRed()), color.getGreen(), color.getBlue());
             } else {
-                return color(0, levelIntensity(actualDarkness, 180), 0);
+                Color color = environment.getExpectedColor();
+                return color(color.getRed(), levelIntensity(actualIntensity, color.getGreen()), color.getBlue());
             }
         } else {
             return ImageTools.fadeElement(expectedElement);

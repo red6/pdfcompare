@@ -37,7 +37,7 @@ public class TempDirectoryExtension implements AfterEachCallback, ParameterResol
     public void afterEach(ExtensionContext context) throws Exception {
         Path tempDirectory = (Path) getLocalStore(context).get(KEY);
         if (tempDirectory != null) {
-            delete(tempDirectory);
+//            delete(tempDirectory);
         }
     }
 

@@ -1,5 +1,6 @@
 package de.redsix.pdfcompare.env;
 
+import java.awt.*;
 import java.io.File;
 import java.io.Reader;
 import java.nio.file.Path;
@@ -89,6 +90,22 @@ public class ConfigFileEnvironment implements Environment {
             return config.getDouble("allowedDifferenceInPercentPerPage");
         }
         return 0;
+    }
+
+    @Override
+    public Color getExpectedColor() {
+        if (config.hasPath("expectedColor")) {
+            return Color.decode("#" + config.getString("expectedColor"));
+        }
+        return new Color(0, 180, 0);
+    }
+
+    @Override
+    public Color getActualColor() {
+        if (config.hasPath("actualColor")) {
+            return Color.decode("#" + config.getString("actualColor"));
+        }
+        return new Color(210, 0, 0);
     }
 
     private int getMB(final String path) {

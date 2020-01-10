@@ -34,12 +34,25 @@ new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput");
 ```
 This will produce an output PDF which may include markings for differences found.
 Pixels that are equal are faded a bit. Pixels that differ are marked in red and green.
-Red for pixels that where expected, but didn't come.
-Green for pixels that are there, but where not expected.
+Green for pixels that were expected, but didn't come.
+Red for pixels that are there, but were not expected.
 And there are markings at the edge of the paper in magenta to find areas that differ quickly.
 Ignored Areas are marked with a yellow background.
-Pages that where expected, but did not come are marked with a red border.
-Pages that appear, but where not expected are marked with a green border.
+Pages that were expected, but did not come are marked with a red border.
+Pages that appear, but were not expected are marked with a green border.
+
+The colors used can be changed. To change them, add a file called "application.conf"
+to the root of the classpath. In this file you can specify new colors in HTML-Stlye format (without a leading '#'):
+
+- expectedColor=D20000
+
+The expected color is the color that is used for pixels that were expected, but are not there.
+The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+of the color. The last two characters define the blue-portion of the color to use.
+- actualColor=00B400
+The actual color is the color that is used for pixels that are there, but were not expected.
+The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+of the color. The last two characters define the blue-portion of the color to use.
 
 The compare-method returns a CompareResult, which can be queried:
 

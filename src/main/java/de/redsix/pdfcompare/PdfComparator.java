@@ -56,8 +56,6 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
     public static final int DPI = 300;
-    private static final int EXTRA_RGB = new Color(0, 160, 0).getRGB();
-    private static final int MISSING_RGB = new Color(220, 0, 0).getRGB();
     public static final int MARKER_WIDTH = 20;
     private Environment environment;
     private final Exclusions exclusions = new Exclusions();
@@ -272,12 +270,12 @@ public class PdfComparator<T extends CompareResultImpl> {
                         }
                     }
                 } catch (NoSuchFileException ex) {
-                    addSingleDocumentToResult(expectedStream, MISSING_RGB);
+                    addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
                     compareResult.expectedOnly();
                 }
             } catch (NoSuchFileException ex) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
-                    addSingleDocumentToResult(actualStream, EXTRA_RGB);
+                    addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
                     compareResult.actualOnly();
                 } catch (NoSuchFileException innerEx) {
                     LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
@@ -307,9 +305,9 @@ public class PdfComparator<T extends CompareResultImpl> {
         Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
         Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
         if (expectedDocument.getNumberOfPages() > minPageCount) {
-            addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, MISSING_RGB, true);
+            addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, environment.getActualColor().getRGB(), true);
         } else if (actualDocument.getNumberOfPages() > minPageCount) {
-            addExtraPages(actualDocument, actualPdfRenderer, minPageCount, EXTRA_RGB, false);
+            addExtraPages(actualDocument, actualPdfRenderer, minPageCount, environment.getExpectedColor().getRGB(), false);
         }
     }
 
