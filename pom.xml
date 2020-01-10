@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.43-SNAPSHOT</version>
+    <version>1.1.42-SNAPSHOT</version>
     <name>PdfCompare</name>
     <url>https://github.com/red6/pdfcompare</url>
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
@@ -126,10 +126,6 @@
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
     </distributionManagement>
 
     <build>
