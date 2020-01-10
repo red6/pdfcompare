@@ -24,7 +24,8 @@
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.src>8</java.src>
+        <java.version>1.${java.src}</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <junit-minor.version>5.2</junit-minor.version>
@@ -256,6 +257,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.1.1</version>
+                        <configuration>
+                            <source>${java.src}</source>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
