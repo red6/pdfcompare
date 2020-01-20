@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
-public class Main {
+public class TestMain {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
