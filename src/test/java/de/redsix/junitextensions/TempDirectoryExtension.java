@@ -1,20 +1,12 @@
 package de.redsix.junitextensions;
 
+import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+
 import java.io.IOException;
 import java.lang.reflect.Parameter;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class TempDirectoryExtension implements AfterEachCallback, ParameterResolver {
 
@@ -37,7 +29,7 @@ public class TempDirectoryExtension implements AfterEachCallback, ParameterResol
     public void afterEach(ExtensionContext context) throws Exception {
         Path tempDirectory = (Path) getLocalStore(context).get(KEY);
         if (tempDirectory != null) {
-//            delete(tempDirectory);
+            delete(tempDirectory);
         }
     }
 
