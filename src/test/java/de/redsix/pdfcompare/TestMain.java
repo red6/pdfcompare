@@ -23,12 +23,13 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-//        String file1 = "expected.pdf";
+        String file1 = "src/test/resources/expected.pdf";
+        String file2 = "src/test/resources/actual.pdf";
 //        String file2 = "actual.pdf";
 //        String file1 = "/home/malte/projects/Testcases/HML/DirektRente/8257926_1/8257926_1_004.pdf";
 //        String file2 = "/home/malte/projects/Testcases/HML/DirektRente/8257926_1/x.pdf";
-        String file1 = "/home/malte/long_chethan.pdf";
-        String file2 = "/home/malte/long_chethan_2.pdf";
+//        String file1 = "/home/malte/long_chethan.pdf";
+//        String file2 = "/home/malte/long_chethan_2.pdf";
 
 //        CompareResult result = null;
 
