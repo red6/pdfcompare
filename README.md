@@ -210,10 +210,10 @@ I have good experience with granting a 2GB heap space to the JVM.
 All the settings, that can be changed through the application.conf file can also be changed programmatically through the API.
 To do so you can use the following code:
 ```java
-Environment env = new SimpleEnvironment();
-env.setExpectedColor(Color.blue);
 new PdfComparator("expected.pdf", "actual.pdf")
-	.withEnvironment(env)
+	.withEnvironment(new SimpleEnvironment()
+        .setActualColor(Color.green)
+        .setExpectedColor(Color.blue))
 	.compare();
 ```
 The SimpleEnvironment delegates all settings, that were not assigned, to the default Environment.
