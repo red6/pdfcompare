@@ -205,6 +205,19 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
 I have good experience with granting a 2GB heap space to the JVM.
 
+### configuring PdfComparator though an API
+
+All the settings, that can be changed through the application.conf file can also be changed programmatically through the API.
+To do so you can use the following code:
+```java
+Environment env = new SimpleEnvironment();
+env.setExpectedColor(Color.blue);
+new PdfComparator("expected.pdf", "actual.pdf")
+	.withEnvironment(env)
+	.compare();
+```
+The SimpleEnvironment delegates all settings, that were not assigned, to the default Environment.
+
 ### Acknowledgements
 
 Big thanks to Chethan Rao <meetchethan@gmail.com> for helping me diagnose out of memory problems and providing

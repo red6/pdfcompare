@@ -15,11 +15,15 @@
  */
 package de.redsix.pdfcompare;
 
-import static de.redsix.pdfcompare.Utilities.blockingExecutor;
-
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
-import java.awt.Color;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.io.File;
@@ -31,18 +35,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.*;
+
+import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
 /**
  * The PdfComparator is the entry point to use for comparing documents.
@@ -131,8 +126,23 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
     }
 
+    /**
+     * @deprecated use {@link #withEnvironment(Environment)} instead.
+     */
+    @Deprecated
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+    }
+
+    /**
+     * Allows to inject an Environment that can override environment settings.
+     * SimpleEnvironment is particularly useful if you want to override some properties.
+     * @param environment the environment so use
+     * @return this
+     */
+    public PdfComparator<T> withEnvironment(Environment environment) {
+        this.environment = environment;
+        return this;
     }
 
     /**

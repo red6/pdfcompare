@@ -23,6 +23,11 @@ public class TestMain {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
+//        new PdfComparator("expected.pdf", "actual.pdf")
+//                .withEnvironment(new SimpleEnvironment()
+//                        .setExpectedColor(Color.blue))
+//                .compare();
+
         String file1 = "src/test/resources/expected.pdf";
         String file2 = "src/test/resources/actual.pdf";
 //        String file2 = "actual.pdf";
