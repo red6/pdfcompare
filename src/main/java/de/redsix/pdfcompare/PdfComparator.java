@@ -136,7 +136,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Allows to inject an Environment that can override environment settings.
-     * SimpleEnvironment is particularly useful if you want to override some properties.
+     * {@link de.redsix.pdfcompare.env.SimpleEnvironment} is particularly useful if you want to override some properties.
      * @param environment the environment so use
      * @return this
      */

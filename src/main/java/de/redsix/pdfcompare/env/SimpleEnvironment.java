@@ -16,6 +16,8 @@ import java.util.Objects;
  *                 .setExpectedColor(Color.blue))
  *         .compare();
  * </pre>
+ *
+ * @see de.redsix.pdfcompare.PdfComparator#withEnvironment(Environment)
  */
 public class SimpleEnvironment implements Environment {
 
