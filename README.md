@@ -49,7 +49,9 @@ to the root of the classpath. In this file you can specify new colors in HTML-St
 The expected color is the color that is used for pixels that were expected, but are not there.
 The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
 of the color. The last two characters define the blue-portion of the color to use.
+
 - actualColor=00B400
+
 The actual color is the color that is used for pixels that are there, but were not expected.
 The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
 of the color. The last two characters define the blue-portion of the color to use.
@@ -86,7 +88,7 @@ The file format is JSON (or actually a superset called [HOCON](https://github.co
 exclusions: [
     {
         page: 2
-        x1: 300 // entries without a unit are in pixels, when Pdf is rendered at 300DPI
+        x1: 300 // entries without a unit are in pixels. Pdfs are rendered by default at 300DPI
         y1: 1000
         x2: 550
         y2: 1300
@@ -157,7 +159,7 @@ Here is in a nutshell, what PdfCompare does, when it compares two PDFs.
 PdfCompare uses the Apache PdfBox Library to read and write Pdfs.
 
 - The Two Pdfs to compare are opened with PdfBox.
-- A page from each Pdf is read and rendered into a BufferedImage at 300dpi.
+- A page from each Pdf is read and rendered into a BufferedImage by default at 300dpi.
 - A new empty BufferedImage is created to take the result of the comparison. It has the maximum size of the expected and the actual image.
 - When the comparison is finished, the new BufferedImage, which holds the result of the comparison, is kept in memory in a CompareResult object. Holding on to the CompareResult means, that the images are also kept in memory. If memory consumption is a problem, a CompareResultWithPageOverflow or a CompareResultWithMemoryOverflow can be used. Those classes store images to a temporary folder on disk, when certain thresholds are reached.
 - After all pages are compared, a new Pdf is created and the images are written page by page into the new Pdf.
@@ -195,9 +197,9 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 - documentCacheSizeMB=200
 
     This is the cache size configured for the PdfBox instance, that loads the documents that are compared.
-- parallelProcessing=false
+- parallelProcessing=true
 
-    Disable all parallel processing and process everything in a single thread.
+    When set to false, disables all parallel processing and process everything in a single thread.
 - overallTimeoutInMinutes=15
 
     Set the overall timeout. This is a safety measure to detect possible deadlocks. Complex comparisons might take longer, so this value might have to be increased.
@@ -217,6 +219,37 @@ new PdfComparator("expected.pdf", "actual.pdf")
 	.compare();
 ```
 The SimpleEnvironment delegates all settings, that were not assigned, to the default Environment.
+
+Through the environment you can configure the memory settings (see above) and the following settings:
+
+- DPI=300
+
+    Sets the DPI that Pdf pages are rendered with. Default is 300.
+    
+- expectedColor=D20000
+
+The expected color is the color that is used for pixels that were expected, but are not there.
+The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+of the color. The last two characters define the blue-portion of the color to use.
+
+- actualColor=00B400
+
+The actual color is the color that is used for pixels that are there, but were not expected.
+The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+of the color. The last two characters define the blue-portion of the color to use.
+
+- tempDir=System.property("java.io.tmpdir")
+
+Sets the directory where to write temporary files. Defaults to the java default for java.io.tmpdir, which usually determines a
+system specific default, like /tmp on most unix systems.
+
+- allowedDifferenceInPercentPerPage=0.2
+
+Percent of pixels that may differ per page. Default is 0.
+
+- parallelProcessing=true
+
+    When set to false, disables all parallel processing and process everything in a single thread.
 
 ### Acknowledgements
 
