@@ -1,5 +1,16 @@
 package de.redsix.pdfcompare;
 
+import de.redsix.pdfcompare.env.DefaultEnvironment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
 import static de.redsix.pdfcompare.DiffImage.MARKER_RGB;
 import static de.redsix.pdfcompare.DiffImage.color;
 import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
@@ -8,17 +19,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
-import de.redsix.pdfcompare.env.DefaultEnvironment;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DiffImageTest {
 
@@ -30,7 +30,7 @@ public class DiffImageTest {
     private final BufferedImage actual = blankImage(new BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB));
     private final ImageWithDimension expectedImage = new ImageWithDimension(expected, 1.0f, 1.0f);
     private final ImageWithDimension actualImage = new ImageWithDimension(actual, 1.0f, 1.0f);
-    private final Exclusions exclusions = new Exclusions().add(new PageArea(35, 35, 37, 37));
+    private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create()).add(new PageArea(35, 35, 37, 37));
 
     @BeforeEach
     public void before() {

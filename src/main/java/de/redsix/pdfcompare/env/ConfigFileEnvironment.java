@@ -1,15 +1,15 @@
 package de.redsix.pdfcompare.env;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+
 import java.awt.*;
 import java.io.File;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
 
 public class ConfigFileEnvironment implements Environment {
 
@@ -106,6 +106,14 @@ public class ConfigFileEnvironment implements Environment {
             return Color.decode("#" + config.getString("actualColor"));
         }
         return new Color(210, 0, 0);
+    }
+
+    @Override
+    public int getDPI() {
+        if (config.hasPath("DPI")) {
+            return config.getInt("DPI");
+        }
+        return 300;
     }
 
     private int getMB(final String path) {

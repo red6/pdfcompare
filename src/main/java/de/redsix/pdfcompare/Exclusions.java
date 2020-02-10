@@ -1,18 +1,11 @@
 package de.redsix.pdfcompare;
 
-import static de.redsix.pdfcompare.PdfComparator.DPI;
+import com.typesafe.config.*;
+import de.redsix.pdfcompare.env.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigObject;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigSyntax;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,8 +16,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Exclusions collect rectangular areas of the document, that shall be ignored during comparison.
@@ -57,13 +48,21 @@ import org.slf4j.LoggerFactory;
 public class Exclusions {
 
     private static final Logger LOG = LoggerFactory.getLogger(Exclusions.class);
-    private static final float CM_TO_PIXEL = 1 / 2.54f * DPI;
-    private static final float MM_TO_PIXEL = CM_TO_PIXEL / 10;
-    private static final float PT_TO_PIXEL = 300f / 72f;
+    private final int dpi;
+    private final float CM_TO_PIXEL;
+    private final float MM_TO_PIXEL;
+    private final float PT_TO_PIXEL;
     private static final Pattern NUMBER = Pattern.compile("([0-9.]+)(cm|mm|pt)");
     private static final ConfigParseOptions configParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF).setAllowMissing(true);
     private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<>();
     private final PageExclusions exclusionsForAllPages = new PageExclusions();
+
+    public Exclusions(Environment environment) {
+        this.dpi = environment.getDPI();
+        CM_TO_PIXEL = 1f / 2.54f * dpi;
+        MM_TO_PIXEL = CM_TO_PIXEL / 10f;
+        PT_TO_PIXEL = ((float)dpi) / 72f;
+    }
 
     public Exclusions add(final PageArea exclusion) {
         if (exclusion.page < 0) {
@@ -95,8 +94,8 @@ public class Exclusions {
     public void readExclusions(final File file) {
         Objects.requireNonNull(file, "file must not be null");
         if (file.exists()) {
-            final Config config = ConfigFactory.parseFile(file, configParseOptions);
-            readFromConfig(config);
+            final Config exclusionConfig = ConfigFactory.parseFile(file, configParseOptions);
+            readFromConfig(exclusionConfig);
         } else {
             LOG.info("Ignore-file at '{}' not found. Continuing without ignores.", file);
         }
@@ -113,12 +112,12 @@ public class Exclusions {
 
     public void readExclusions(Reader reader) {
         Objects.requireNonNull(reader, "reader must not be null");
-        final Config config = ConfigFactory.parseReader(reader, configParseOptions);
-        readFromConfig(config);
+        final Config exclusionConfig = ConfigFactory.parseReader(reader, configParseOptions);
+        readFromConfig(exclusionConfig);
     }
 
-    private void readFromConfig(final Config load) {
-        final List<? extends ConfigObject> exclusions = load.getObjectList("exclusions");
+    private void readFromConfig(final Config exclusionConfig) {
+        final List<? extends ConfigObject> exclusions = exclusionConfig.getObjectList("exclusions");
         exclusions.stream().map(co -> {
             final Config c = co.toConfig();
             if (!c.hasPath("x1") && !c.hasPath("y1") && !c.hasPath("x2") && !c.hasPath("y2")) {

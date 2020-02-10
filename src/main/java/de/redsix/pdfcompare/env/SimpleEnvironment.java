@@ -34,6 +34,7 @@ public class SimpleEnvironment implements Environment {
     private Double allowedDiffInPercent;
     private Color expectedColor;
     private Color actualColor;
+    private Integer dpi;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -151,6 +152,15 @@ public class SimpleEnvironment implements Environment {
 
     public SimpleEnvironment setActualColor(Color actualColor) {
         this.actualColor = actualColor;
+        return this;
+    }
+
+    public int getDPI() {
+        return dpi != null ? dpi : fallback.getDPI();
+    }
+
+    public SimpleEnvironment setDPI(int dpi) {
+        this.dpi = dpi;
         return this;
     }
 }

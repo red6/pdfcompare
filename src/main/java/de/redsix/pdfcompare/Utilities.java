@@ -1,23 +1,18 @@
 package de.redsix.pdfcompare;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Utilities {
 
@@ -125,7 +120,7 @@ public class Utilities {
             }
             pdDocument.setResourceCache(new ResourceCacheWithLimitedImages(environment));
             PDFRenderer pdfRenderer = new PDFRenderer(pdDocument);
-            return PdfComparator.renderPageAsImage(pdDocument, pdfRenderer, page);
+            return PdfComparator.renderPageAsImage(pdDocument, pdfRenderer, page, environment);
         }
     }
 }

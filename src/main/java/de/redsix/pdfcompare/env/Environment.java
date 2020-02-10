@@ -1,6 +1,6 @@
 package de.redsix.pdfcompare.env;
 
-import java.awt.Color;
+import java.awt.*;
 import java.nio.file.Path;
 
 public interface Environment {
@@ -26,4 +26,6 @@ public interface Environment {
     Color getExpectedColor();
 
     Color getActualColor();
+
+    int getDPI();
 }

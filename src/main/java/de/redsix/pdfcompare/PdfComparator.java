@@ -50,10 +50,9 @@ import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
-    public static final int DPI = 300;
     public static final int MARKER_WIDTH = 20;
     private Environment environment;
-    private final Exclusions exclusions = new Exclusions();
+    private Exclusions exclusions;
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
     private ExecutorService drawExecutor;
@@ -64,6 +63,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     private final TimeUnit unit = TimeUnit.MINUTES;
     private String expectedPassword = "";
     private String actualPassword = "";
+    private boolean withIgnoreCalled = false;
 
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
@@ -131,7 +131,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     @Deprecated
     public void setEnvironment(Environment environment) {
-        this.environment = environment;
+        withEnvironment(environment);
     }
 
     /**
@@ -139,8 +139,12 @@ public class PdfComparator<T extends CompareResultImpl> {
      * {@link de.redsix.pdfcompare.env.SimpleEnvironment} is particularly useful if you want to override some properties.
      * @param environment the environment so use
      * @return this
+     * @throws IllegalStateException when withIgnore methods are called before this method.
      */
     public PdfComparator<T> withEnvironment(Environment environment) {
+        if (withIgnoreCalled) {
+            throw new IllegalStateException("withEnvironment(...) must be called before any withIgnore(...) methods are called.");
+        }
         this.environment = environment;
         return this;
     }
@@ -153,7 +157,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     public PdfComparator<T> withIgnore(final String ignoreFilename) {
         Objects.requireNonNull(ignoreFilename, "ignoreFilename is null");
-        exclusions.readExclusions(ignoreFilename);
+        withIgnoreCalled = true;
+        getExclusions().readExclusions(ignoreFilename);
         return this;
     }
 
@@ -165,7 +170,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     public PdfComparator<T> withIgnore(final File ignoreFile) {
         Objects.requireNonNull(ignoreFile, "ignoreFile is null");
-        exclusions.readExclusions(ignoreFile);
+        withIgnoreCalled = true;
+        getExclusions().readExclusions(ignoreFile);
         return this;
     }
 
@@ -201,7 +207,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     public PdfComparator<T> withIgnore(final Path ignorePath) {
         Objects.requireNonNull(ignorePath, "ignorePath is null");
-        exclusions.readExclusions(ignorePath);
+        withIgnoreCalled = true;
+        getExclusions().readExclusions(ignorePath);
         return this;
     }
 
@@ -213,7 +220,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     public PdfComparator<T> withIgnore(final InputStream ignoreIS) {
         Objects.requireNonNull(ignoreIS, "ignoreIS is null");
-        exclusions.readExclusions(ignoreIS);
+        withIgnoreCalled = true;
+        getExclusions().readExclusions(ignoreIS);
         return this;
     }
 
@@ -224,7 +232,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     public PdfComparator<T> withIgnore(final PageArea exclusion) {
         Objects.requireNonNull(exclusion, "exclusion is null");
-        exclusions.add(exclusion);
+        withIgnoreCalled = true;
+        getExclusions().add(exclusion);
         return this;
     }
 
@@ -236,9 +245,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      */
     @Deprecated
     public PdfComparator<T> with(final PageArea exclusion) {
-        Objects.requireNonNull(exclusion, "exclusion is null");
-        exclusions.add(exclusion);
-        return this;
+        return withIgnore(exclusion);
     }
 
     public PdfComparator<T> withExpectedPassword(final String password) {
@@ -253,11 +260,22 @@ public class PdfComparator<T extends CompareResultImpl> {
         return this;
     }
 
-    private void buildEnvironment() {
+    private Exclusions getExclusions() {
+        if (exclusions == null) {
+            exclusions = new Exclusions(getEnvironment());
+        }
+        return exclusions;
+    }
+
+    private Environment getEnvironment() {
         if (environment == null) {
             environment = DefaultEnvironment.create();
         }
-        compareResult.setEnvironment(environment);
+        return environment;
+    }
+
+    private void buildEnvironment() {
+        compareResult.setEnvironment(getEnvironment());
 
         drawExecutor = blockingExecutor("Draw", 1, 50, environment);
         parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4, environment);
@@ -328,12 +346,12 @@ public class PdfComparator<T extends CompareResultImpl> {
             try {
                 LOG.trace("Drawing page {}", pageIndex);
                 final Future<ImageWithDimension> expectedImageFuture = parrallelDrawExecutor
-                        .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex));
+                        .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex, environment));
                 final Future<ImageWithDimension> actualImageFuture = parrallelDrawExecutor
-                        .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex));
+                        .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex, environment));
                 final ImageWithDimension expectedImage = getImage(expectedImageFuture, pageIndex, "expected document");
                 final ImageWithDimension actualImage = getImage(actualImageFuture, pageIndex, "actual document");
-                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, environment, exclusions, compareResult);
+                final DiffImage diffImage = new DiffImage(expectedImage, actualImage, pageIndex, environment, getExclusions(), compareResult);
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
                     LOG.trace("Diffing page {}", diffImage);
@@ -372,7 +390,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     private void addExtraPages(final PDDocument document, final PDFRenderer pdfRenderer, final int minPageCount,
             final int color, final boolean expected) throws IOException {
         for (int pageIndex = minPageCount; pageIndex < document.getNumberOfPages(); pageIndex++) {
-            ImageWithDimension image = renderPageAsImage(document, pdfRenderer, pageIndex);
+            ImageWithDimension image = renderPageAsImage(document, pdfRenderer, pageIndex, environment);
             final DataBuffer dataBuffer = image.bufferedImage.getRaster().getDataBuffer();
             for (int i = 0; i < image.bufferedImage.getWidth() * MARKER_WIDTH; i++) {
                 dataBuffer.setElem(i, color);
@@ -394,9 +412,9 @@ public class PdfComparator<T extends CompareResultImpl> {
         return new ImageWithDimension(new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()), image.width, image.height);
     }
 
-    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex)
+    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex, Environment environment)
             throws IOException {
-        final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, DPI);
+        final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, environment.getDPI());
         final PDPage page = document.getPage(pageIndex);
         final PDRectangle mediaBox = page.getMediaBox();
         if (page.getRotation() == 90 || page.getRotation() == 270)

@@ -1,20 +1,20 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.typesafe.config.ConfigException;
+import de.redsix.pdfcompare.env.DefaultEnvironment;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Paths;
 
-import org.junit.jupiter.api.Test;
-
-import com.typesafe.config.ConfigException;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ExclusionsTest {
 
-    private final Exclusions exclusions = new Exclusions();
+    private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
 
     @Test
     public void readExclusions() {
