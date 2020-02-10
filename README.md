@@ -46,15 +46,15 @@ to the root of the classpath. In this file you can specify new colors in HTML-St
 
 - expectedColor=D20000
 
-The expected color is the color that is used for pixels that were expected, but are not there.
-The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-of the color. The last two characters define the blue-portion of the color to use.
+    The expected color is the color that is used for pixels that were expected, but are not there.
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
 
 - actualColor=00B400
 
-The actual color is the color that is used for pixels that are there, but were not expected.
-The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-of the color. The last two characters define the blue-portion of the color to use.
+    The actual color is the color that is used for pixels that are there, but were not expected.
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
 
 The compare-method returns a CompareResult, which can be queried:
 
@@ -144,7 +144,7 @@ In that file you can add a setting:
 
 - allowedDifferenceInPercentPerPage=0.2
 
-Percent of pixels that may differ per page. Default is 0.
+    Percent of pixels that may differ per page. Default is 0.
 
 ### Different CompareResult Implementations
 
@@ -228,24 +228,24 @@ Through the environment you can configure the memory settings (see above) and th
     
 - expectedColor=D20000
 
-The expected color is the color that is used for pixels that were expected, but are not there.
-The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-of the color. The last two characters define the blue-portion of the color to use.
+    The expected color is the color that is used for pixels that were expected, but are not there.
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
 
 - actualColor=00B400
 
-The actual color is the color that is used for pixels that are there, but were not expected.
-The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-of the color. The last two characters define the blue-portion of the color to use.
+    The actual color is the color that is used for pixels that are there, but were not expected.
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
 
 - tempDir=System.property("java.io.tmpdir")
 
-Sets the directory where to write temporary files. Defaults to the java default for java.io.tmpdir, which usually determines a
-system specific default, like /tmp on most unix systems.
+    Sets the directory where to write temporary files. Defaults to the java default for java.io.tmpdir, which usually determines a
+    system specific default, like /tmp on most unix systems.
 
 - allowedDifferenceInPercentPerPage=0.2
 
-Percent of pixels that may differ per page. Default is 0.
+    Percent of pixels that may differ per page. Default is 0.
 
 - parallelProcessing=true
 
