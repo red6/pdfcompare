@@ -35,6 +35,7 @@ public class SimpleEnvironment implements Environment {
     private Color expectedColor;
     private Color actualColor;
     private Integer dpi;
+    private Boolean addEqualPagesToResult;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -155,12 +156,23 @@ public class SimpleEnvironment implements Environment {
         return this;
     }
 
+    @Override
     public int getDPI() {
         return dpi != null ? dpi : fallback.getDPI();
     }
 
     public SimpleEnvironment setDPI(int dpi) {
         this.dpi = dpi;
+        return this;
+    }
+
+    @Override
+    public boolean addEqualPagesToResult() {
+        return addEqualPagesToResult != null ? addEqualPagesToResult : fallback.addEqualPagesToResult();
+    }
+
+    public SimpleEnvironment setAddEqualPagesToResult(final boolean b) {
+        this.addEqualPagesToResult = b;
         return this;
     }
 }

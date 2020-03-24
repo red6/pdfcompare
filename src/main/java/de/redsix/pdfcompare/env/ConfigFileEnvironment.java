@@ -116,6 +116,14 @@ public class ConfigFileEnvironment implements Environment {
         return 300;
     }
 
+    @Override
+    public boolean addEqualPagesToResult() {
+        if (config.hasPath("addEqualPagesToResult")) {
+            return config.getBoolean("addEqualPagesToResult");
+        }
+        return true;
+    }
+
     private int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }

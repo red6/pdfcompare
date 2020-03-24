@@ -15,16 +15,7 @@
  */
 package de.redsix.pdfcompare;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.TreeMap;
-
+import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -34,7 +25,10 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.redsix.pdfcompare.env.Environment;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * A CompareResult tracks the differences, that result from a comparison.
@@ -134,9 +128,12 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         if (diffCalculator.differencesFound()) {
             isEqual = false;
             diffAreas.add(diffCalculator.getDiffArea());
+            diffImages.put(pageIndex, diffImage);
+            pages++;
+        } else if (environment.addEqualPagesToResult()) {
+            diffImages.put(pageIndex, diffImage);
+            pages++;
         }
-        diffImages.put(pageIndex, diffImage);
-        pages++;
     }
 
     @Override

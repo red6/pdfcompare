@@ -251,6 +251,10 @@ Through the environment you can configure the memory settings (see above) and th
 
     When set to false, disables all parallel processing and process everything in a single thread.
 
+- addEqualPagesToResult=true
+
+    When set to false, only pages with differences are added to the result and this the resulting difference PDF document.
+
 ### Acknowledgements
 
 Big thanks to Chethan Rao <meetchethan@gmail.com> for helping me diagnose out of memory problems and providing

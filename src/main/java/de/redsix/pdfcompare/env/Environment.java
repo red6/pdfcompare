@@ -28,4 +28,6 @@ public interface Environment {
     Color getActualColor();
 
     int getDPI();
+
+    boolean addEqualPagesToResult();
 }
