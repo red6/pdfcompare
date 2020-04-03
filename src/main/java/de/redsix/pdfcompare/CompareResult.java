@@ -72,5 +72,9 @@ public interface CompareResult {
      */
     Collection<PageArea> getDifferences();
 
+    /**
+     * Converts the result of the {@link CompareResult#getDifferences()} method to an exclusions JSON format.
+     * @return a JSON string with exclusion areas.
+     */
     String getDifferencesJson();
 }
