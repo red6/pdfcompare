@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.48-SNAPSHOT</version>
+    <version>1.1.47-SNAPSHOT</version>
     <name>PdfCompare</name>
     <url>https://github.com/red6/pdfcompare</url>
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
@@ -103,8 +103,8 @@
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>2.2</version>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
