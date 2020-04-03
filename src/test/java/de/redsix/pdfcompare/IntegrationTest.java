@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,7 +71,7 @@ public class IntegrationTest {
         assertThat(diff2.getY2(), is(293));
 
         String json = result.getDifferencesJson();
-        assertThat(json, is("exclusions: [\n{\"page\":1,\"x1\":237,\"y1\":363,\"x2\":421,\"y2\":408},\n{\"page\":2,\"x1\":1776,\"y1\":248,\"x2\":1960,\"y2\":293}\n]"));
+        assertThat(json, matchesPattern("exclusions: \\[\n\\{\"page\":1,\"x1\":237,\"y1\":363,\"x2\":421,\"y2\":408\\},\n\\{\"page\":2,\"x1\":1776,\"y1\":248,\"x2\":196.,\"y2\":293\\}\n\\]"));
 
         writeAndCompare(result);
     }
