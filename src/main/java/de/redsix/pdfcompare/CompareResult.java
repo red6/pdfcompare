@@ -71,4 +71,6 @@ public interface CompareResult {
      * @return a collection of PageAreas, where differences where found.
      */
     Collection<PageArea> getDifferences();
+
+    String getDifferencesJson();
 }

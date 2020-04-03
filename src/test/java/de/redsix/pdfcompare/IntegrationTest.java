@@ -68,6 +68,10 @@ public class IntegrationTest {
         assertThat(diff2.getY1(), is(248));
         assertThat(diff2.getX2(), is(both(greaterThanOrEqualTo(1960)).and(lessThanOrEqualTo(1961)))); // For some reason JDK11 results in a different pixel here.
         assertThat(diff2.getY2(), is(293));
+
+        String json = result.getDifferencesJson();
+        assertThat(json, is("exclusions: [\n{\"page\":1,\"x1\":237,\"y1\":363,\"x2\":421,\"y2\":408},\n{\"page\":2,\"x1\":1776,\"y1\":248,\"x2\":1960,\"y2\":293}\n]"));
+
         writeAndCompare(result);
     }
 

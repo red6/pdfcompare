@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * A CompareResult tracks the differences, that result from a comparison.
@@ -179,6 +180,12 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     @Override
     public Collection<PageArea> getDifferences() {
         return diffAreas;
+    }
+
+    public String getDifferencesJson() {
+        return "exclusions: [\n" +
+                getDifferences().stream().map(PageArea::asJson).collect(Collectors.joining(",\n")) +
+                "\n]";
     }
 
     public void expectedOnly() {
