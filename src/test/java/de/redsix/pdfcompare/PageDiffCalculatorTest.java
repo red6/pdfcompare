@@ -1,26 +1,11 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class PageDiffCalculatorTest {
-
-    @Test
-    public void booleanConstructor1() {
-        final PageDiffCalculator diffCalculator = new PageDiffCalculator(true, true);
-        assertTrue(diffCalculator.differencesFound());
-        assertTrue(diffCalculator.differencesFoundInExclusion());
-    }
-
-    @Test
-    public void booleanConstructor2() {
-        final PageDiffCalculator diffCalculator = new PageDiffCalculator(false, false);
-        assertFalse(diffCalculator.differencesFound());
-        assertFalse(diffCalculator.differencesFoundInExclusion());
-    }
 
     @Test
     public void noDiffFound() {

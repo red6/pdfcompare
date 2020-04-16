@@ -15,11 +15,21 @@ public class PageDiffCalculator {
         this.allowedDiffInPercent = allowedDiffInPercent;
     }
 
-    public PageDiffCalculator(final boolean differencesFound, final boolean differencesFoundInExclusion) {
+    /**
+     * This is a convenience constructor for a single diff.
+     * The result is the same as the following code:
+     * <pre>{@code
+     * pdc = new PageDiffCalculator(0, 0);
+     * pdc.diffFound();
+     * pdc.addDiffArea(pageArea);
+     * }</pre>
+     * @param pageArea the page area that covers the diff.
+     */
+    public PageDiffCalculator(final PageArea pageArea) {
         totalPixels = 0;
         allowedDiffInPercent = 0;
-        if (differencesFound) diffsFound = 1;
-        if (differencesFoundInExclusion) diffsFoundInExclusion = 1;
+        diffsFound = 1;
+        this.diffArea = pageArea;
     }
 
     public void diffFound() {

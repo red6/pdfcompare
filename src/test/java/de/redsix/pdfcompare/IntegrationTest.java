@@ -1,21 +1,13 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.both;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import de.redsix.junitextensions.TempDirectory;
+import de.redsix.junitextensions.TempDirectoryExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,13 +15,11 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import de.redsix.junitextensions.TempDirectory;
-import de.redsix.junitextensions.TempDirectoryExtension;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(TempDirectoryExtension.class)
 public class IntegrationTest {
@@ -156,6 +146,8 @@ public class IntegrationTest {
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
+        assertThat(result.getDifferences(), hasSize(1));
+        assertThat(result.getDifferences().iterator().next().page, is(2));
         writeAndCompare(result);
     }
 
@@ -165,6 +157,10 @@ public class IntegrationTest {
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
+        assertThat(result.getDifferences(), hasSize(2));
+        Iterator<PageArea> iterator = result.getDifferences().iterator();
+        assertThat(iterator.next().page, is(1));
+        assertThat(iterator.next().page, is(2));
         writeAndCompare(result);
     }
 
