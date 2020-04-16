@@ -124,6 +124,14 @@ public class ConfigFileEnvironment implements Environment {
         return true;
     }
 
+    @Override
+    public boolean failOnMissingIgnoreFile() {
+        if (config.hasPath("failOnMissingIgnoreFile")) {
+            return config.getBoolean("failOnMissingIgnoreFile");
+        }
+        return false;
+    }
+
     private int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }

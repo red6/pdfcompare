@@ -2,6 +2,7 @@ package de.redsix.pdfcompare;
 
 import com.typesafe.config.ConfigException;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
+import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -11,6 +12,7 @@ import java.nio.file.Paths;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ExclusionsTest {
 
@@ -38,6 +40,26 @@ public class ExclusionsTest {
     public void readFromPath() {
         exclusions.readExclusions(Paths.get("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
+    }
+
+    @Test
+    public void missingPathIsIgnored() {
+        exclusions.readExclusions(Paths.get("fileDoesNotExist.conf"));
+        // No exclusions are read
+        exclusions.forEach(pageArea -> fail());
+    }
+
+    @Test
+    public void missingFileIsIgnored() {
+        exclusions.readExclusions(new File("fileDoesNotExist.conf"));
+        // No exclusions are read
+        exclusions.forEach(pageArea -> fail());
+    }
+
+    @Test
+    public void missingFileThrowsException() {
+        Exclusions exclusions = new Exclusions(new SimpleEnvironment().setFailOnMissingIgnoreFile(true));
+        assertThrows(IgnoreFileMissing.class, () -> exclusions.readExclusions(new File("fileDoesNotExist.conf")));
     }
 
     @Test

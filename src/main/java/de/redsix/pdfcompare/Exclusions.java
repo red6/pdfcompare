@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.regex.Pattern;
 /**
  * Exclusions collect rectangular areas of the document, that shall be ignored during comparison.
  * Each area is specified through a {@link PageArea} object.
- *
+ * <p>
  * Exclusions can be read from a file in JSON format (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) which has the following form:
  * <pre>
  * exclusions: [
@@ -43,12 +42,11 @@ import java.util.regex.Pattern;
  *         // coordinates are optional. When not given, the whole page is excluded.
  *     }
  * ]</pre>
- *
  */
 public class Exclusions {
 
     private static final Logger LOG = LoggerFactory.getLogger(Exclusions.class);
-    private final int dpi;
+    private final Environment environment;
     private final float CM_TO_PIXEL;
     private final float MM_TO_PIXEL;
     private final float PT_TO_PIXEL;
@@ -58,10 +56,11 @@ public class Exclusions {
     private final PageExclusions exclusionsForAllPages = new PageExclusions();
 
     public Exclusions(Environment environment) {
-        this.dpi = environment.getDPI();
+        this.environment = environment;
+        int dpi = environment.getDPI();
         CM_TO_PIXEL = 1f / 2.54f * dpi;
         MM_TO_PIXEL = CM_TO_PIXEL / 10f;
-        PT_TO_PIXEL = ((float)dpi) / 72f;
+        PT_TO_PIXEL = ((float) dpi) / 72f;
     }
 
     public Exclusions add(final PageArea exclusion) {
@@ -84,11 +83,7 @@ public class Exclusions {
 
     public void readExclusions(final Path path) {
         Objects.requireNonNull(path, "path must not be null");
-        if (Files.exists(path)) {
-            readExclusions(path.toFile());
-        } else {
-            LOG.info("Ignore-file at '{}' not found. Continuing without ignores.", path);
-        }
+        readExclusions(path.toFile());
     }
 
     public void readExclusions(final File file) {
@@ -97,17 +92,20 @@ public class Exclusions {
             final Config exclusionConfig = ConfigFactory.parseFile(file, configParseOptions);
             readFromConfig(exclusionConfig);
         } else {
+            if (environment.failOnMissingIgnoreFile()) {
+                throw new IgnoreFileMissing(file);
+            }
             LOG.info("Ignore-file at '{}' not found. Continuing without ignores.", file);
         }
     }
 
     public void readExclusions(InputStream inputStream) {
         Objects.requireNonNull(inputStream, "inputStream must not be null");
-            try (final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                readExclusions(inputStreamReader);
-            } catch (IOException e) {
-                LOG.warn("Could not read ignores from InputStream. Continuing without ignores.", e);
-            }
+        try (final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+            readExclusions(inputStreamReader);
+        } catch (IOException e) {
+            LOG.warn("Could not read ignores from InputStream. Continuing without ignores.", e);
+        }
     }
 
     public void readExclusions(Reader reader) {
@@ -124,10 +122,10 @@ public class Exclusions {
                 return new PageArea(c.getInt("page"));
             }
             if (c.hasPath("page")) {
-                return new PageArea(c.getInt("page"), toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
+                return new PageArea(c.getInt("page"), toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c, "y2"));
             }
-            return new PageArea(toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c,"y2"));
-        }).forEach(e -> add(e));
+            return new PageArea(toPix(c, "x1"), toPix(c, "y1"), toPix(c, "x2"), toPix(c, "y2"));
+        }).forEach(this::add);
     }
 
     private int toPix(final Config c, final String key) {
@@ -147,7 +145,7 @@ public class Exclusions {
                 }
                 return Math.round(factor * Float.parseFloat(matcher.group(1)));
             } else {
-                throw new RuntimeException("Exclusion can't be read. String not parsable to a number: " + valueStr);
+                throw new RuntimeException("Exclusion can't be read. String not parseable to a number: " + valueStr);
             }
         }
     }

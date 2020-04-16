@@ -30,4 +30,6 @@ public interface Environment {
     int getDPI();
 
     boolean addEqualPagesToResult();
+
+    boolean failOnMissingIgnoreFile();
 }

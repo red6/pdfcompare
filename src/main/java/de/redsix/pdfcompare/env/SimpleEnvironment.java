@@ -36,6 +36,7 @@ public class SimpleEnvironment implements Environment {
     private Color actualColor;
     private Integer dpi;
     private Boolean addEqualPagesToResult;
+    private Boolean failOnMissingIgnoreFile;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -173,6 +174,16 @@ public class SimpleEnvironment implements Environment {
 
     public SimpleEnvironment setAddEqualPagesToResult(final boolean b) {
         this.addEqualPagesToResult = b;
+        return this;
+    }
+
+    @Override
+    public boolean failOnMissingIgnoreFile() {
+        return failOnMissingIgnoreFile != null ? failOnMissingIgnoreFile : fallback.failOnMissingIgnoreFile();
+    }
+
+    public SimpleEnvironment setFailOnMissingIgnoreFile(final boolean b) {
+        this.failOnMissingIgnoreFile = b;
         return this;
     }
 }

@@ -254,6 +254,10 @@ Through the environment you can configure the memory settings (see above) and th
 - addEqualPagesToResult=true
 
     When set to false, only pages with differences are added to the result and this the resulting difference PDF document.
+    
+- failOnMissingIgnoreFile=false
+
+    When set to true, a missing ignore file leads to an exception. Otherwise it is ignored and only an info level log messages is written.
 
 ### Acknowledgements
 
