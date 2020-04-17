@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -70,17 +71,25 @@ public class PdfComparator<T extends CompareResultImpl> {
         this.compareResult = compareResult;
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename) throws IOException {
-        this(expectedPdfFilename, actualPdfFilename, (T) new CompareResultImpl());
+    public PdfComparator(String expectedPdf, String actualPdf) throws IOException {
+        this(expectedPdf, actualPdf, (T) new CompareResultImpl());
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, T compareResult) throws IOException {
+    public PdfComparator(String expectedPdf, String actualPdf, T compareResult) throws IOException {
         this(compareResult);
-        Objects.requireNonNull(expectedPdfFilename, "expectedPdfFilename is null");
-        Objects.requireNonNull(actualPdfFilename, "actualPdfFilename is null");
-        if (!expectedPdfFilename.equals(actualPdfFilename)) {
-            this.expectedStreamSupplier = () -> Files.newInputStream(Paths.get(expectedPdfFilename));
-            this.actualStreamSupplier = () -> Files.newInputStream(Paths.get(actualPdfFilename));
+        Objects.requireNonNull(expectedPdf, "expectedPdf is null");
+        Objects.requireNonNull(actualPdf, "actualPdf is null");
+        if (!expectedPdf.equals(actualPdf)) {
+            if (expectedPdf.endsWith(".pdf")) {
+                this.expectedStreamSupplier = () -> Files.newInputStream(Paths.get(expectedPdf));
+            } else {
+                this.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(expectedPdf));
+            }
+            if (actualPdf.endsWith(".pdf")) {
+                this.actualStreamSupplier = () -> Files.newInputStream(Paths.get(actualPdf));
+            } else {
+                this.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(actualPdf));
+            }
         }
     }
 
