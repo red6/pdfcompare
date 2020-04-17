@@ -212,12 +212,23 @@ public class IntegrationTest {
 
     @Test
     public void compareWithBase64() throws IOException {
-        String expectedBase64 = Base64.getEncoder().encodeToString(r("expected.pdf").readAllBytes());
-        String actualBase64 = Base64.getEncoder().encodeToString(r("actual.pdf").readAllBytes());
+        String expectedBase64 = Base64.getEncoder().encodeToString(toByteArray(r("expected.pdf")));
+        String actualBase64 = Base64.getEncoder().encodeToString(toByteArray(r("actual.pdf")));
         final CompareResult result = new PdfComparator(expectedBase64, actualBase64).compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.getDifferences(), hasSize(0));
         writeAndCompare(result);
+    }
+
+    private byte[] toByteArray(InputStream in) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        byte[] buffer = new byte[in.available()];
+        int len;
+        while ((len = in.read(buffer)) != -1) {
+            os.write(buffer, 0, len);
+        }
+
+        return os.toByteArray();
     }
 
     private InputStream r(final String s) {
