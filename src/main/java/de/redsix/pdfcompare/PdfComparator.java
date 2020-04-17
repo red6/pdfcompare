@@ -26,14 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -65,16 +63,51 @@ public class PdfComparator<T extends CompareResultImpl> {
     private String actualPassword = "";
     private boolean withIgnoreCalled = false;
 
+    /**
+     * Compare two PDFs, that are given as base64 encoded strings.
+     * @param expectedPdfBase64 expected PDF in base64 encoded format
+     * @param actualPdfBase64 actual PDF in base64 encoded format
+     * @return A CompareResultImpl object, that contains the result of this compare.
+     */
+    public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64) {
+        return base64(expectedPdfBase64, actualPdfBase64, (T) new CompareResultImpl());
+    }
+
+    /**
+     * Compare two PDFs, that are given as base64 encoded strings.
+     * @param expectedPdfBase64 expected PDF in base64 encoded format
+     * @param actualPdfBase64 actual PDF in base64 encoded format
+     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     * @return A CompareResultImpl object, that contains the result of this compare.
+     */
+    public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64, T compareResult) {
+        PdfComparator pdfComparator = new PdfComparator(compareResult);
+        pdfComparator.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(expectedPdfBase64));
+        pdfComparator.actualStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(actualPdfBase64));
+        return pdfComparator;
+    }
+
     private PdfComparator(T compareResult) {
         Objects.requireNonNull(compareResult, "compareResult is null");
         this.compareResult = compareResult;
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename) throws IOException {
+    /**
+     * Compare two PDFs by providing two filenames for the expected PDF and the actual PDF.
+     * @param expectedPdfFilename filename for the expected PDF
+     * @param actualPdfFilename filename for the actual PDF
+     */
+    public PdfComparator(String expectedPdfFilename, String actualPdfFilename) {
         this(expectedPdfFilename, actualPdfFilename, (T) new CompareResultImpl());
     }
 
-    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, T compareResult) throws IOException {
+    /**
+     * Compare two PDFs by providing two filenames for the expected PDF and the actual PDF.
+     * @param expectedPdfFilename filename for the expected PDF
+     * @param actualPdfFilename filename for the actual PDF
+     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     */
+    public PdfComparator(String expectedPdfFilename, String actualPdfFilename, T compareResult) {
         this(compareResult);
         Objects.requireNonNull(expectedPdfFilename, "expectedPdfFilename is null");
         Objects.requireNonNull(actualPdfFilename, "actualPdfFilename is null");
@@ -84,11 +117,22 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
     }
 
-    public PdfComparator(final Path expectedPath, final Path actualPath) throws IOException {
+    /**
+     * Compare two PDFs by providing two Path objects for the expected PDF and the actual PDF.
+     * @param expectedPath Path for the expected PDF
+     * @param actualPath Path for the actual PDF
+     */
+    public PdfComparator(final Path expectedPath, final Path actualPath) {
         this(expectedPath, actualPath, (T) new CompareResultImpl());
     }
 
-    public PdfComparator(final Path expectedPath, final Path actualPath, final T compareResult) throws IOException {
+    /**
+     * Compare two PDFs by providing two Path objects for the expected PDF and the actual PDF.
+     * @param expectedPath Path for the expected PDF
+     * @param actualPath Path for the actual PDF
+     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     */
+    public PdfComparator(final Path expectedPath, final Path actualPath, final T compareResult) {
         this(compareResult);
         Objects.requireNonNull(expectedPath, "expectedPath is null");
         Objects.requireNonNull(actualPath, "actualPath is null");
@@ -98,11 +142,22 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
     }
 
-    public PdfComparator(final File expectedFile, final File actualFile) throws IOException {
+    /**
+     * Compare two PDFs by providing two File objects for the expected PDF and the actual PDF.
+     * @param expectedFile File for the expected PDF
+     * @param actualFile File for the actual PDF
+     */
+    public PdfComparator(final File expectedFile, final File actualFile) {
         this(expectedFile, actualFile, (T) new CompareResultImpl());
     }
 
-    public PdfComparator(final File expectedFile, final File actualFile, final T compareResult) throws IOException {
+    /**
+     * Compare two PDFs by providing two File objects for the expected PDF and the actual PDF.
+     * @param expectedFile File for the expected PDF
+     * @param actualFile File for the actual PDF
+     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     */
+    public PdfComparator(final File expectedFile, final File actualFile, final T compareResult) {
         this(compareResult);
         Objects.requireNonNull(expectedFile, "expectedFile is null");
         Objects.requireNonNull(actualFile, "actualFile is null");
@@ -112,10 +167,21 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
     }
 
+    /**
+     * Compare two PDFs by providing two InputStream objects for the expected PDF and the actual PDF.
+     * @param expectedPdfIS InputStream for the expected PDF
+     * @param actualPdfIS InputStream for the actual PDF
+     */
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS) {
         this(expectedPdfIS, actualPdfIS, (T) new CompareResultImpl());
     }
 
+    /**
+     * Compare two PDFs by providing two InputStream objects for the expected PDF and the actual PDF.
+     * @param expectedPdfIS InputStream for the expected PDF
+     * @param actualPdfIS InputStream for the actual PDF
+     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     */
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS, final T compareResult) {
         this(compareResult);
         Objects.requireNonNull(expectedPdfIS, "expectedPdfIS is null");

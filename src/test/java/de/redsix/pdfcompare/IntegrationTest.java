@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -206,6 +207,19 @@ public class IntegrationTest {
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(0));
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void compareWithBase64() throws IOException {
+        String expectedBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(p("expected.pdf")));
+        String actualBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(p("actual.pdf")));
+        final CompareResult result = PdfComparator.base64(expectedBase64, actualBase64)
+                .withIgnore(new PageArea(1, 230, 350, 450, 420))
+                .withIgnore(new PageArea(2, 1750, 240, 2000, 300))
+                .compare();
+        assertThat(result.isEqual(), is(true));
+        assertThat(result.hasDifferenceInExclusion(), is(true));
         writeAndCompare(result);
     }
 
