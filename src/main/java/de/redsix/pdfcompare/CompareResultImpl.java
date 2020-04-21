@@ -124,7 +124,6 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     @Override
     public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         if(this.environment.getEnableHorizontalCompareOutput()) {
-        	System.out.println("devo chiamare mio addpage");
         	this.addPageWithHorizontalCompare(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
         }else { 	
 			Objects.requireNonNull(expectedImage, "expectedImage is null");
