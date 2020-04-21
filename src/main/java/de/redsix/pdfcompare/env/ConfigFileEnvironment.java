@@ -135,4 +135,9 @@ public class ConfigFileEnvironment implements Environment {
     private int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }
+
+	@Override
+	public boolean getEnableHorizontalCompareOutput() {
+		return false;
+	}
 }

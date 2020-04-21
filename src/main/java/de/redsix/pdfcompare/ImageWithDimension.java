@@ -15,4 +15,8 @@ public class ImageWithDimension {
         this.width = width;
         this.height = height;
     }
+
+	public BufferedImage getBufferedImage() {
+		return bufferedImage;
+	}   
 }

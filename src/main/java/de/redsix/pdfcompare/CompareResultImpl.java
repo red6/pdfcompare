@@ -16,6 +16,8 @@
 package de.redsix.pdfcompare;
 
 import de.redsix.pdfcompare.env.Environment;
+import x.team.tool.MergeImages;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -120,20 +122,25 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     }
 
     @Override
-    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
-            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
-        Objects.requireNonNull(expectedImage, "expectedImage is null");
-        Objects.requireNonNull(actualImage, "actualImage is null");
-        Objects.requireNonNull(diffImage, "diffImage is null");
-        this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
-        if (diffCalculator.differencesFound()) {
-            isEqual = false;
-            diffAreas.add(diffCalculator.getDiffArea());
-            diffImages.put(pageIndex, diffImage);
-            pages++;
-        } else if (environment.addEqualPagesToResult()) {
-            diffImages.put(pageIndex, diffImage);
-            pages++;
+    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
+        if(this.environment.getEnableHorizontalCompareOutput()) {
+        	System.out.println("devo chiamare mio addpage");
+        	this.addPageWithHorizontalCompare(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
+        }else { 	
+			Objects.requireNonNull(expectedImage, "expectedImage is null");
+			Objects.requireNonNull(actualImage, "actualImage is null");
+			Objects.requireNonNull(diffImage, "diffImage is null");
+
+			this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
+			if (diffCalculator.differencesFound()) {
+				isEqual = false;
+				diffAreas.add(diffCalculator.getDiffArea());
+				diffImages.put(pageIndex, diffImage);
+				pages++;
+			} else if (environment.addEqualPagesToResult()) {
+				diffImages.put(pageIndex, diffImage);
+				pages++;
+			}
         }
     }
 
@@ -199,4 +206,27 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     public void setEnvironment(Environment environment) {
         this.environment = environment;
     }
+
+	@Override
+	public void addPageWithHorizontalCompare(PageDiffCalculator diffCalculator, int pageIndex,
+			ImageWithDimension expectedImage, ImageWithDimension actualImage, ImageWithDimension diffImage) {
+
+		        Objects.requireNonNull(expectedImage, "expectedImage is null");
+		        Objects.requireNonNull(actualImage, "actualImage is null");
+		        Objects.requireNonNull(diffImage, "diffImage is null");
+		        this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
+		        
+		        //Creto una nuova immagine con a sinistra l'atteso e a destra l'attuale con segnate le differenze
+		        MergeImages merge=new MergeImages();
+		        ImageWithDimension mergedImage=merge.mergeOnLeft(expectedImage, diffImage);
+		        if (diffCalculator.differencesFound()) {
+		            isEqual = false;
+		            diffAreas.add(diffCalculator.getDiffArea());
+		            diffImages.put(pageIndex, mergedImage);
+		            pages++;
+		        } else if (environment.addEqualPagesToResult()) {
+		        	diffImages.put(pageIndex, mergedImage);
+		            pages++;
+		        }
+	}
 }
