@@ -123,3 +123,4 @@ reise_bestand_ws_war/overlays
 # Gradle
 build/
 *.pdf
+output/
