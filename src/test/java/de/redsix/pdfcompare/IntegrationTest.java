@@ -2,6 +2,7 @@ package de.redsix.pdfcompare;
 
 import de.redsix.junitextensions.TempDirectory;
 import de.redsix.junitextensions.TempDirectoryExtension;
+import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -221,6 +222,22 @@ public class IntegrationTest {
         assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
         writeAndCompare(result);
+    }
+
+    @Test
+    public void whenLessPixelsAreDifferentThanAllowedDiffInPercentResultIsEqual() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
+                .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.04))
+                .compare();
+        assertThat(result.isEqual(), is(true));
+    }
+
+    @Test
+    public void whenMorePixelsAreDifferentThanAllowedDiffInPercentResultIsNotEqual() throws IOException {
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
+                .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.03))
+                .compare();
+        assertThat(result.isEqual(), is(false));
     }
 
     private InputStream r(final String s) {
