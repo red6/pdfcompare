@@ -1,6 +1,8 @@
 package de.redsix.pdfcompare;
 
 import de.redsix.pdfcompare.env.DefaultEnvironment;
+import de.redsix.pdfcompare.env.Environment;
+import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -16,6 +18,7 @@ import static de.redsix.pdfcompare.DiffImage.color;
 import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
 import static de.redsix.pdfcompare.ImageTools.blankImage;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -26,11 +29,15 @@ public class DiffImageTest {
     private ResultCollector resultMock;
     @Captor
     private ArgumentCaptor<ImageWithDimension> captor;
+    @Captor
+    private ArgumentCaptor<PageDiffCalculator> pageDiffCalculatorCaptor;
     private final BufferedImage expected = blankImage(new BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB));
     private final BufferedImage actual = blankImage(new BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB));
     private final ImageWithDimension expectedImage = new ImageWithDimension(expected, 1.0f, 1.0f);
     private final ImageWithDimension actualImage = new ImageWithDimension(actual, 1.0f, 1.0f);
     private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create()).add(new PageArea(35, 35, 37, 37));
+    private PageDiffCalculator pageDiffCalculator;
+    private BufferedImage resultImage;
 
     @BeforeEach
     public void before() {
@@ -41,23 +48,25 @@ public class DiffImageTest {
     public void equalImagesAreEqualAndEqualPixelsAreDimmed() {
         expected.setRGB(23, 23, Color.BLACK.getRGB());
         actual.setRGB(23, 23, Color.BLACK.getRGB());
-        final BufferedImage resultImage = createAndAssertDiffImage(false, false);
+        final BufferedImage resultImage = createAndAssertDiffImage();
+        assertThat(pageDiffCalculator.differencesFound(), is(false));
         assertThat(resultImage.getRGB(23, 23), is(color(153, 153, 153)));
     }
 
     @Test
     public void unexpectedPixelsAreColoredRed() {
         actual.setRGB(23, 23, Color.BLACK.getRGB());
-        final BufferedImage resultImage = createAndAssertDiffImage(true, false);
+        final BufferedImage resultImage = createAndAssertDiffImage();
+        assertThat(pageDiffCalculator.differencesFound(), is(true));
         assertThat(resultImage.getRGB(23, 23), is(color(210, 0, 0)));
-
         assertMarker(resultImage, 23, 23);
     }
 
     @Test
     public void expectedPixelsNotPresentAreColoredGreen() {
         expected.setRGB(23, 23, Color.BLACK.getRGB());
-        final BufferedImage resultImage = createAndAssertDiffImage(true, false);
+        final BufferedImage resultImage = createAndAssertDiffImage();
+        assertThat(pageDiffCalculator.differencesFound(), is(true));
         assertThat(resultImage.getRGB(23, 23), is(color(0, 180, 0)));
 
         assertMarker(resultImage, 23, 23);
@@ -66,7 +75,10 @@ public class DiffImageTest {
     @Test
     public void exclusionsAreColoredYellowAndDimmed() {
         actual.setRGB(36, 36, Color.BLACK.getRGB());
-        final BufferedImage resultImage = createAndAssertDiffImage(false, true);
+        final BufferedImage resultImage = createAndAssertDiffImage();
+        assertThat(pageDiffCalculator.differencesFound(), is(false));
+        assertThat(pageDiffCalculator.differencesFoundInExclusion(), is(true));
+        assertThat(pageDiffCalculator.getDiffArea(), nullValue());
 
         assertThat(resultImage.getRGB(35, 35), is(EXCLUDED_BACKGROUND_RGB));
         assertThat(resultImage.getRGB(36, 35), is(EXCLUDED_BACKGROUND_RGB));
@@ -87,17 +99,43 @@ public class DiffImageTest {
         }
     }
 
-    private BufferedImage createAndAssertDiffImage(final boolean hasDifferences, final boolean hasDifferencesInExclusion) {
+    @Test
+    public void diffAreaCapturesAllDifferences() {
+        actual.setRGB(26, 26, Color.BLACK.getRGB());
+        actual.setRGB(31, 27, Color.BLACK.getRGB());
+        createAndAssertDiffImage();
+        assertThat(pageDiffCalculator.getDiffArea().getPage(), is(2));
+        assertThat(pageDiffCalculator.getDiffArea().getX1(), is(26));
+        assertThat(pageDiffCalculator.getDiffArea().getY1(), is(26));
+        assertThat(pageDiffCalculator.getDiffArea().getX2(), is(31));
+        assertThat(pageDiffCalculator.getDiffArea().getY2(), is(27));
+    }
+
+    @Test
+    public void differencesBelowAllowedPercentGivesNoDifference() {
+        actual.setRGB(26, 26, Color.BLACK.getRGB());
+        actual.setRGB(31, 27, Color.BLACK.getRGB());
+        createAndAssertDiffImage(new SimpleEnvironment().setAllowedDiffInPercent(10));
+        assertThat(pageDiffCalculator.differencesFound(), is(false));
+        assertThat(pageDiffCalculator.getDiffArea(), nullValue());
+        assertMarker(resultImage, 26, 26);
+        assertMarker(resultImage, 31, 27);
+    }
+
+    private BufferedImage createAndAssertDiffImage() {
+        return createAndAssertDiffImage(DefaultEnvironment.create());
+    }
+
+    private BufferedImage createAndAssertDiffImage(Environment env) {
         final DiffImage diffImage = new DiffImage(
                 expectedImage,
                 actualImage,
-                1, DefaultEnvironment.create(), exclusions, resultMock);
+                1, env, exclusions, resultMock);
         diffImage.diffImages();
-        PageDiffCalculator pdc = new PageDiffCalculator(0, 0);
-        if (hasDifferences) pdc.diffFound();
-        if (hasDifferencesInExclusion) pdc.diffFoundInExclusion();
-        verify(resultMock).addPage(eq(pdc), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
-        return captor.getValue().bufferedImage;
+        verify(resultMock).addPage(pageDiffCalculatorCaptor.capture(), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
+        pageDiffCalculator = pageDiffCalculatorCaptor.getValue();
+        resultImage = captor.getValue().bufferedImage;
+        return resultImage;
     }
 
     private void assertMarker(final BufferedImage resultImage, final int x, final int y) {
