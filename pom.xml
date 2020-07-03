@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.51-SNAPSHOT</version>
+    <version>1.1.51</version>
     <name>PdfCompare</name>
     <url>https://github.com/red6/pdfcompare</url>
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
@@ -119,7 +119,7 @@
         <connection>scm:git:git@github.com:red6/pdfcompare.git</connection>
         <developerConnection>scm:git:git@github.com:red6/pdfcompare.git</developerConnection>
         <url>https://github.com/red6/pdfcompare.git</url>
-        <tag>HEAD</tag>
+        <tag>pdfcompare-1.1.51</tag>
     </scm>
 
     <distributionManagement>
