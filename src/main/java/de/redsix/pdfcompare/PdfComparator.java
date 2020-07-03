@@ -425,7 +425,11 @@ public class PdfComparator<T extends CompareResultImpl> {
                     LOG.trace("DONE Diffing page {}", diffImage);
                 });
                 LOG.trace("DONE drawing page {}", pageIndex);
-            } catch (RenderingException e) {
+            } catch (Throwable t) {
+                LOG.error("An error occurred, while rendering this page.", t);
+                StacktraceImage stacktraceImage = new StacktraceImage("An error occurred, while rendering this page", t, environment);
+                ImageWithDimension error = stacktraceImage.getImage();
+                compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, stacktraceImage.getBlankImage(), error, error);
             } finally {
                 latch.countDown();
             }
@@ -438,12 +442,14 @@ public class PdfComparator<T extends CompareResultImpl> {
         } catch (InterruptedException e) {
             LOG.warn("Waiting for Future was interrupted while rendering page {} for {}", pageIndex, type, e);
             Thread.currentThread().interrupt();
+            throw new RenderingException(e);
         } catch (TimeoutException e) {
             LOG.error("Waiting for Future timed out after {} {} while rendering page {} for {}", timeout, unit, pageIndex, type, e);
+            throw new RenderingException(e);
         } catch (ExecutionException e) {
             LOG.error("Error while rendering page {} for {}", pageIndex, type, e);
+            throw new RenderingException(e);
         }
-        throw new RenderingException();
     }
 
     private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
