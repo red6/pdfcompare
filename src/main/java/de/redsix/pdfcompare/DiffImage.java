@@ -46,66 +46,64 @@ public class DiffImage {
         return resultImage;
     }
 
+    public int getPage() {
+        return page;
+    }
+
     public void diffImages() {
-        try {
-            BufferedImage expectBuffImage = this.expectedImage.bufferedImage;
-            BufferedImage actualBuffImage = this.actualImage.bufferedImage;
-            expectedBuffer = expectBuffImage.getRaster().getDataBuffer();
-            actualBuffer = actualBuffImage.getRaster().getDataBuffer();
+        BufferedImage expectBuffImage = this.expectedImage.bufferedImage;
+        BufferedImage actualBuffImage = this.actualImage.bufferedImage;
+        expectedBuffer = expectBuffImage.getRaster().getDataBuffer();
+        actualBuffer = actualBuffImage.getRaster().getDataBuffer();
 
-            expectedImageWidth = expectBuffImage.getWidth();
-            expectedImageHeight = expectBuffImage.getHeight();
-            actualImageWidth = actualBuffImage.getWidth();
-            actualImageHeight = actualBuffImage.getHeight();
+        expectedImageWidth = expectBuffImage.getWidth();
+        expectedImageHeight = expectBuffImage.getHeight();
+        actualImageWidth = actualBuffImage.getWidth();
+        actualImageHeight = actualBuffImage.getHeight();
 
-            resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
-            resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
-            resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
-            DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
+        resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
+        resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
+        resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
+        DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
-            diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, environment.getAllowedDiffInPercent());
+        diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, environment.getAllowedDiffInPercent());
 
-            int expectedElement;
-            int actualElement;
-            final PageExclusions pageExclusions = exclusions.forPage(page + 1);
+        int expectedElement;
+        int actualElement;
+        final PageExclusions pageExclusions = exclusions.forPage(page + 1);
 
-            for (int y = 0; y < resultImageHeight; y++) {
-                final int expectedLineOffset = y * expectedImageWidth;
-                final int actualLineOffset = y * actualImageWidth;
-                final int resultLineOffset = y * resultImageWidth;
-                for (int x = 0; x < resultImageWidth; x++) {
-                    expectedElement = getExpectedElement(x, y, expectedLineOffset);
-                    actualElement = getActualElement(x, y, actualLineOffset);
-                    int element = getElement(expectedElement, actualElement);
-                    if (pageExclusions.contains(x, y)) {
-                        element = ImageTools.fadeExclusion(element);
-                        if (expectedElement != actualElement) {
-                            diffCalculator.diffFoundInExclusion();
-                        }
-                    } else {
-                        if (expectedElement != actualElement) {
-                            extendDiffArea(x, y);
-                            diffCalculator.diffFound();
-                            LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
-                            mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
-                        }
+        for (int y = 0; y < resultImageHeight; y++) {
+            final int expectedLineOffset = y * expectedImageWidth;
+            final int actualLineOffset = y * actualImageWidth;
+            final int resultLineOffset = y * resultImageWidth;
+            for (int x = 0; x < resultImageWidth; x++) {
+                expectedElement = getExpectedElement(x, y, expectedLineOffset);
+                actualElement = getActualElement(x, y, actualLineOffset);
+                int element = getElement(expectedElement, actualElement);
+                if (pageExclusions.contains(x, y)) {
+                    element = ImageTools.fadeExclusion(element);
+                    if (expectedElement != actualElement) {
+                        diffCalculator.diffFoundInExclusion();
                     }
-                    resultBuffer.setElem(x + resultLineOffset, element);
+                } else {
+                    if (expectedElement != actualElement) {
+                        extendDiffArea(x, y);
+                        diffCalculator.diffFound();
+                        LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
+                        mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
+                    }
                 }
+                resultBuffer.setElem(x + resultLineOffset, element);
             }
-            if (diffCalculator.differencesFound()) {
-                diffCalculator.addDiffArea(new PageArea(page + 1, diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2));
-                LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
-                        diffAreaY2);
-            }
-            final float maxWidth = Math.max(expectedImage.width, actualImage.width);
-            final float maxHeight = Math.max(expectedImage.height, actualImage.height);
-            compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
-        } catch (Throwable t) {
-            StacktraceImage stacktraceImage = new StacktraceImage("An error occurred, while diffing this page", t, environment);
-            ImageWithDimension error = stacktraceImage.getImage();
-            compareResult.addPage(new PageDiffCalculator(new PageArea(page + 1)), page, stacktraceImage.getBlankImage(), error, error);
         }
+        if (diffCalculator.differencesFound()) {
+            diffCalculator.addDiffArea(new PageArea(page + 1, diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2));
+            LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
+                    diffAreaY2);
+        }
+        final float maxWidth = Math.max(expectedImage.width, actualImage.width);
+        final float maxHeight = Math.max(expectedImage.height, actualImage.height);
+        compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
     }
 
     private void extendDiffArea(final int x, final int y) {
