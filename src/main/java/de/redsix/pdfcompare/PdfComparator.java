@@ -31,9 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -50,7 +48,11 @@ import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
+
+    private static final int timeout = 3;
+    private static final TimeUnit unit = TimeUnit.MINUTES;
     public static final int MARKER_WIDTH = 20;
+
     private Environment environment;
     private Exclusions exclusions;
     private InputStreamSupplier expectedStreamSupplier;
@@ -59,12 +61,10 @@ public class PdfComparator<T extends CompareResultImpl> {
     private ExecutorService parrallelDrawExecutor;
     private ExecutorService diffExecutor;
     private final T compareResult;
-    private final int timeout = 3;
-    private final TimeUnit unit = TimeUnit.MINUTES;
     private String expectedPassword = "";
     private String actualPassword = "";
     private boolean withIgnoreCalled = false;
-    private Collection<Throwable> exceptionFromOtherThread = new ArrayList<>();
+    private ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
@@ -432,11 +432,8 @@ public class PdfComparator<T extends CompareResultImpl> {
             addExtraPages(actualDocument, actualPdfRenderer, minPageCount, environment.getExpectedColor().getRGB(), false);
         }
         if (!exceptionFromOtherThread.isEmpty()) {
-            if (exceptionFromOtherThread.size() == 1) {
-                throw new RenderingException("Exception was caught during rendering or diffing", exceptionFromOtherThread.iterator().next());
-            }
             RenderingException ex = new RenderingException("Exceptions where caught during rendering or diffing");
-            exceptionFromOtherThread.forEach(t -> ex.addSuppressed(t));
+            exceptionFromOtherThread.forEach(ex::addSuppressed);
             throw ex;
         }
     }
@@ -485,15 +482,13 @@ public class PdfComparator<T extends CompareResultImpl> {
         try {
             return imageFuture.get(timeout, unit);
         } catch (InterruptedException e) {
-            LOG.warn("Waiting for Future was interrupted while rendering page {} for {}", pageIndex, type, e);
             Thread.currentThread().interrupt();
-            throw new RenderingException(e);
+            throw new RenderingException("Waiting for Future was interrupted while rendering page " + (pageIndex + 1) + " of " + type, e);
         } catch (TimeoutException e) {
-            LOG.error("Waiting for Future timed out after {} {} while rendering page {} for {}", timeout, unit, pageIndex, type, e);
-            throw new RenderingException(e);
+            String msg = String.format("Waiting for Future timed out after %d %s while rendering page %d of %s", timeout, unit, pageIndex + 1, type);
+            throw new RenderingException(msg, e);
         } catch (ExecutionException e) {
-            LOG.error("Error while rendering page {} for {}", pageIndex, type, e);
-            throw new RenderingException(e);
+            throw new RenderingException("Error while rendering page " + (pageIndex + 1) + " of " + type, e);
         }
     }
 

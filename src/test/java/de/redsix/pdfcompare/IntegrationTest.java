@@ -20,8 +20,7 @@ import java.util.Iterator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(TempDirectoryExtension.class)
 public class IntegrationTest {
@@ -30,7 +29,7 @@ public class IntegrationTest {
     private Path outDir;
 
     @BeforeEach
-    public void before(TestInfo testInfo, @TempDirectory(parentPath = ".") Path outDir) throws IOException, InterruptedException {
+    public void before(TestInfo testInfo, @TempDirectory(parentPath = ".") Path outDir) {
         testName = testInfo.getTestMethod().get().getName();
         this.outDir = outDir;
     }
@@ -238,6 +237,17 @@ public class IntegrationTest {
                 .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.03))
                 .compare();
         assertThat(result.isEqual(), is(false));
+    }
+
+    @Test
+    public void corruptPdfGivesRenderingException() throws IOException {
+        try {
+            new PdfComparator(r("expected.pdf"), r("corrupt.pdf")).compare();
+            fail("RenderingException expected");
+        } catch (RenderingException expected) {
+            assertThat(expected.getSuppressed().length, is(1));
+            assertThat(expected.getSuppressed()[0], instanceOf(RenderingException.class));
+        }
     }
 
     private InputStream r(final String s) {
