@@ -1,9 +1,8 @@
 package de.redsix.pdfcompare.ui;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
-import javax.swing.*;
 
 class ImagePanel extends JPanel implements Scrollable {
 

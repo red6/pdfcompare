@@ -17,6 +17,7 @@ public class CompareResultWithPageOverflow extends AbstractCompareResultWithSwap
 
     /**
      * Swaps to disk, when more than the given pages are in memory.
+     *
      * @param maxPages the maximum amount of pages to keep in memory
      */
     public CompareResultWithPageOverflow(final int maxPages) {

@@ -14,6 +14,7 @@ public class PageArea {
 
     /**
      * Defines the area for the whole page.
+     *
      * @param page Page number starting with 1
      */
     public PageArea(final int page) {
@@ -26,6 +27,7 @@ public class PageArea {
 
     /**
      * Defines the same area for every page.
+     *
      * @param x1 x-coordinate of the upper left corner of the rectangle
      * @param y1 y-coordinate of the upper left corner of the rectangle
      * @param x2 x-coordinate of the lower right corner of the rectangle
@@ -42,11 +44,12 @@ public class PageArea {
 
     /**
      * Defines an area for one particular page.
+     *
      * @param page Page number starting with 1
-     * @param x1 x-coordinate of the upper left corner of the rectangle
-     * @param y1 y-coordinate of the upper left corner of the rectangle
-     * @param x2 x-coordinate of the lower right corner of the rectangle
-     * @param y2 y-coordinate of the lower right corner of the rectangle
+     * @param x1   x-coordinate of the upper left corner of the rectangle
+     * @param y1   y-coordinate of the upper left corner of the rectangle
+     * @param x2   x-coordinate of the lower right corner of the rectangle
+     * @param y2   y-coordinate of the lower right corner of the rectangle
      */
     public PageArea(final int page, final int x1, final int y1, final int x2, final int y2) {
         checkCoordinates(x1, y1, x2, y2);

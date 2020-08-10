@@ -1,7 +1,5 @@
 package de.redsix.pdfcompare;
 
-import java.io.IOException;
-
 import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.pdmodel.ResourceCache;
 import org.apache.pdfbox.pdmodel.documentinterchange.markedcontent.PDPropertyList;
@@ -11,6 +9,8 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDAbstractPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
+
+import java.io.IOException;
 
 public class DummyResourceCache implements ResourceCache {
 

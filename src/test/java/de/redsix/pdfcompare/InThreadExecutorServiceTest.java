@@ -4,12 +4,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
+import de.redsix.pdfcompare.InThreadExecutorService.ImmediateFuture;
 import org.junit.jupiter.api.Test;
 
-import de.redsix.pdfcompare.InThreadExecutorService.ImmediateFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class InThreadExecutorServiceTest {
 

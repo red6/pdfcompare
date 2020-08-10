@@ -1,5 +1,15 @@
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.DiffImage.MARKER_RGB;
+import static de.redsix.pdfcompare.DiffImage.color;
+import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
+import static de.redsix.pdfcompare.ImageTools.blankImage;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
 import de.redsix.pdfcompare.env.SimpleEnvironment;
@@ -12,16 +22,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
-import static de.redsix.pdfcompare.DiffImage.MARKER_RGB;
-import static de.redsix.pdfcompare.DiffImage.color;
-import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
-import static de.redsix.pdfcompare.ImageTools.blankImage;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 
 public class DiffImageTest {
 

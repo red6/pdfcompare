@@ -1,5 +1,7 @@
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
+
 import de.redsix.pdfcompare.env.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-
-import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
 
 public class DiffImage {
 
@@ -33,7 +33,7 @@ public class DiffImage {
     private PageDiffCalculator diffCalculator;
 
     public DiffImage(final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final int page,
-                     final Environment environment, final Exclusions exclusions, final ResultCollector compareResult) {
+            final Environment environment, final Exclusions exclusions, final ResultCollector compareResult) {
         this.expectedImage = expectedImage;
         this.actualImage = actualImage;
         this.page = page;

@@ -1,7 +1,7 @@
 package de.redsix.pdfcompare;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import de.redsix.pdfcompare.cli.CliArgumentsImpl;
 import de.redsix.pdfcompare.cli.CliComparator;

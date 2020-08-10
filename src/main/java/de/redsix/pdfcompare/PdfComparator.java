@@ -15,6 +15,8 @@
  */
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.Utilities.blockingExecutor;
+
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -34,8 +36,6 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.*;
-
-import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
 /**
  * The PdfComparator is the entry point to use for comparing documents.

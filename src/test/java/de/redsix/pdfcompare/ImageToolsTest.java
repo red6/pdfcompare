@@ -1,14 +1,12 @@
 package de.redsix.pdfcompare;
 
-import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
-import static de.redsix.pdfcompare.ImageTools.fadeElement;
-import static de.redsix.pdfcompare.ImageTools.fadeExclusion;
+import static de.redsix.pdfcompare.ImageTools.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.awt.*;
-
 import org.junit.jupiter.api.Test;
+
+import java.awt.*;
 
 public class ImageToolsTest {
 

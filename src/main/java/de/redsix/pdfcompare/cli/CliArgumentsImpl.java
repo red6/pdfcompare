@@ -47,7 +47,7 @@ public class CliArgumentsImpl implements CliArguments {
 
     @Override
     public Optional<String> getOutputFile() {
-        if (! commandLine.hasOption(OUTPUT_OPTION)) {
+        if (!commandLine.hasOption(OUTPUT_OPTION)) {
             return Optional.empty();
         }
 
@@ -62,15 +62,15 @@ public class CliArgumentsImpl implements CliArguments {
 
     private Option buildOutputOption() {
         return Option.builder(OUTPUT_OPTION)
-            .argName("output")
-            .desc("Provide an optional output file for the result")
-            .hasArg(true)
-            .longOpt(OUTPUT_LONG_OPTION)
-            .numberOfArgs(1)
-            .required(false)
-            .type(String.class)
-            .valueSeparator('=')
-            .build();
+                .argName("output")
+                .desc("Provide an optional output file for the result")
+                .hasArg(true)
+                .longOpt(OUTPUT_LONG_OPTION)
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build();
     }
 
     private Option buildHelpOption() {

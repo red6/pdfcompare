@@ -2,6 +2,12 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
+import de.redsix.pdfcompare.env.Environment;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -13,13 +19,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-
-import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import de.redsix.pdfcompare.env.Environment;
 
 /**
  * This CompareResult monitors the memory the JVM consumes through Runtime.totalMemory() - Runtime.freeMemory()

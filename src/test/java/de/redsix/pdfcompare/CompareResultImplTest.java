@@ -1,12 +1,12 @@
 package de.redsix.pdfcompare;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 
 class CompareResultImplTest {
 

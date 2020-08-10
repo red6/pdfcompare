@@ -23,6 +23,7 @@ public class PageDiffCalculator {
      * pdc.diffFound();
      * pdc.addDiffArea(pageArea);
      * }</pre>
+     *
      * @param diffArea the page area that covers the diff.
      */
     public PageDiffCalculator(final PageArea diffArea) {

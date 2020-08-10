@@ -1,5 +1,11 @@
 package de.redsix.pdfcompare.ui;
 
+import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
+import de.redsix.pdfcompare.PdfComparator;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -8,13 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
-import javax.swing.*;
-
-import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
-import de.redsix.pdfcompare.PdfComparator;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
 public class Display {
 

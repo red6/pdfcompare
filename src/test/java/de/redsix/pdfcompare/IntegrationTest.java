@@ -1,5 +1,10 @@
 package de.redsix.pdfcompare;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.jupiter.api.Assertions.*;
+
 import de.redsix.junitextensions.TempDirectory;
 import de.redsix.junitextensions.TempDirectoryExtension;
 import de.redsix.pdfcompare.env.SimpleEnvironment;
@@ -16,11 +21,6 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(TempDirectoryExtension.class)
 public class IntegrationTest {
@@ -58,11 +58,13 @@ public class IntegrationTest {
         assertThat(diff2.getPage(), is(2));
         assertThat(diff2.getX1(), is(1776));
         assertThat(diff2.getY1(), is(248));
-        assertThat(diff2.getX2(), is(both(greaterThanOrEqualTo(1960)).and(lessThanOrEqualTo(1961)))); // For some reason JDK11 results in a different pixel here.
+        assertThat(diff2.getX2(),
+                is(both(greaterThanOrEqualTo(1960)).and(lessThanOrEqualTo(1961)))); // For some reason JDK11 results in a different pixel here.
         assertThat(diff2.getY2(), is(293));
 
         String json = result.getDifferencesJson();
-        assertThat(json, matchesPattern("exclusions: \\[\n\\{\"page\":1,\"x1\":237,\"y1\":363,\"x2\":421,\"y2\":408\\},\n\\{\"page\":2,\"x1\":1776,\"y1\":248,\"x2\":196.,\"y2\":293\\}\n\\]"));
+        assertThat(json, matchesPattern(
+                "exclusions: \\[\n\\{\"page\":1,\"x1\":237,\"y1\":363,\"x2\":421,\"y2\":408\\},\n\\{\"page\":2,\"x1\":1776,\"y1\":248,\"x2\":196.,\"y2\":293\\}\n\\]"));
 
         writeAndCompare(result);
     }

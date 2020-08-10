@@ -84,6 +84,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 
     /**
      * checks, whether this CompareResult has stored images.
+     *
      * @return true, when images are stored in this CompareResult
      */
     protected synchronized boolean hasImages() {
