@@ -4,7 +4,7 @@ Files are rendered and compared pixel by pixel.
 
 ### Usage with Maven
 
-Just include it as dependency. Please check for the most current version available:
+Just include it as a dependency. Please check for the most current version available:
 
 ```xml
 <dependencies>
@@ -33,9 +33,11 @@ But the focus of PdfCompare is on embedded usage as a library.
 new PdfComparator("expected.pdf", "actual.pdf").compare().writeTo("diffOutput");
 ```
 This will produce an output PDF which may include markings for differences found.
+PdfCompare renders a page from the expected.pdf and the same page from the actual.pdf
+to a bitmap image and compares these two images pixel by pixel.
 Pixels that are equal are faded a bit. Pixels that differ are marked in red and green.
-Green for pixels that were expected, but didn't come.
-Red for pixels that are there, but were not expected.
+Green for pixels that where in the expected.pdf, but are not present in the actual.pdf.
+Red for pixels that are present in the actual.pdf, but were not in the expected.pdf.
 And there are markings at the edge of the paper in magenta to find areas that differ quickly.
 Ignored Areas are marked with a yellow background.
 Pages that were expected, but did not come are marked with a red border.
