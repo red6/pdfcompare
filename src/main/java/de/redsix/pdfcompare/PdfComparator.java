@@ -439,8 +439,8 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private void drawImage(final CountDownLatch latch, final int pageIndex,
-                           final PDDocument expectedDocument, final PDDocument actualDocument,
-                           final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
+            final PDDocument expectedDocument, final PDDocument actualDocument,
+            final PDFRenderer expectedPdfRenderer, final PDFRenderer actualPdfRenderer) {
         drawExecutor.execute(() -> {
             try {
                 LOG.trace("Drawing page {}", pageIndex);
@@ -500,7 +500,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private void addExtraPages(final PDDocument document, final PDFRenderer pdfRenderer, final int minPageCount,
-                               final int color, final boolean expected) throws IOException {
+            final int color, final boolean expected) throws IOException {
         for (int pageIndex = minPageCount; pageIndex < document.getNumberOfPages(); pageIndex++) {
             ImageWithDimension image = renderPageAsImage(document, pdfRenderer, pageIndex, environment);
             final DataBuffer dataBuffer = image.bufferedImage.getRaster().getDataBuffer();
@@ -521,11 +521,13 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private static ImageWithDimension blank(final ImageWithDimension image) {
-        return new ImageWithDimension(new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()), image.width, image.height);
+        return new ImageWithDimension(
+                new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()),
+                image.width, image.height);
     }
 
-    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex, Environment environment)
-            throws IOException {
+    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex,
+            Environment environment) throws IOException {
         final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, environment.getDPI());
         final PDPage page = document.getPage(pageIndex);
         final PDRectangle mediaBox = page.getMediaBox();
