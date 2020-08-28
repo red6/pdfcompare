@@ -17,8 +17,10 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
+import de.redsix.pdfcompare.env.ConfigFileEnvironment;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
+import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -215,7 +217,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Allows to inject an Environment that can override environment settings.
-     * {@link de.redsix.pdfcompare.env.SimpleEnvironment} is particularly useful if you want to override some properties.
+     * {@link SimpleEnvironment} is particularly useful if you want to override some properties.
+     * If you want to specify your own config file, instead of the default application.conf
+     * in the root of the classpath, you an use a {@link ConfigFileEnvironment}.
      *
      * @param environment the environment so use
      * @return this

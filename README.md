@@ -43,21 +43,6 @@ Ignored Areas are marked with a yellow background.
 Pages that were expected, but did not come are marked with a red border.
 Pages that appear, but were not expected are marked with a green border.
 
-The colors used can be changed. To change them, add a file called "application.conf"
-to the root of the classpath. In this file you can specify new colors in HTML-Stlye format (without a leading '#'):
-
-- expectedColor=D20000
-
-    The expected color is the color that is used for pixels that were expected, but are not there.
-    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-    of the color. The last two characters define the blue-portion of the color to use.
-
-- actualColor=00B400
-
-    The actual color is the color that is used for pixels that are there, but were not expected.
-    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-    of the color. The last two characters define the blue-portion of the color to use.
-
 The compare-method returns a CompareResult, which can be queried:
 
 ```java
@@ -136,17 +121,79 @@ new PdfComparator("expected.pdf", "actual.pdf")
     .compare();
 ```
 
-### Allow for a difference in percent per page
+### Configuring PdfCompare
 
-If for some reason your rendering is a little off or you allow for some error margin, you can configure a percentage of pixels that are ignored during comparison.
-That way a difference is only reported, when more than the given percentage of pixels differ. The percentage is calculated per page.
+PdfCompare can be configured with a config file. The default config file is called "application.conf" and it
+must be located in the root of the classpath.
 
-To use this feature, just add a file called "application.conf" to the root of the classpath.
-In that file you can add a setting:
+PdfCompare uses Lightbend Config (previously called TypeSafe Config) to read its configuration
+files. If you want to specify another configuration file, you can find out more about that here:
+https://github.com/lightbend/config#standard-behavior. In particular you can specify a
+replacement config file with the -Dconfig.file=path/to/file command line argument.  
+
+Another way to specify a different config location programmatically is to create a
+new ConfigFileEnvironment(...) and pass it to PdfCompare.withEnvironment(...).
+ 
+### Configuring PdfCompare though an API
+
+All the settings, that can be changed through the application.conf file can also be changed programmatically through the API.
+To do so you can use the following code:
+```java
+new PdfComparator("expected.pdf", "actual.pdf")
+	.withEnvironment(new SimpleEnvironment()
+        .setActualColor(Color.green)
+        .setExpectedColor(Color.blue))
+	.compare();
+```
+The SimpleEnvironment delegates all settings, that were not assigned, to the default Environment.
+
+#### Configuration options
+
+Through the environment you can configure the memory settings (see above) and the following settings:
+
+- DPI=300
+
+    Sets the DPI that Pdf pages are rendered with. Default is 300.
+    
+- expectedColor=D20000
+
+    The expected color is the color that is used for pixels that were expected, but are not there.
+    The colors are specified in HTML-Stlye format (without a leading '#'):
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
+    
+- actualColor=00B400
+
+    The actual color is the color that is used for pixels that are there, but were not expected.
+    The colors are specified in HTML-Stlye format (without a leading '#'):
+    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
+    of the color. The last two characters define the blue-portion of the color to use.
+
+- tempDir=System.property("java.io.tmpdir")
+
+    Sets the directory where to write temporary files. Defaults to the java default for java.io.tmpdir, which usually determines a
+    system specific default, like /tmp on most unix systems.
 
 - allowedDifferenceInPercentPerPage=0.2
 
     Percent of pixels that may differ per page. Default is 0.
+    If for some reason your rendering is a little off or you allow for some error margin,
+    you can configure a percentage of pixels that are ignored during comparison.
+    That way a difference is only reported, when more than the given percentage
+    of pixels differ. The percentage is calculated per page. Not that the differences
+    are still marked in the output file, when you addEqualPagesToResult.
+
+- parallelProcessing=true
+
+    When set to false, disables all parallel processing and process everything in a single thread.
+
+- addEqualPagesToResult=true
+
+    When set to false, only pages with differences are added to the result and this the resulting difference PDF document.
+    
+- failOnMissingIgnoreFile=false
+
+    When set to true, a missing ignore file leads to an exception. Otherwise it is ignored and only an info level log messages is written.
 
 ### Different CompareResult Implementations
 
@@ -208,58 +255,6 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 
 So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
 I have good experience with granting a 2GB heap space to the JVM.
-
-### configuring PdfComparator though an API
-
-All the settings, that can be changed through the application.conf file can also be changed programmatically through the API.
-To do so you can use the following code:
-```java
-new PdfComparator("expected.pdf", "actual.pdf")
-	.withEnvironment(new SimpleEnvironment()
-        .setActualColor(Color.green)
-        .setExpectedColor(Color.blue))
-	.compare();
-```
-The SimpleEnvironment delegates all settings, that were not assigned, to the default Environment.
-
-Through the environment you can configure the memory settings (see above) and the following settings:
-
-- DPI=300
-
-    Sets the DPI that Pdf pages are rendered with. Default is 300.
-    
-- expectedColor=D20000
-
-    The expected color is the color that is used for pixels that were expected, but are not there.
-    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-    of the color. The last two characters define the blue-portion of the color to use.
-
-- actualColor=00B400
-
-    The actual color is the color that is used for pixels that are there, but were not expected.
-    The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
-    of the color. The last two characters define the blue-portion of the color to use.
-
-- tempDir=System.property("java.io.tmpdir")
-
-    Sets the directory where to write temporary files. Defaults to the java default for java.io.tmpdir, which usually determines a
-    system specific default, like /tmp on most unix systems.
-
-- allowedDifferenceInPercentPerPage=0.2
-
-    Percent of pixels that may differ per page. Default is 0.
-
-- parallelProcessing=true
-
-    When set to false, disables all parallel processing and process everything in a single thread.
-
-- addEqualPagesToResult=true
-
-    When set to false, only pages with differences are added to the result and this the resulting difference PDF document.
-    
-- failOnMissingIgnoreFile=false
-
-    When set to true, a missing ignore file leads to an exception. Otherwise it is ignored and only an info level log messages is written.
 
 ### Acknowledgements
 
