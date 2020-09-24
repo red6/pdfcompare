@@ -1,12 +1,11 @@
 package de.redsix.pdfcompare.ui;
 
-import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
-import de.redsix.pdfcompare.PdfComparator;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -15,14 +14,40 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class Display {
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.WindowConstants;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+
+import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
+import de.redsix.pdfcompare.PdfComparator;
+import de.redsix.pdfcompare.RenderingException;
+
+public class Display {
     private ViewModel viewModel;
+    private JFrame frame;
+    private ImagePanel leftPanel;
+    private ImagePanel resultPanel;
+    private JToggleButton expectedButton;
 
     public void init() {
         viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
 
-        JFrame frame = new JFrame();
+        frame = new JFrame();
+        frame.setTitle("PDF Compare");
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         final BorderLayout borderLayout = new BorderLayout();
         frame.setLayout(borderLayout);
@@ -37,8 +62,8 @@ public class Display {
         toolBar.setFloatable(false);
         frame.add(toolBar, BorderLayout.PAGE_START);
 
-        ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
-        ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
+        leftPanel = new ImagePanel(viewModel.getLeftImage());
+        resultPanel = new ImagePanel(viewModel.getDiffImage());
 
         JScrollPane expectedScrollPane = new JScrollPane(leftPanel);
         expectedScrollPane.setMinimumSize(new Dimension(200, 200));
@@ -70,7 +95,7 @@ public class Display {
         splitPane.setOneTouchExpandable(true);
         frame.add(splitPane, BorderLayout.CENTER);
 
-        final JToggleButton expectedButton = new JToggleButton("Expected");
+        expectedButton = new JToggleButton("Expected");
 
         addToolBarButton(toolBar, "Open...", (event) -> {
             JFileChooser fileChooser = new JFileChooser();
@@ -83,24 +108,7 @@ public class Display {
                         final File actualFile = fileChooser.getSelectedFile();
                         final JPasswordField passwordForActualFile = askForPassword(actualFile);
 
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual)
-                                new PdfComparator<>(expectedFile, actualFile,
-                                        new CompareResultWithExpectedAndActual())
-                                        .withExpectedPassword(String.valueOf(passwordForExpectedFile.getPassword()))
-                                        .withActualPassword(String.valueOf(passwordForActualFile.getPassword()))
-                                        .compare();
-
-                        viewModel = new ViewModel(compareResult);
-                        leftPanel.setImage(viewModel.getLeftImage());
-                        resultPanel.setImage(viewModel.getDiffImage());
-
-                        if (compareResult.isEqual()) {
-                            JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
-                        }
-
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        expectedButton.setSelected(true);
+                        openFiles(expectedFile, actualFile, String.valueOf(passwordForExpectedFile.getPassword()), String.valueOf(passwordForActualFile.getPassword()));
                     }
                 }
             } catch (IOException ex) {
@@ -180,6 +188,33 @@ public class Display {
         buttonGroup.add(actualButton);
 
         frame.setVisible(true);
+    }
+
+    public void openFiles(File expectedFile, File actualFile,
+            String passwordForExpectedFile, String passwordForActualFile) throws RenderingException, IOException {
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            PdfComparator<CompareResultWithExpectedAndActual> c = new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual());
+            if (passwordForExpectedFile != null && !passwordForExpectedFile.isEmpty()) {
+                c = c.withExpectedPassword(passwordForExpectedFile);
+            }
+            if (passwordForActualFile != null && !passwordForActualFile.isEmpty()) {
+                c = c.withActualPassword(passwordForActualFile);
+            }
+            final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual) c.compare();
+    
+            viewModel = new ViewModel(compareResult);
+            leftPanel.setImage(viewModel.getLeftImage());
+            resultPanel.setImage(viewModel.getDiffImage());
+    
+            if (compareResult.isEqual()) {
+                JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
+            }
+    
+            expectedButton.setSelected(true);
+        } finally {
+            frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 
     private static void DisplayExceptionDialog(final JFrame frame, final IOException ex) {
