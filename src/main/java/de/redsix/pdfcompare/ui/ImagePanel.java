@@ -1,8 +1,14 @@
 package de.redsix.pdfcompare.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+
+import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 
 class ImagePanel extends JPanel implements Scrollable {
 
@@ -41,6 +47,9 @@ class ImagePanel extends JPanel implements Scrollable {
     }
 
     private void setZoomToPage() {
+        if (viewSize == null) {
+            return;
+        }
         double zoomWidth = ((double) viewSize.width) / ((double) getImageWidth());
         double zoomHeight = ((double) viewSize.height) / ((double) getImageHeight());
         zoom = Math.min(zoomWidth, zoomHeight);
