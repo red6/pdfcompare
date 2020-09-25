@@ -6,9 +6,15 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -42,12 +48,14 @@ public class Display {
     private ImagePanel leftPanel;
     private ImagePanel resultPanel;
     private JToggleButton expectedButton;
+    private double dpi = 300;
 
     public void init() {
         viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
 
         frame = new JFrame();
-        frame.setTitle("PDF Compare");
+        final String title = "PDF Compare";
+        frame.setTitle(title);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         final BorderLayout borderLayout = new BorderLayout();
         frame.setLayout(borderLayout);
@@ -187,6 +195,35 @@ public class Display {
         toolBar.add(actualButton);
         buttonGroup.add(actualButton);
 
+        toolBar.addSeparator();
+
+        final MouseListener mouseListener = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                double f = 300 / getDPI();
+                double zoom = leftPanel.getZoomFactor() * f;
+                String xy = (int) (e.getX() / zoom) + ", " + (int) (e.getY() / zoom);
+
+                Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+                c.setContents(new StringSelection(xy), null);
+                
+                frame.setTitle(title + " - " + xy); // feedback for user
+            }
+        };
+        final JToggleButton xyMode = new JToggleButton("XY Mode");
+        xyMode.addActionListener(event -> {
+            if (xyMode.isSelected()) {
+                leftPanel.addMouseListener(mouseListener);
+                // Cross mouse pointer shows active XY mode and makes positioning easier.
+                leftPanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+            } else {
+                leftPanel.removeMouseListener(mouseListener);
+                leftPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+            frame.setTitle(title);
+        });
+        toolBar.add(xyMode);
+
         frame.setVisible(true);
     }
 
@@ -273,5 +310,13 @@ public class Display {
             return true;
         }
         return false;
+    }
+
+    public double getDPI() {
+        return dpi;
+    }
+
+    public void setDPI(double dpi) {
+        this.dpi = dpi;
     }
 }
