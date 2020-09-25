@@ -5,6 +5,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -56,6 +59,10 @@ public class Display {
         frame = new JFrame();
         final String title = "PDF Compare";
         frame.setTitle(title);
+        List<Image> list = new ArrayList<>();
+        list.add(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/pdfcomparestudio16.png")));
+        list.add(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/pdfcomparestudio40.png")));
+        frame.setIconImages(list);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         final BorderLayout borderLayout = new BorderLayout();
         frame.setLayout(borderLayout);
