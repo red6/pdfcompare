@@ -59,10 +59,6 @@ class ImagePanel extends JPanel implements Scrollable {
         zoom = Math.min(zoomWidth, zoomHeight);
     }
 
-    private void getWidthZoom() {
-        zoom = ((double) getVisibleRect().width) / ((double) getImageWidth());
-    }
-
     private int getZoomWidth() {
         return (int) Math.floor(getImageWidth() * zoom);
     }
