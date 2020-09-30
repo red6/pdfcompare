@@ -98,6 +98,31 @@ public class PageArea {
     public int getY2() {
         return y2;
     }
+    
+    @Override
+    public int hashCode() {
+        return page + 31 * x1;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        
+        if (obj == null || ! (obj instanceof PageArea)) {
+            return false;
+        }
+        
+        PageArea pageArea = (PageArea) obj;
+        
+        return this.getPage() == pageArea.getPage()
+                && this.getX1() == pageArea.getX1()
+                && this.getY1() == pageArea.getY1()
+                && this.getX2() == pageArea.getX2()
+                && this.getY2() == pageArea.getY2()
+            ;
+    }
 
     public String asJson() {
         return "{\"page\":" + page + ",\"x1\":" + x1 + ",\"y1\":" + y1 + ",\"x2\":" + x2 + ",\"y2\":" + y2 + "}";

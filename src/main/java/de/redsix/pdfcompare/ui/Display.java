@@ -1,21 +1,27 @@
 package de.redsix.pdfcompare.ui;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,6 +29,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -36,22 +43,29 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
+import de.redsix.pdfcompare.PageArea;
 import de.redsix.pdfcompare.PdfComparator;
 import de.redsix.pdfcompare.RenderingException;
+
 
 public class Display {
     private ViewModel viewModel;
     private JFrame frame;
     private ImagePanel leftPanel;
     private ImagePanel resultPanel;
+    private ExclusionsPanel exclusionsPanel;
     private JToggleButton expectedButton;
     private double dpi = 300;
+    private boolean showExclusions = false;
+    /** used for drawing a new exclusion area with the mouse */
+    private PageArea dragArea;
 
     public void init() {
         viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
@@ -109,6 +123,11 @@ public class Display {
         splitPane.setDividerLocation(0.5);
         splitPane.setOneTouchExpandable(true);
         frame.add(splitPane, BorderLayout.CENTER);
+        
+        exclusionsPanel = new ExclusionsPanel(this);
+        // panel is hidden until toggled
+        exclusionsPanel.setVisible(showExclusions);
+        frame.add(exclusionsPanel, BorderLayout.EAST);
 
         expectedButton = new JToggleButton("Expected");
 
@@ -135,15 +154,15 @@ public class Display {
 
         addToolBarButton(toolBar, "Page -", (event) -> {
             if (viewModel.decreasePage()) {
-                leftPanel.setImage(viewModel.getLeftImage());
-                resultPanel.setImage(viewModel.getDiffImage());
+                leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
+                resultPanel.setImage(applyExclusions(viewModel.getDiffImage()));
             }
         });
 
         addToolBarButton(toolBar, "Page +", (event) -> {
             if (viewModel.increasePage()) {
-                leftPanel.setImage(viewModel.getLeftImage());
-                resultPanel.setImage(viewModel.getDiffImage());
+                leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
+                resultPanel.setImage(applyExclusions(viewModel.getDiffImage()));
             }
         });
 
@@ -189,7 +208,7 @@ public class Display {
         expectedButton.setSelected(true);
         expectedButton.addActionListener((event) -> {
             viewModel.showExpected();
-            leftPanel.setImage(viewModel.getLeftImage());
+            leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
         });
         toolBar.add(expectedButton);
         buttonGroup.add(expectedButton);
@@ -197,39 +216,157 @@ public class Display {
         final JToggleButton actualButton = new JToggleButton("Actual");
         actualButton.addActionListener((event) -> {
             viewModel.showActual();
-            leftPanel.setImage(viewModel.getLeftImage());
+            leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
         });
         toolBar.add(actualButton);
         buttonGroup.add(actualButton);
 
         toolBar.addSeparator();
-
-        final MouseListener mouseListener = new MouseAdapter() {
+        
+        final MouseAdapter mouseListener = new MouseAdapter() {
+            private boolean dragging = false;
+            private Point startPoint;
+            
             @Override
             public void mouseClicked(MouseEvent e) {
-                double f = 300 / getDPI();
-                double zoom = leftPanel.getZoomFactor() * f;
+                double zoom = leftPanel.getZoomFactor();
                 String xy = (int) (e.getX() / zoom) + ", " + (int) (e.getY() / zoom);
-
-                Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
-                c.setContents(new StringSelection(xy), null);
                 
                 frame.setTitle(title + " - " + xy); // feedback for user
+                
+                // pick selected area by clicking on it
+                ExclusionItemPanel item = exclusionsPanel.getItemAt(viewModel.getPageToShow() + 1
+                        , (int) (e.getX() / zoom)
+                        , (int) (e.getY() / zoom) );
+                if (item != null) {
+                    exclusionsPanel.setSelectedItem(item);
+                }
             }
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                startPoint = e.getPoint();
+                dragging = true;
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (dragging) {
+                    Point endPoint = e.getPoint();
+                    
+                    double d = Point2D.distance(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+                    // assuming user didn't drag if less than 8 pixels
+                    if (d > 7) {
+                        int pageNumber = viewModel.getPageToShow();
+                        PageArea pageArea = getPageArea(pageNumber, endPoint);
+                        exclusionsPanel.addExclusion(pageArea);
+                        ExclusionItemPanel item = exclusionsPanel.getItemForArea(pageArea);
+                        exclusionsPanel.setSelectedItem(item);
+                    }
+                    
+                    dragging = false;
+                    startPoint = null;
+                    dragArea = null;
+                    
+                    redrawImages();
+                }
+            }
+            
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (dragging) {
+                    int pageNumber = viewModel.getPageToShow();
+                    Point endPoint = e.getPoint();
+                    PageArea pageArea = getPageArea(pageNumber, endPoint);
+                    
+                    dragArea = pageArea;
+                    
+                    redrawImages();
+                }
+            }
+            
+            private PageArea getPageArea(int pageNumber, Point endPoint) {
+                double zoom = leftPanel.getZoomFactor();
+                
+                int x1 = (int) Math.min(startPoint.x/zoom, endPoint.x/zoom);
+                int y1 = (int) Math.min(startPoint.y/zoom, endPoint.y/zoom);
+                int x2 = (int) Math.max(startPoint.x/zoom, endPoint.x/zoom);
+                int y2 = (int) Math.max(startPoint.y/zoom, endPoint.y/zoom);
+                
+                return new PageArea(pageNumber + 1, x1, y1, x2, y2);
+            }
+            
         };
-        final JToggleButton xyMode = new JToggleButton("XY Mode");
-        xyMode.addActionListener(event -> {
-            if (xyMode.isSelected()) {
+        
+        // zoom using the mouse wheel
+        final MouseWheelListener mouseWheelListener = new MouseWheelListener() {
+            
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                BoundedRangeModel horizontalModel = actualScrollPane.getHorizontalScrollBar().getModel();
+                BoundedRangeModel verticalModel = actualScrollPane.getVerticalScrollBar().getModel();
+                double horizontalOffset = horizontalModel.getValue();
+                double verticalOffset = verticalModel.getValue();
+                double horizontalExtent = horizontalModel.getExtent();
+                double verticalExtent = verticalModel.getExtent();
+                double zoomBefore = leftPanel.getZoomFactor();
+                
+                if (e.getWheelRotation() > 0) {
+                    leftPanel.decreaseZoom();
+                    resultPanel.decreaseZoom();
+                    
+                    // keep visible area centered on zooming out
+                    double zoomAfter = leftPanel.getZoomFactor();
+                    int horizontalValue = (int) ( (horizontalOffset + horizontalExtent / 2) * zoomAfter / zoomBefore - horizontalExtent / 2);
+                    int verticalValue = (int) ( (verticalOffset + verticalExtent / 2) * zoomAfter / zoomBefore - verticalExtent / 2);
+                    horizontalModel.setValue(horizontalValue);
+                    verticalModel.setValue(verticalValue);
+
+                } else {
+                    leftPanel.increaseZoom();
+                    resultPanel.increaseZoom();
+                    
+                    // keep visible area centered on mouse cursor
+                    Point mousePoint = e.getPoint();
+                    double zoomAfter = leftPanel.getZoomFactor();
+                    int horizontalValue = (int) ( mousePoint.x * zoomAfter / zoomBefore - horizontalExtent / 2);
+                    int verticalValue = (int) ( mousePoint.y * zoomAfter / zoomBefore - verticalExtent / 2);
+                    
+                    // FIXME: this is a workaround because the zoom isn't applied to the scrollbars immediately and scroll maximum might be too small at this time.
+                    SwingUtilities.invokeLater(() -> {
+                        horizontalModel.setValue(horizontalValue);
+                        verticalModel.setValue(verticalValue);
+                    });
+                }
+            }
+            
+        };
+        leftPanel.addMouseWheelListener(mouseWheelListener);
+        resultPanel.addMouseWheelListener(mouseWheelListener);
+        
+        final JToggleButton exclusionMode = new JToggleButton("Exclusions");
+        exclusionMode.addActionListener(event -> {
+            if (exclusionMode.isSelected()) {
                 leftPanel.addMouseListener(mouseListener);
+                leftPanel.addMouseMotionListener(mouseListener);
+                resultPanel.addMouseListener(mouseListener);
+                resultPanel.addMouseMotionListener(mouseListener);
                 // Cross mouse pointer shows active XY mode and makes positioning easier.
                 leftPanel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                showExclusions = true;
             } else {
                 leftPanel.removeMouseListener(mouseListener);
+                leftPanel.removeMouseMotionListener(mouseListener);
+                resultPanel.removeMouseListener(mouseListener);
+                resultPanel.removeMouseMotionListener(mouseListener);
                 leftPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                showExclusions = false;
             }
+            exclusionsPanel.setVisible(showExclusions);
+            redrawImages();
             frame.setTitle(title);
         });
-        toolBar.add(xyMode);
+        toolBar.add(exclusionMode);
 
         frame.setVisible(true);
     }
@@ -247,9 +384,10 @@ public class Display {
             }
             final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual) c.compare();
     
+            exclusionsPanel.setCompareResults(compareResult);
             viewModel = new ViewModel(compareResult);
-            leftPanel.setImage(viewModel.getLeftImage());
-            resultPanel.setImage(viewModel.getDiffImage());
+            leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
+            resultPanel.setImage(applyExclusions(viewModel.getDiffImage()));
     
             if (compareResult.isEqual()) {
                 JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
@@ -260,8 +398,8 @@ public class Display {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
-
-    private static void DisplayExceptionDialog(final JFrame frame, final IOException ex) {
+    
+    public static void DisplayExceptionDialog(final JFrame frame, final Exception ex) {
         final StringWriter stringWriter = new StringWriter();
         ex.printStackTrace(new PrintWriter(stringWriter));
         JTextArea textArea = new JTextArea(
@@ -326,4 +464,103 @@ public class Display {
     public void setDPI(double dpi) {
         this.dpi = dpi;
     }
+
+    public void redrawImages() {
+        leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
+        resultPanel.setImage(applyExclusions(viewModel.getDiffImage()));
+    }
+    
+    /** switches to the page and scrolls to show the area. */
+    public void showPageArea(PageArea pageArea) {
+        int pageNo = pageArea.getPage();
+        viewModel.setPageToShow(pageNo - 1);
+        redrawImages();
+        
+        if (pageArea.getX1() != -1) {
+            double zoom = leftPanel.getZoomFactor();
+
+            Rectangle rect = new Rectangle(
+                      (int) ( pageArea.getX1() * zoom )
+                    , (int) ( pageArea.getY1() * zoom )
+                    , (int) ( ( pageArea.getX2() - pageArea.getX1() ) * zoom )
+                    , (int) ( ( pageArea.getY2() - pageArea.getY1() ) * zoom )
+                );
+            
+            leftPanel.scrollRectToVisible(rect);
+            frame.repaint();
+        }
+    }
+    
+    static private Color SHADE_BORDER = new Color(0x708090);
+    static private Color SHADE = new Color(0x70606000, true);
+    static private Color SHADE_HIGHLIGHT = new Color(0xA0A0A0FF, true);
+    
+    /** paints shaded areas over defined exclusions */
+    public BufferedImage applyExclusions(BufferedImage image) {
+        if (! showExclusions) {
+            return image;
+        }
+        
+        if (image == null) {
+            return null;
+        }
+        
+        int pageNo = viewModel.getPageToShow();
+        
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB); 
+        Graphics g = bufferedImage.getGraphics();
+        
+        g.drawImage(image, 0, 0, null);
+        
+        exclusionsPanel.getExclusions().forEach(pa -> {
+            if (pa.getPage() != -1 && pa.getPage() != pageNo + 1) {
+                // filter by page.
+                // NOTE: forPage doesn't work correctly
+                return;
+            }
+            
+            if (pa.getX1() == -1) {
+                // full page
+                g.setColor(exclusionsPanel.isSelected(pa) ? SHADE_HIGHLIGHT : SHADE);
+                g.fillRect(0, 0, image.getWidth(), image.getHeight());
+                g.setColor(SHADE_BORDER);
+                g.drawRect(0, 0, image.getWidth(), image.getHeight());
+            } else {
+                g.setColor(exclusionsPanel.isSelected(pa) ? SHADE_HIGHLIGHT : SHADE);
+                g.fillRect(pa.getX1(), pa.getY1(), pa.getX2() - pa.getX1(), pa.getY2() - pa.getY1());
+                g.setColor(SHADE_BORDER);
+                g.drawRect(pa.getX1(), pa.getY1(), pa.getX2() - pa.getX1(), pa.getY2() - pa.getY1());
+                
+                if (dragArea == null && exclusionsPanel.isSelected(pa)) {
+                    // draw scan lines for the selected area
+                    ((Graphics2D) g).setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[] { 10, 20 }, 5 ));
+                    g.drawLine(0, pa.getY1(), image.getWidth(), pa.getY1());
+                    g.drawLine(0, pa.getY2(), image.getWidth(), pa.getY2());
+                    g.drawLine(pa.getX1(), 0, pa.getX1(), image.getHeight());
+                    g.drawLine(pa.getX2(), 0, pa.getX2(), image.getHeight());
+                    ((Graphics2D) g).setStroke(new BasicStroke());
+                }
+            }
+            
+        });
+        
+        // this is the overlay for mouse drawing a rectangle
+        if (dragArea != null) {
+            g.setColor(SHADE_HIGHLIGHT);
+            g.fillRect(dragArea.getX1(), dragArea.getY1(), dragArea.getX2() - dragArea.getX1(), dragArea.getY2() - dragArea.getY1());
+            g.setColor(SHADE_BORDER);
+            g.drawRect(dragArea.getX1(), dragArea.getY1(), dragArea.getX2() - dragArea.getX1(), dragArea.getY2() - dragArea.getY1());
+            
+            // draw scan lines for the area
+            ((Graphics2D) g).setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[] { 10, 20 }, 5 ));
+            g.drawLine(0, dragArea.getY1(), image.getWidth(), dragArea.getY1());
+            g.drawLine(0, dragArea.getY2(), image.getWidth(), dragArea.getY2());
+            g.drawLine(dragArea.getX1(), 0, dragArea.getX1(), image.getHeight());
+            g.drawLine(dragArea.getX2(), 0, dragArea.getX2(), image.getHeight());
+            ((Graphics2D) g).setStroke(new BasicStroke());
+        }
+        
+        return bufferedImage;
+    }
+
 }
