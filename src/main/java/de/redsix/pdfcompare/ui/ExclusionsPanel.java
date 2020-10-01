@@ -93,11 +93,10 @@ public class ExclusionsPanel extends JPanel {
         toolBar.setFloatable(false);
         this.add(toolBar, BorderLayout.SOUTH);
         
-        addToolBarButton(toolBar, "new", (event) -> addItemAction() );
-        addToolBarButton(toolBar, "use diff", (event) -> useDifferencesAction() );
-        addToolBarButton(toolBar, "load", (event) -> loadAction() );
-        addToolBarButton(toolBar, "save", (event) -> saveAction() );
-        
+        addToolBarButton(toolBar, "New", "Add new exclusion block", event -> addItemAction());
+        addToolBarButton(toolBar, "Diffs", "Show computed differences", event -> useDifferencesAction());
+        addToolBarButton(toolBar, "Load", "Load exclusions file", event -> loadAction());
+        addToolBarButton(toolBar, "Save", "Save exclusions file", event -> saveAction());        
         
         // support to drag config files into the panel
         new DropTarget(this, DnDConstants.ACTION_COPY, new DropTargetAdapter() {
@@ -394,9 +393,10 @@ public class ExclusionsPanel extends JPanel {
         }
     }
     
-    private static void addToolBarButton(final JToolBar toolBar, final String label, final ActionListener actionListener) {
+    private static void addToolBarButton(final JToolBar toolBar, final String label, final String tooltip, final ActionListener actionListener) {
         final JButton button = new JButton(label);
         button.addActionListener(actionListener);
+        button.setToolTipText(tooltip);
         toolBar.add(button);
     }
     
