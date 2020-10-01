@@ -62,7 +62,6 @@ public class Display {
     private ImagePanel resultPanel;
     private ExclusionsPanel exclusionsPanel;
     private JToggleButton expectedButton;
-    private double dpi = 300;
     private boolean showExclusions = false;
     /** used for drawing a new exclusion area with the mouse */
     private PageArea dragArea;
@@ -71,7 +70,7 @@ public class Display {
         viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
 
         frame = new JFrame();
-        final String title = "PDF Compare";
+        final String title = "PDF Compare Studio";
         frame.setTitle(title);
         List<Image> list = new ArrayList<>();
         list.add(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/pdfcomparestudio16.png")));
@@ -451,14 +450,6 @@ public class Display {
             return true;
         }
         return false;
-    }
-
-    public double getDPI() {
-        return dpi;
-    }
-
-    public void setDPI(double dpi) {
-        this.dpi = dpi;
     }
 
     public void redrawImages() {
