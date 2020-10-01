@@ -28,6 +28,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
@@ -94,7 +95,7 @@ public class ExclusionsPanel extends JPanel {
         this.add(toolBar, BorderLayout.SOUTH);
         
         addToolBarButton(toolBar, "New", "Add new exclusion block", event -> addItemAction());
-        addToolBarButton(toolBar, "Diffs", "Show computed differences", event -> useDifferencesAction());
+        addToolBarButton(toolBar, "Diffs", "Show computed differences", event -> showComputedDifferencesAction());
         addToolBarButton(toolBar, "Load", "Load exclusions file", event -> loadAction());
         addToolBarButton(toolBar, "Save", "Save exclusions file", event -> saveAction());        
         
@@ -112,6 +113,7 @@ public class ExclusionsPanel extends JPanel {
                 
                 try {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY);
+                    @SuppressWarnings("unchecked")
                     List<File> files = (List<File>) dtde.getTransferable().getTransferData(flavor);
                     if (files == null || files.isEmpty()) {
                         dtde.dropComplete(false);
@@ -163,9 +165,16 @@ public class ExclusionsPanel extends JPanel {
         addExclusion(new PageArea(display.getPageNumber()));
     }
     
-    private void useDifferencesAction() {
-        useCompareResults();
-        display.redrawImages();
+    private void showComputedDifferencesAction() {
+        if (exclusionsList.getComponents().length == 0 || askForReplacement()) {
+            useCompareResults();
+            display.redrawImages();
+        }
+    }
+
+    private boolean askForReplacement() {
+        return JOptionPane.showConfirmDialog(null, "This replaces the current exclusions with the computed differences.", "Info",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE) == JOptionPane.OK_OPTION;
     }
     
     private void loadAction() {
