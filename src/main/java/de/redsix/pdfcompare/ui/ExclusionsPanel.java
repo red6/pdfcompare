@@ -160,7 +160,7 @@ public class ExclusionsPanel extends JPanel {
     }
     
     private void addItemAction() {
-        addExclusion(new PageArea(1));
+        addExclusion(new PageArea(display.getPageNumber()));
     }
     
     private void useDifferencesAction() {

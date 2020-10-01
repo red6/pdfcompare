@@ -563,4 +563,7 @@ public class Display {
         return bufferedImage;
     }
 
+    public int getPageNumber() {
+        return viewModel.getPageToShow();
+    }
 }
