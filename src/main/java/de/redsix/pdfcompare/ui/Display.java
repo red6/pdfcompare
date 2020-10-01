@@ -229,12 +229,8 @@ public class Display {
             
             @Override
             public void mouseClicked(MouseEvent e) {
-                double zoom = leftPanel.getZoomFactor();
-                String xy = (int) (e.getX() / zoom) + ", " + (int) (e.getY() / zoom);
-                
-                frame.setTitle(title + " - " + xy); // feedback for user
-                
                 // pick selected area by clicking on it
+                double zoom = leftPanel.getZoomFactor();
                 ExclusionItemPanel item = exclusionsPanel.getItemAt(viewModel.getPageToShow() + 1
                         , (int) (e.getX() / zoom)
                         , (int) (e.getY() / zoom) );
@@ -563,7 +559,10 @@ public class Display {
         return bufferedImage;
     }
 
+    /**
+     * @return current page number, 1 based
+     */
     public int getPageNumber() {
-        return viewModel.getPageToShow();
+        return viewModel.getPageToShow() + 1;
     }
 }
