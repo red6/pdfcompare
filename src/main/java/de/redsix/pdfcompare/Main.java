@@ -14,7 +14,7 @@ public class Main {
         try {
             final CliArguments cliArguments = new CliArguments(args);
 
-            if (cliArguments.areAvailable()) {
+            if (args.length > 0) {
                 System.exit(cliArguments.execute());
             } else {
                 startUI();

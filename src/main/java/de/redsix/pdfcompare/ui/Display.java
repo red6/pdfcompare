@@ -2,6 +2,7 @@ package de.redsix.pdfcompare.ui;
 
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
 import de.redsix.pdfcompare.PdfComparator;
+import de.redsix.pdfcompare.cli.CliArguments;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
@@ -14,15 +15,29 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Optional;
 
 public class Display {
 
-    private ViewModel viewModel;
+    private final JFrame frame = new JFrame();
+    private ViewModel viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
+    private final ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
+    private final ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
+    private final JToggleButton expectedButton = new JToggleButton("Expected");
+
+    public void init(CliArguments cliArguments) {
+        init();
+        if (cliArguments.hasFileArguments()) {
+            try {
+                openFiles(new File(cliArguments.getExpectedFile().get()), cliArguments.getExpectedPassword(),
+                        new File(cliArguments.getActualFile().get()), cliArguments.getActualPassword(), cliArguments.getExclusionsFile());
+            } catch (IOException ex) {
+                DisplayExceptionDialog(frame, ex);
+            }
+        }
+    }
 
     public void init() {
-        viewModel = new ViewModel(new CompareResultWithExpectedAndActual());
-
-        JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         final BorderLayout borderLayout = new BorderLayout();
         frame.setLayout(borderLayout);
@@ -36,9 +51,6 @@ public class Display {
         toolBar.setRollover(true);
         toolBar.setFloatable(false);
         frame.add(toolBar, BorderLayout.PAGE_START);
-
-        ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
-        ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
 
         JScrollPane expectedScrollPane = new JScrollPane(leftPanel);
         expectedScrollPane.setMinimumSize(new Dimension(200, 200));
@@ -70,37 +82,18 @@ public class Display {
         splitPane.setOneTouchExpandable(true);
         frame.add(splitPane, BorderLayout.CENTER);
 
-        final JToggleButton expectedButton = new JToggleButton("Expected");
-
         addToolBarButton(toolBar, "Open...", (event) -> {
             JFileChooser fileChooser = new JFileChooser();
             try {
                 if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
                     final File expectedFile = fileChooser.getSelectedFile();
-                    final JPasswordField passwordForExpectedFile = askForPassword(expectedFile);
+                    final Optional<String> passwordForExpectedFile = askForPasswordIfNeeded(expectedFile);
 
                     if (fileChooser.showDialog(frame, "Open actual PDF") == JFileChooser.APPROVE_OPTION) {
                         final File actualFile = fileChooser.getSelectedFile();
-                        final JPasswordField passwordForActualFile = askForPassword(actualFile);
+                        final Optional<String> passwordForActualFile = askForPasswordIfNeeded(actualFile);
 
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        final CompareResultWithExpectedAndActual compareResult = (CompareResultWithExpectedAndActual)
-                                new PdfComparator<>(expectedFile, actualFile,
-                                        new CompareResultWithExpectedAndActual())
-                                        .withExpectedPassword(String.valueOf(passwordForExpectedFile.getPassword()))
-                                        .withActualPassword(String.valueOf(passwordForActualFile.getPassword()))
-                                        .compare();
-
-                        viewModel = new ViewModel(compareResult);
-                        leftPanel.setImage(viewModel.getLeftImage());
-                        resultPanel.setImage(viewModel.getDiffImage());
-
-                        if (compareResult.isEqual()) {
-                            JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
-                        }
-
-                        frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                        expectedButton.setSelected(true);
+                        openFiles(expectedFile, passwordForExpectedFile, actualFile, passwordForActualFile, Optional.empty());
                     }
                 }
             } catch (IOException ex) {
@@ -182,6 +175,29 @@ public class Display {
         frame.setVisible(true);
     }
 
+    private void openFiles(File expectedFile, Optional<String> passwordForExpectedFile, File actualFile, Optional<String> passwordForActualFile,
+            Optional<String> exclusions)
+            throws IOException {
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        PdfComparator<CompareResultWithExpectedAndActual> pdfComparator
+                = new PdfComparator<>(expectedFile, actualFile, new CompareResultWithExpectedAndActual());
+        passwordForExpectedFile.ifPresent(pdfComparator::withExpectedPassword);
+        passwordForActualFile.ifPresent(pdfComparator::withActualPassword);
+        exclusions.ifPresent(pdfComparator::withIgnore);
+        final CompareResultWithExpectedAndActual compareResult = pdfComparator.compare();
+
+        viewModel = new ViewModel(compareResult);
+        leftPanel.setImage(viewModel.getLeftImage());
+        resultPanel.setImage(viewModel.getDiffImage());
+
+        if (compareResult.isEqual()) {
+            JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
+        }
+
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        expectedButton.setSelected(true);
+    }
+
     private static void DisplayExceptionDialog(final JFrame frame, final IOException ex) {
         final StringWriter stringWriter = new StringWriter();
         ex.printStackTrace(new PrintWriter(stringWriter));
@@ -202,33 +218,35 @@ public class Display {
         return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
     }
 
-    private static JPasswordField askForPassword(final File file) throws IOException {
-        JPasswordField passwordForFile = new JPasswordField(10);
-        if (isInvalidPassword(file, "")) {
-            final JLabel label = new JLabel("Enter password: ");
-            label.setLabelFor(passwordForFile);
+    private static Optional<String> askForPasswordIfNeeded(final File file) throws IOException {
+        if (!isInvalidPassword(file, "")) {
+            return Optional.empty();
+        }
 
-            final JPanel textPane = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-            textPane.add(label);
-            textPane.add(passwordForFile);
+        JPasswordField passwordField = new JPasswordField(20);
+        final JLabel label = new JLabel("Enter password: ");
+        label.setLabelFor(passwordField);
 
+        final JPanel textPane = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+        textPane.add(label);
+        textPane.add(passwordField);
+
+        JOptionPane.showMessageDialog(
+                null,
+                textPane,
+                "PDF is encrypted",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        label.setText("Password was invalid. Enter password: ");
+        while (isInvalidPassword(file, String.valueOf(passwordField.getPassword()))) {
+            passwordField.setText("");
             JOptionPane.showMessageDialog(
                     null,
                     textPane,
                     "PDF is encrypted",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            label.setText("Password was invalid. Enter password: ");
-            while (isInvalidPassword(file, String.valueOf(passwordForFile.getPassword()))) {
-                passwordForFile.setText("");
-                JOptionPane.showMessageDialog(
-                        null,
-                        textPane,
-                        "PDF is encrypted",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+                    JOptionPane.ERROR_MESSAGE);
         }
-        return passwordForFile;
+        return Optional.of(String.valueOf(passwordField.getPassword()));
     }
 
     private static boolean isInvalidPassword(final File file, final String password) throws IOException {

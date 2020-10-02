@@ -12,35 +12,35 @@ public class CliArgumentsTest {
     public void cliIsAvailableWhenExpectedAndActualFilenameAreProvided() {
         CliArguments cliArguments = new CliArguments(new String[]{"expected.pdf", "actual.pdf"});
 
-        assertThat(cliArguments.areAvailable(), is(true));
+        assertThat(cliArguments.hasFileArguments(), is(true));
     }
 
     @Test
     public void cliIsNotAvailableWhenOnlyOneFilenameIsProvided() {
         CliArguments cliArguments = new CliArguments(new String[]{"expected.pdf"});
 
-        assertThat(cliArguments.areAvailable(), is(false));
+        assertThat(cliArguments.hasFileArguments(), is(false));
     }
 
     @Test
     public void cliIsNotAvailableWhenMoreArgumentsAreProvidedThanExpected() {
         CliArguments cliArguments = new CliArguments(new String[]{"a.pdf", "b.pdf", "c.pdf"});
 
-        assertThat(cliArguments.areAvailable(), is(false));
+        assertThat(cliArguments.hasFileArguments(), is(false));
     }
 
     @Test
     public void cliIsNotAvailableWhenNoArgumentsAreProvided() {
         CliArguments cliArguments = new CliArguments(new String[]{});
 
-        assertThat(cliArguments.areAvailable(), is(false));
+        assertThat(cliArguments.hasFileArguments(), is(false));
     }
 
     @Test
     public void cliIsAvailableWhenHelpIsProvided() {
         CliArguments cliArguments = new CliArguments(new String[]{"-h"});
 
-        assertThat(cliArguments.areAvailable(), is(true));
+        assertThat(cliArguments.hasFileArguments(), is(true));
     }
 
     @Test
@@ -59,6 +59,14 @@ public class CliArgumentsTest {
 
         assertThat(cliArguments.getOutputFile().isPresent(), is(true));
         assertThat(cliArguments.getOutputFile().get(), equalTo("result.pdf"));
+    }
+
+    @Test
+    public void provideExpectedPasswordWithShortArgument() {
+        CliArguments cliArguments = new CliArguments(new String[]{"-exppwd", "MyPwd"});
+
+        assertThat(cliArguments.getExpectedPassword().isPresent(), is(true));
+        assertThat(cliArguments.getExpectedPassword().get(), equalTo("MyPwd"));
     }
 
     @Test

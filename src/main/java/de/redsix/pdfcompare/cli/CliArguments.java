@@ -24,23 +24,66 @@ public class CliArguments {
     private static final String OUTPUT_OPTION = "o";
     private static final String EXCLUSION_OPTION = "x";
     private static final String HELP_OPTION = "h";
+    private static final String EXPECTED_PASSWORD_OPTION = "exppwd";
+    private static final String ACTUAL_PASSWORD_OPTION = "actpwd";
 
     private final Options options;
     private CommandLine commandLine;
 
     public CliArguments(String[] args) {
         options = new Options();
-        options.addOption(buildHelpOption());
-        options.addOption(buildOutputOption());
-        options.addOption(buildExclusionOption());
+        options.addOption(Option.builder(HELP_OPTION)
+                .argName("help")
+                .desc("Displays this text and exit")
+                .hasArg(false)
+                .longOpt("help")
+                .numberOfArgs(0)
+                .required(false)
+                .build());
+        options.addOption(Option.builder(OUTPUT_OPTION)
+                .argName("output")
+                .desc("Provide an optional output file for the result")
+                .hasArg(true)
+                .longOpt("output")
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build());
+        options.addOption(Option.builder(EXCLUSION_OPTION)
+                .argName("exclusions")
+                .desc("Provide an optional file with exclusions")
+                .hasArg(true)
+                .longOpt("exclusions")
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build());
+        options.addOption(Option.builder(EXPECTED_PASSWORD_OPTION)
+                .argName("expected-password")
+                .desc("Provide a password for the expected file")
+                .hasArg(true)
+                .longOpt("expected-password")
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build());
+        options.addOption(Option.builder(ACTUAL_PASSWORD_OPTION)
+                .argName("actual-password")
+                .desc("Provide a password for the actual file")
+                .hasArg(true)
+                .longOpt("actual-password")
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build());
         process(args);
     }
 
-    public boolean areAvailable() {
-        return hasFileArguments() || isHelp();
-    }
-
-    private boolean hasFileArguments() {
+    public boolean hasFileArguments() {
         return commandLine.getArgList().size() == 2 && getExpectedFile().isPresent() && getActualFile().isPresent();
     }
 
@@ -48,20 +91,28 @@ public class CliArguments {
         return commandLine.hasOption(HELP_OPTION);
     }
 
-    /*package*/ Optional<String> getExpectedFile() {
+    public Optional<String> getExpectedFile() {
         return getRemainingArgument(EXPECTED_FILENAME_INDEX);
     }
 
-    /*package*/ Optional<String> getActualFile() {
+    public Optional<String> getActualFile() {
         return getRemainingArgument(ACTUAL_FILENAME_INDEX);
     }
 
-    /*package*/  Optional<String> getExclusionsFile() {
+    public  Optional<String> getExclusionsFile() {
         return Optional.ofNullable(commandLine.getOptionValue(EXCLUSION_OPTION));
     }
 
-    /*package*/ Optional<String> getOutputFile() {
+    public Optional<String> getOutputFile() {
         return Optional.ofNullable(commandLine.getOptionValue(OUTPUT_OPTION));
+    }
+
+    public Optional<String> getExpectedPassword() {
+        return Optional.ofNullable(commandLine.getOptionValue(EXPECTED_PASSWORD_OPTION));
+    }
+
+    public Optional<String> getActualPassword() {
+        return Optional.ofNullable(commandLine.getOptionValue(ACTUAL_PASSWORD_OPTION));
     }
 
     /*package*/ int printHelp() {
@@ -74,17 +125,19 @@ public class CliArguments {
             return printHelp();
         }
         if (hasFileArguments()) {
-            return compare();
+            return doCompare();
         }
         System.out.println("No files or too many files where passed as arguments\n");
         printHelp();
         return ERROR_RESULT_VALUE;
     }
 
-    private int compare() {
+    private int doCompare() {
         try {
             PdfComparator<CompareResultImpl> pdfComparator = new PdfComparator<>(getExpectedFile().get(), getActualFile().get());
             getExclusionsFile().ifPresent(pdfComparator::withIgnore);
+            getExpectedPassword().ifPresent(pdfComparator::withExpectedPassword);
+            getActualPassword().ifPresent(pdfComparator::withActualPassword);
             CompareResult compareResult = pdfComparator.compare();
             getOutputFile().ifPresent(compareResult::writeTo);
             return (compareResult.isEqual()) ? EQUAL_DOCUMENTS_RESULT_VALUE : UNEQUAL_DOCUMENTS_RESULT_VALUE;
@@ -140,7 +193,7 @@ public class CliArguments {
     }
 
     private Optional<String> getRemainingArgument(int index) {
-        if (commandLine.getArgList().isEmpty() || commandLine.getArgList().size() < index + 1) {
+        if (commandLine.getArgList().isEmpty() || commandLine.getArgList().size() <= index) {
             return Optional.empty();
         }
         return Optional.of(commandLine.getArgList().get(index));

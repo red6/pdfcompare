@@ -380,7 +380,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @throws IOException        when an input file or stream can not be read
      * @throws RenderingException when errors during rendering or diffing of pages occurred
      */
-    public CompareResult compare() throws IOException, RenderingException {
+    public T compare() throws IOException, RenderingException {
         try {
             if (expectedStreamSupplier == null || actualStreamSupplier == null) {
                 return compareResult;
