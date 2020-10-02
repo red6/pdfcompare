@@ -11,6 +11,7 @@ public class CliArgumentsImpl implements CliArguments {
 
     private static final String OUTPUT_OPTION = "o";
     private static final String OUTPUT_LONG_OPTION = "output";
+    private static final String EXCLUSION_OPTION = "x";
     private static final String HELP_OPTION = "h";
     private static final String HELP_LONG_OPTION = "help";
 
@@ -19,9 +20,9 @@ public class CliArgumentsImpl implements CliArguments {
 
     public CliArgumentsImpl(String[] args) {
         options = new Options();
-        options.addOption(buildOutputOption());
         options.addOption(buildHelpOption());
-
+        options.addOption(buildOutputOption());
+        options.addOption(buildExclusionOption());
         process(args);
     }
 
@@ -46,11 +47,18 @@ public class CliArgumentsImpl implements CliArguments {
     }
 
     @Override
+    public Optional<String> getExclusionsFile() {
+        if (!commandLine.hasOption(EXCLUSION_OPTION)) {
+            return Optional.empty();
+        }
+        return Optional.of(commandLine.getOptionValue(EXCLUSION_OPTION));
+    }
+
+    @Override
     public Optional<String> getOutputFile() {
         if (!commandLine.hasOption(OUTPUT_OPTION)) {
             return Optional.empty();
         }
-
         return Optional.of(commandLine.getOptionValue(OUTPUT_OPTION));
     }
 
@@ -66,6 +74,19 @@ public class CliArgumentsImpl implements CliArguments {
                 .desc("Provide an optional output file for the result")
                 .hasArg(true)
                 .longOpt(OUTPUT_LONG_OPTION)
+                .numberOfArgs(1)
+                .required(false)
+                .type(String.class)
+                .valueSeparator('=')
+                .build();
+    }
+
+    private Option buildExclusionOption() {
+        return Option.builder(EXCLUSION_OPTION)
+                .argName("exclusions")
+                .desc("Provide an optional file with exclusions")
+                .hasArg(true)
+                .longOpt("exclusions")
                 .numberOfArgs(1)
                 .required(false)
                 .type(String.class)
@@ -97,7 +118,6 @@ public class CliArgumentsImpl implements CliArguments {
         if (commandLine.getArgList().isEmpty() || commandLine.getArgList().size() < index + 1) {
             return Optional.empty();
         }
-
         return Optional.of(commandLine.getArgList().get(index));
     }
 }

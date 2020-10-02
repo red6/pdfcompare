@@ -12,6 +12,8 @@ public interface CliArguments {
 
     Optional<String> getActualFile();
 
+    Optional<String> getExclusionsFile();
+
     Optional<String> getOutputFile();
 
     void printHelp();
