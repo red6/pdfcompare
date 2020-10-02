@@ -35,6 +35,12 @@ public class IntegrationTest {
     }
 
     @Test
+    public void equalDocumentsAreEqual() throws IOException {
+        final CompareResult result = new PdfComparator(r("expectedSameAsActual.pdf"), r("actual.pdf")).compare();
+        assertThat(result.isEqual(), is(true));
+    }
+
+    @Test
     public void differingDocumentsAreNotEqual() throws IOException {
         final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
