@@ -250,9 +250,8 @@ public class Display {
                 if (dragging) {
                     int pageNumber = viewModel.getPageToShow();
                     Point endPoint = e.getPoint();
-                    PageArea pageArea = getPageArea(pageNumber, endPoint);
 
-                    dragArea = pageArea;
+                    dragArea = getPageArea(pageNumber, endPoint);
 
                     redrawImages();
                 }
@@ -453,9 +452,9 @@ public class Display {
         }
     }
 
-    static private Color SHADE_BORDER = new Color(0x708090);
-    static private Color SHADE = new Color(0x70606000, true);
-    static private Color SHADE_HIGHLIGHT = new Color(0xA0A0A0FF, true);
+    static private final Color SHADE_BORDER = new Color(0x708090);
+    static private final Color SHADE = new Color(0x70606000, true);
+    static private final Color SHADE_HIGHLIGHT = new Color(0xA0A0A0FF, true);
 
     /**
      * paints shaded areas over defined exclusions

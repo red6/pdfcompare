@@ -23,7 +23,7 @@ import java.util.List;
 
 public class ExclusionsPanel extends JPanel {
 
-    private Environment environment;
+    private final Environment environment;
     private JPanel exclusionsList;
     private JLabel configFile;
     /**
@@ -31,7 +31,7 @@ public class ExclusionsPanel extends JPanel {
      */
     private File selectedFile;
     private ExclusionItemPanel selectedItem;
-    private Display display;
+    private final Display display;
     private Collection<PageArea> differencesFromCompare = new ArrayList<>();
 
     public ExclusionsPanel(Display display, Environment environment) {

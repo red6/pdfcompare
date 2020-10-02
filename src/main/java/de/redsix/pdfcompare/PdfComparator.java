@@ -76,7 +76,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
     public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64) {
-        return base64(expectedPdfBase64, actualPdfBase64, (T) new CompareResultImpl());
+        return base64(expectedPdfBase64, actualPdfBase64, new CompareResultImpl());
     }
 
     /**
@@ -88,7 +88,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
     public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64, T compareResult) {
-        PdfComparator pdfComparator = new PdfComparator(compareResult);
+        PdfComparator pdfComparator = new PdfComparator<>(compareResult);
         pdfComparator.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(expectedPdfBase64));
         pdfComparator.actualStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(actualPdfBase64));
         return pdfComparator;

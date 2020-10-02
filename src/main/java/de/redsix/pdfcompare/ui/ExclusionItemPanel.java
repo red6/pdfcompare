@@ -29,9 +29,9 @@ public class ExclusionItemPanel extends JPanel {
     private JTextField y1;
     private JTextField x2;
     private JTextField y2;
-    private List<ActionListener> listeners = new ArrayList<>();
+    private final List<ActionListener> listeners = new ArrayList<>();
     private boolean invalid = false;
-    private Color defaultBackground;
+    private final Color defaultBackground;
 
 
     public ExclusionItemPanel(PageArea pageArea) {
