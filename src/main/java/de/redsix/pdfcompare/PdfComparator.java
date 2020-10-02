@@ -51,7 +51,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
 
-    private static final int timeout = 3;
+    private static final int TIMEOUT = 3;
     private static final TimeUnit unit = TimeUnit.MINUTES;
     public static final int MARKER_WIDTH = 20;
 
@@ -66,7 +66,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     private String expectedPassword = "";
     private String actualPassword = "";
     private boolean withIgnoreCalled = false;
-    private ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
@@ -484,12 +484,12 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     private ImageWithDimension getImage(final Future<ImageWithDimension> imageFuture, final int pageIndex, final String type) {
         try {
-            return imageFuture.get(timeout, unit);
+            return imageFuture.get(TIMEOUT, unit);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RenderingException("Waiting for Future was interrupted while rendering page " + (pageIndex + 1) + " of " + type, e);
         } catch (TimeoutException e) {
-            String msg = String.format("Waiting for Future timed out after %d %s while rendering page %d of %s", timeout, unit, pageIndex + 1, type);
+            String msg = String.format("Waiting for Future timed out after %d %s while rendering page %d of %s", TIMEOUT, unit, pageIndex + 1, type);
             throw new RenderingException(msg, e);
         } catch (ExecutionException e) {
             throw new RenderingException("Error while rendering page " + (pageIndex + 1) + " of " + type, e);

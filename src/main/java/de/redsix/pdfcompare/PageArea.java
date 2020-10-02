@@ -114,12 +114,12 @@ public class PageArea {
     public String asJson() {
         if (hasPage()) {
             if (hasCoordinates()) {
-                return "{\"page\": " + page + ",\"x1\": " + x1 + ",\"y1\": " + y1 + ",\"x2\": " + x2 + ",\"y2\": " + y2 + "}";
+                return "{\"page\": " + page + ", \"x1\": " + x1 + ", \"y1\": " + y1 + ", \"x2\": " + x2 + ", \"y2\": " + y2 + "}";
             } else {
                 return "{\"page\": " + page + "}";
             }
         } else {
-            return "{\"x1\": " + x1 + ",\"y1\": " + y1 + ",\"x2\": " + x2 + ",\"y2\": " + y2 + "}";
+            return "{\"x1\": " + x1 + ", \"y1\": " + y1 + ", \"x2\": " + x2 + ", \"y2\": " + y2 + "}";
         }
     }
 

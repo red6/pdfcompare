@@ -26,7 +26,7 @@ public class Display {
     private final ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
     private final ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
     private final JToggleButton expectedButton = new JToggleButton("Expected");
-    private Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
+    private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
 
     public void init(CliArguments cliArguments) {
         init();
@@ -36,7 +36,7 @@ public class Display {
                 openFiles(new File(cliArguments.getExpectedFile().get()), cliArguments.getExpectedPassword(),
                         new File(cliArguments.getActualFile().get()), cliArguments.getActualPassword(), cliArguments.getExclusionsFile());
             } catch (IOException ex) {
-                DisplayExceptionDialog(frame, ex);
+                displayExceptionDialog(frame, ex);
             }
         }
     }
@@ -86,7 +86,7 @@ public class Display {
         splitPane.setOneTouchExpandable(true);
         frame.add(splitPane, BorderLayout.CENTER);
 
-        addToolBarButton(toolBar, "Open...", (event) -> {
+        addToolBarButton(toolBar, "Open...", event -> {
             JFileChooser fileChooser = new JFileChooser();
             try {
                 if (fileChooser.showDialog(frame, "Open expected PDF") == JFileChooser.APPROVE_OPTION) {
@@ -101,20 +101,20 @@ public class Display {
                     }
                 }
             } catch (IOException ex) {
-                DisplayExceptionDialog(frame, ex);
+                displayExceptionDialog(frame, ex);
             }
         });
 
         toolBar.addSeparator();
 
-        addToolBarButton(toolBar, "Page -", (event) -> {
+        addToolBarButton(toolBar, "Page -", event -> {
             if (viewModel.decreasePage()) {
                 leftPanel.setImage(viewModel.getLeftImage());
                 resultPanel.setImage(viewModel.getDiffImage());
             }
         });
 
-        addToolBarButton(toolBar, "Page +", (event) -> {
+        addToolBarButton(toolBar, "Page +", event -> {
             if (viewModel.increasePage()) {
                 leftPanel.setImage(viewModel.getLeftImage());
                 resultPanel.setImage(viewModel.getDiffImage());
@@ -125,18 +125,18 @@ public class Display {
 
         final JToggleButton pageZoomButton = new JToggleButton("Zoom Page");
         pageZoomButton.setSelected(true);
-        pageZoomButton.addActionListener((event) -> {
+        pageZoomButton.addActionListener(event -> {
             leftPanel.zoomPage();
             resultPanel.zoomPage();
         });
 
-        addToolBarButton(toolBar, "Zoom -", (event) -> {
+        addToolBarButton(toolBar, "Zoom -", event -> {
             pageZoomButton.setSelected(false);
             leftPanel.decreaseZoom();
             resultPanel.decreaseZoom();
         });
 
-        addToolBarButton(toolBar, "Zoom +", (event) -> {
+        addToolBarButton(toolBar, "Zoom +", event -> {
             pageZoomButton.setSelected(false);
             leftPanel.increaseZoom();
             resultPanel.increaseZoom();
@@ -144,7 +144,7 @@ public class Display {
 
         toolBar.add(pageZoomButton);
 
-        addToolBarButton(toolBar, "Zoom 100%", (event) -> {
+        addToolBarButton(toolBar, "Zoom 100%", event -> {
             pageZoomButton.setSelected(false);
             leftPanel.zoom100();
             resultPanel.zoom100();
@@ -152,7 +152,7 @@ public class Display {
 
         toolBar.addSeparator();
 
-        addToolBarButton(toolBar, "Center Split", (event) -> {
+        addToolBarButton(toolBar, "Center Split", event -> {
             splitPane.setDividerLocation(0.5);
             splitPane.revalidate();
         });
@@ -161,7 +161,7 @@ public class Display {
 
         final ButtonGroup buttonGroup = new ButtonGroup();
         expectedButton.setSelected(true);
-        expectedButton.addActionListener((event) -> {
+        expectedButton.addActionListener(event -> {
             viewModel.showExpected();
             leftPanel.setImage(viewModel.getLeftImage());
         });
@@ -169,7 +169,7 @@ public class Display {
         buttonGroup.add(expectedButton);
 
         final JToggleButton actualButton = new JToggleButton("Actual");
-        actualButton.addActionListener((event) -> {
+        actualButton.addActionListener(event -> {
             viewModel.showActual();
             leftPanel.setImage(viewModel.getLeftImage());
         });
@@ -202,7 +202,7 @@ public class Display {
         expectedButton.setSelected(true);
     }
 
-    private static void DisplayExceptionDialog(final JFrame frame, final IOException ex) {
+    private static void displayExceptionDialog(final JFrame frame, final IOException ex) {
         final StringWriter stringWriter = new StringWriter();
         ex.printStackTrace(new PrintWriter(stringWriter));
         JTextArea textArea = new JTextArea(

@@ -34,8 +34,8 @@ public class ExclusionsTest extends FileReading {
         exclusions.readExclusions(f("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.asJson(), is("exclusions: [\n" +
-                "{\"page\": 1,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
-                "{\"page\": 2,\"x1\": 1750,\"y1\": 240,\"x2\": 2000,\"y2\": 300}\n" +
+                "{\"page\": 1, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
+                "{\"page\": 2, \"x1\": 1750, \"y1\": 240, \"x2\": 2000, \"y2\": 300}\n" +
                 "]"));
     }
 
@@ -62,7 +62,8 @@ public class ExclusionsTest extends FileReading {
     @Test
     public void missingFileThrowsException() {
         Exclusions exclusions = new Exclusions(new SimpleEnvironment().setFailOnMissingIgnoreFile(true));
-        assertThrows(IgnoreFileMissing.class, () -> exclusions.readExclusions(new File("fileDoesNotExist.conf")));
+        assertThrows(IgnoreFileMissing.class,
+                () -> exclusions.readExclusions(new File("fileDoesNotExist.conf")));
     }
 
     @Test
@@ -70,7 +71,7 @@ public class ExclusionsTest extends FileReading {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{x1: 230, y1: 350, x2: 450, y2: 420}]".getBytes()));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.forPage(8).contains(300, 400), is(true));
-        assertThat(exclusions.asJson(), is("exclusions: [\n{\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420}\n]"));
+        assertThat(exclusions.asJson(), is("exclusions: [\n{\"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420}\n]"));
     }
 
     @Test
@@ -89,10 +90,10 @@ public class ExclusionsTest extends FileReading {
                 "{page: 3}," +
                 "{x1: 230, y1: 350, x2: 450, y2: 420}]").getBytes()));
         assertThat(exclusions.asJson(), is("exclusions: [\n" +
-                "{\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
-                "{\"page\": 2,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
+                "{\"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
+                "{\"page\": 2, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
                 "{\"page\": 3},\n" +
-                "{\"page\": 4,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420}\n" +
+                "{\"page\": 4, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420}\n" +
                 "]"));
     }
 

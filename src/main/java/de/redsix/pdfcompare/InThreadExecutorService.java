@@ -77,7 +77,7 @@ public class InThreadExecutorService implements ExecutorService {
 
     @Override
     public <T> T invokeAny(final Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
-        return null;
+        return invokeAny(tasks);
     }
 
     @Override

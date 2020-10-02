@@ -147,43 +147,6 @@ public class CliArguments {
         }
     }
 
-    private Option buildOutputOption() {
-        return Option.builder(OUTPUT_OPTION)
-                .argName("output")
-                .desc("Provide an optional output file for the result")
-                .hasArg(true)
-                .longOpt("output")
-                .numberOfArgs(1)
-                .required(false)
-                .type(String.class)
-                .valueSeparator('=')
-                .build();
-    }
-
-    private Option buildExclusionOption() {
-        return Option.builder(EXCLUSION_OPTION)
-                .argName("exclusions")
-                .desc("Provide an optional file with exclusions")
-                .hasArg(true)
-                .longOpt("exclusions")
-                .numberOfArgs(1)
-                .required(false)
-                .type(String.class)
-                .valueSeparator('=')
-                .build();
-    }
-
-    private Option buildHelpOption() {
-        return Option.builder(HELP_OPTION)
-                .argName("help")
-                .desc("Displays this text and exit")
-                .hasArg(false)
-                .longOpt("help")
-                .numberOfArgs(0)
-                .required(false)
-                .build();
-    }
-
     private void process(String[] args) {
         try {
             commandLine = new DefaultParser().parse(options, args);

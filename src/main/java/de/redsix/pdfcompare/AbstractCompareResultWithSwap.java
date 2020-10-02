@@ -65,7 +65,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             }
             mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
-            LOG.trace("Merging took: " + Duration.between(start, end).toMillis() + "ms");
+            LOG.trace("Merging took: {}ms", Duration.between(start, end).toMillis());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -123,8 +123,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
                     try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
                         document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
-                        final Path tempDir = getTempDir();
-                        final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
+                        final Path tempFile = getTempDir().resolve(String.format("partial_%06d.pdf", minPageIndex));
                         document.save(tempFile.toFile());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -149,7 +148,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    protected void finalize() {
         if (swapExecutor != null) {
             swapExecutor.shutdown();
         }

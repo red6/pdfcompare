@@ -45,7 +45,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     protected boolean hasDifferenceInExclusion = false;
     private boolean expectedOnly;
     private boolean actualOnly;
-    private Collection<PageArea> diffAreas = new ArrayList<>();
+    private final Collection<PageArea> diffAreas = new ArrayList<>();
     private int pages = 0;
 
     @Override

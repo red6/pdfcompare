@@ -5,13 +5,11 @@ import de.redsix.pdfcompare.cli.CliArgumentsParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public class DisplayMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(DisplayMain.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         try {
             final CliArguments cliArguments = new CliArguments(args);
 

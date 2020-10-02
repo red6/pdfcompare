@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class FileUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileUtils.class);
-    private static Collection<Path> tempDirs = new ConcurrentLinkedQueue<>();
+    private static final Collection<Path> tempDirs = new ConcurrentLinkedQueue<>();
     private static volatile boolean shutdownRegistered;
     private static Path tempDirParent;
 
