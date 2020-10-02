@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -159,11 +160,19 @@ public class Exclusions {
         }
     }
 
+    public void forEach(final Consumer<PageArea> exclusionConsumer) {
+        getPageAreaStream().forEach(exclusionConsumer);
+    }
+
     public String asJson() {
+        return PageArea.asJsonWithExclusion(getPageAreaStream());
+    }
+
+    private Stream<PageArea> getPageAreaStream() {
         Stream<PageArea> allPages = exclusionsForAllPages.getExclusions().stream();
         Stream<PageArea> pageAreas = exclusionsPerPage.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(e -> e.getValue().getExclusions().stream());
-        return PageArea.asJsonWithExclusion(Stream.concat(allPages, pageAreas));
+        return Stream.concat(allPages, pageAreas);
     }
 }

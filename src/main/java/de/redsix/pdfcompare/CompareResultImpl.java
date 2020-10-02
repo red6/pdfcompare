@@ -182,6 +182,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         return diffAreas;
     }
 
+    @Override
     public String getDifferencesJson() {
         return PageArea.asJsonWithExclusion(getDifferences());
     }

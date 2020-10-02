@@ -47,6 +47,15 @@ public class ViewModel {
         }
         return false;
     }
+    
+    public boolean setPageToShow(int pageNumber) {
+        if (pageNumber < 0 || pageNumber > maxPages) {
+            return false;
+        }
+        
+        pageToShow = pageNumber;
+        return true;
+    }
 
     public BufferedImage getLeftImage() {
         if (isShowExpected()) {

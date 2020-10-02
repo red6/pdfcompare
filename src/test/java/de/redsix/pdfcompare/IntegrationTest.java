@@ -35,13 +35,13 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void equalDocumentsAreEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expectedSameAsActual.pdf"), r("actual.pdf")).compare();
+        final CompareResult result = new PdfComparator<>(r("expectedSameAsActual.pdf"), r("actual.pdf")).compare();
         assertThat(result.isEqual(), is(true));
     }
 
     @Test
     public void differingDocumentsAreNotEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.hasOnlyExpected(), is(false));
@@ -76,13 +76,13 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void differingDocumentsAreNotEqualUsingOutputStream() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf")).compare();
         writeAndCompareWithOutputStream(result);
     }
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow()).compare();
+        final CompareResult result = new PdfComparator<>(f("expected.pdf"), f("actual.pdf"), new CompareResultWithPageOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -91,7 +91,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        final CompareResult result = new PdfComparator<>(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -100,7 +100,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void differingDocumentsAreNotEqualUsingPageOverflowWithOverflowUsingOutputStream() throws IOException {
-        final CompareResult result = new PdfComparator(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
+        final CompareResult result = new PdfComparator<>(p("expected.pdf"), p("actual.pdf"), new CompareResultWithPageOverflow(1)).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -109,7 +109,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void differingDocumentsAreNotEqualUsingMemoryOverflow() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"), new CompareResultWithMemoryOverflow()).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"), new CompareResultWithMemoryOverflow()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -118,7 +118,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void differingDocumentsWithIgnoreAreEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore(f("ignore.conf")).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf")).withIgnore(f("ignore.conf")).compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.hasDifferenceInExclusion(), is(true));
@@ -130,7 +130,7 @@ public class IntegrationTest extends FileReading {
     @Test
     public void differingDocumentsWithFullPageIgnoreAreEqual() throws IOException {
         final ByteArrayInputStream ignoreIS = new ByteArrayInputStream("exclusions: [{page:1}, {page:2}]".getBytes());
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore(ignoreIS).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf")).withIgnore(ignoreIS).compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.hasDifferenceInExclusion(), is(true));
         assertThat(result.getNumberOfPages(), is(2));
@@ -139,7 +139,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void exclusionsCanBeAddedViaAPI() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"))
                 .withIgnore(new PageArea(1, 230, 350, 450, 420))
                 .withIgnore(new PageArea(2, 1750, 240, 2000, 300))
                 .compare();
@@ -150,7 +150,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void aShorterDocumentActualIsNotEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("short.pdf")).compare();
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("short.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -161,7 +161,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void aShorterDocumentExpectedIsNotEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("short.pdf"), r("actual.pdf")).compare();
+        final CompareResult result = new PdfComparator<>(r("short.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
@@ -176,7 +176,7 @@ public class IntegrationTest extends FileReading {
     public void missingActualIsNotEqual() throws IOException {
         final Path target = outDir.resolve("expected.pdf");
         Files.copy(r("expected.pdf"), target);
-        final CompareResult result = new PdfComparator(target.toString(), "doesNotExist.pdf").compare();
+        final CompareResult result = new PdfComparator<>(target.toString(), "doesNotExist.pdf").compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.hasOnlyExpected(), is(true));
@@ -190,7 +190,7 @@ public class IntegrationTest extends FileReading {
     public void missingExpectedIsNotEqual() throws IOException {
         final Path target = outDir.resolve("actual.pdf");
         Files.copy(r("actual.pdf"), target);
-        final CompareResult result = new PdfComparator("doesNotExist.pdf", target.toString()).compare();
+        final CompareResult result = new PdfComparator<>("doesNotExist.pdf", target.toString()).compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         assertThat(result.hasOnlyExpected(), is(false));
@@ -202,7 +202,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void bothFilesMissingIsNotEqual() throws IOException {
-        final CompareResult result = new PdfComparator("doesNotExist.pdf", "doesNotExistAsWell.pdf").compare();
+        final CompareResult result = new PdfComparator<>("doesNotExist.pdf", "doesNotExistAsWell.pdf").compare();
         assertThat(result.isNotEqual(), is(true));
         assertThat(result.isEqual(), is(false));
         writeAndCompare(result);
@@ -210,7 +210,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void identicalFilenamesAreEqual() throws IOException {
-        final CompareResult result = new PdfComparator("whatever.pdf", "whatever.pdf").compare();
+        final CompareResult result = new PdfComparator<>("whatever.pdf", "whatever.pdf").compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(0));
@@ -232,7 +232,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void whenLessPixelsAreDifferentThanAllowedDiffInPercentResultIsEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"))
                 .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.04))
                 .compare();
         assertThat(result.isEqual(), is(true));
@@ -240,7 +240,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void whenMorePixelsAreDifferentThanAllowedDiffInPercentResultIsNotEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf"))
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"))
                 .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.03))
                 .compare();
         assertThat(result.isEqual(), is(false));
@@ -249,7 +249,7 @@ public class IntegrationTest extends FileReading {
     @Test
     public void corruptPdfGivesRenderingException() throws IOException {
         try {
-            new PdfComparator(r("expected.pdf"), r("corrupt.pdf")).compare();
+            new PdfComparator<>(r("expected.pdf"), r("corrupt.pdf")).compare();
             fail("RenderingException expected");
         } catch (RenderingException expected) {
             assertThat(expected.getSuppressed().length, is(1));
@@ -263,7 +263,7 @@ public class IntegrationTest extends FileReading {
             result.writeTo(filename);
             try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
                 if (expectedPdf != null) {
-                    assertTrue(new PdfComparator(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
+                    assertTrue(new PdfComparator<>(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
                 } else {
                     assertFalse(Files.exists(Paths.get(filename + ".pdf")));
                 }
@@ -277,7 +277,7 @@ public class IntegrationTest extends FileReading {
             result.writeTo(new FileOutputStream(filename + ".pdf"));
             try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
                 if (expectedPdf != null) {
-                    assertTrue(new PdfComparator(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
+                    assertTrue(new PdfComparator<>(expectedPdf, new FileInputStream(filename + ".pdf")).compare().isEqual());
                 } else {
                     assertThat(Files.size(Paths.get(filename + ".pdf")), is(0));
                 }
