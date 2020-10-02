@@ -37,13 +37,6 @@ public class CliArgumentsTest {
     }
 
     @Test
-    public void cliIsAvailableWhenHelpIsProvided() {
-        CliArguments cliArguments = new CliArguments(new String[]{"-h"});
-
-        assertThat(cliArguments.hasFileArguments(), is(true));
-    }
-
-    @Test
     public void provideExpectedAndActualFilename() {
         CliArguments cliArguments = new CliArguments(new String[]{"expected.pdf", "actual.pdf"});
 
@@ -84,16 +77,26 @@ public class CliArgumentsTest {
 
     @Test
     public void comparesTwoEqualFilesAndReturnsZero() {
-        assertThat(new CliArguments(new String[]{"src/test/resources/de/redsix/pdfcompare/expectedSameAsActual.pdf", "src/test/resources/de/redsix/pdfcompare/actual.pdf"}).execute(), equalTo(0));
+        assertThat(new CliArguments(new String[]{
+                "src/test/resources/de/redsix/pdfcompare/expectedSameAsActual.pdf",
+                "src/test/resources/de/redsix/pdfcompare/actual.pdf"})
+                .execute(), equalTo(0));
     }
 
     @Test
     public void comparesTwoDifferentFilesAndReturnsOne() {
-        assertThat(new CliArguments(new String[]{"src/test/resources/de/redsix/pdfcompare/expected.pdf", "src/test/resources/de/redsix/pdfcompare/actual.pdf"}).execute(), equalTo(1));
+        assertThat(new CliArguments(new String[]{
+                "src/test/resources/de/redsix/pdfcompare/expected.pdf",
+                "src/test/resources/de/redsix/pdfcompare/actual.pdf"})
+                .execute(), equalTo(1));
     }
 
     @Test
     public void comparesTwoDifferentFilesWithExclusionReturnsZero() {
-        assertThat(new CliArguments(new String[]{"src/test/resources/de/redsix/pdfcompare/expected.pdf", "src/test/resources/de/redsix/pdfcompare/actual.pdf", "-x", "ignore.conf"}).execute(), equalTo(0));
+        assertThat(new CliArguments(new String[]{
+                "src/test/resources/de/redsix/pdfcompare/expected.pdf",
+                "src/test/resources/de/redsix/pdfcompare/actual.pdf",
+                "-x", "src/test/resources/de/redsix/pdfcompare/ignore.conf"})
+                .execute(), equalTo(0));
     }
 }

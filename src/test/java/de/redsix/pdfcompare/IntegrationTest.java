@@ -14,7 +14,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 @ExtendWith(TempDirectoryExtension.class)
-public class IntegrationTest {
+public class IntegrationTest extends FileReading {
 
     private String testName;
     private Path outDir;
@@ -119,7 +118,7 @@ public class IntegrationTest {
 
     @Test
     public void differingDocumentsWithIgnoreAreEqual() throws IOException {
-        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore("ignore.conf").compare();
+        final CompareResult result = new PdfComparator(r("expected.pdf"), r("actual.pdf")).withIgnore(f("ignore.conf")).compare();
         assertThat(result.isEqual(), is(true));
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.hasDifferenceInExclusion(), is(true));
@@ -255,22 +254,6 @@ public class IntegrationTest {
         } catch (RenderingException expected) {
             assertThat(expected.getSuppressed().length, is(1));
             assertThat(expected.getSuppressed()[0], instanceOf(RenderingException.class));
-        }
-    }
-
-    private InputStream r(final String s) {
-        return getClass().getResourceAsStream(s);
-    }
-
-    private File f(final String s) {
-        return new File(getClass().getResource(s).getFile());
-    }
-
-    private Path p(final String s) {
-        try {
-            return Paths.get(getClass().getResource(s).toURI());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
     }
 

@@ -14,13 +14,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Paths;
 
-public class ExclusionsTest {
+public class ExclusionsTest extends FileReading {
 
     private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
 
     @Test
     public void readExclusions() {
-        exclusions.readExclusions("ignore.conf");
+        exclusions.readExclusions("src/test/resources/de/redsix/pdfcompare/ignore.conf");
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.forPage(1).contains(600, 400), is(false));
 
@@ -32,13 +32,13 @@ public class ExclusionsTest {
 
     @Test
     public void readFromFile() {
-        exclusions.readExclusions(new File("ignore.conf"));
+        exclusions.readExclusions(f("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
     }
 
     @Test
     public void readFromPath() {
-        exclusions.readExclusions(Paths.get("ignore.conf"));
+        exclusions.readExclusions(p("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
     }
 
