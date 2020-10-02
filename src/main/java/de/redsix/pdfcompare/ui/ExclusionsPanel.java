@@ -217,7 +217,6 @@ public class ExclusionsPanel extends JPanel {
                 return item;
             }
         }
-
         return null;
     }
 
@@ -233,7 +232,6 @@ public class ExclusionsPanel extends JPanel {
                 return item;
             }
         }
-
         return null;
     }
 
@@ -262,7 +260,6 @@ public class ExclusionsPanel extends JPanel {
         if (selectedArea == null) {
             return false;
         }
-
         return selectedArea.equals(pageArea);
     }
 
@@ -312,7 +309,6 @@ public class ExclusionsPanel extends JPanel {
             });
             exclusionsList.add(item);
         });
-
         exclusionsList.revalidate();
     }
 
@@ -331,7 +327,6 @@ public class ExclusionsPanel extends JPanel {
                 }
             }
         }
-
         return exclusions;
     }
 
@@ -342,7 +337,6 @@ public class ExclusionsPanel extends JPanel {
                 itemPanels.add((ExclusionItemPanel) component);
             }
         }
-
         return itemPanels;
     }
 
@@ -357,10 +351,8 @@ public class ExclusionsPanel extends JPanel {
             if (exclusionFile != null) {
                 exclusions.readExclusions(exclusionFile);
             }
-
             createExclusionItems(exclusions);
             display.redrawImages();
-
         } finally {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
@@ -370,7 +362,6 @@ public class ExclusionsPanel extends JPanel {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             try (BufferedWriter writer = Files.newBufferedWriter(exclusionFile.toPath())) {
-                // FIXME: this is destructive. We should merge the file
                 writer.write(getExclusions().asJson());
             }
         } finally {
@@ -392,7 +383,6 @@ public class ExclusionsPanel extends JPanel {
         while (component != null && !(component instanceof JFrame)) {
             component = component.getParent();
         }
-
         return (JFrame) component;
     }
 

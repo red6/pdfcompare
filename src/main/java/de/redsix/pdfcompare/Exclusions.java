@@ -65,6 +65,7 @@ public class Exclusions {
     }
 
     public Exclusions add(final PageArea exclusion) {
+        Objects.requireNonNull(exclusion);
         if (exclusion.hasPage()) {
             exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions(exclusionsForAllPages)).add(exclusion);
         } else {
@@ -74,6 +75,7 @@ public class Exclusions {
     }
 
     public Exclusions remove(final PageArea exclusion) {
+        Objects.requireNonNull(exclusion);
         if (exclusion.hasPage()) {
             exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions(exclusionsForAllPages)).remove(exclusion);
         } else {

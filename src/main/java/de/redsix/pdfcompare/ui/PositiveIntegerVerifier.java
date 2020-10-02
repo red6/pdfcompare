@@ -1,8 +1,6 @@
 package de.redsix.pdfcompare.ui;
 
-import javax.swing.InputVerifier;
-import javax.swing.JComponent;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 
 /** allow only valid numbers to be input into a JTextField.
@@ -23,12 +21,10 @@ public class PositiveIntegerVerifier extends InputVerifier {
                     return false;
                 }
                 
-            } catch (NumberFormatException execption) {
+            } catch (NumberFormatException exception) {
                 return false;
             }
         }
-        
         return true;
     }
-    
 }
