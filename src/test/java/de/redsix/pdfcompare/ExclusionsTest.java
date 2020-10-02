@@ -3,7 +3,6 @@ package de.redsix.pdfcompare;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.typesafe.config.ConfigException;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
@@ -34,6 +33,10 @@ public class ExclusionsTest extends FileReading {
     public void readFromFile() {
         exclusions.readExclusions(f("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n" +
+                "{\"page\": 1,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
+                "{\"page\": 2,\"x1\": 1750,\"y1\": 240,\"x2\": 2000,\"y2\": 300}\n" +
+                "]"));
     }
 
     @Test
@@ -46,14 +49,14 @@ public class ExclusionsTest extends FileReading {
     public void missingPathIsIgnored() {
         exclusions.readExclusions(Paths.get("fileDoesNotExist.conf"));
         // No exclusions are read
-        exclusions.forEach(pageArea -> fail());
+        assertThat(exclusions.asJson(), is("exclusions: [\n]"));
     }
 
     @Test
     public void missingFileIsIgnored() {
         exclusions.readExclusions(new File("fileDoesNotExist.conf"));
         // No exclusions are read
-        exclusions.forEach(pageArea -> fail());
+        assertThat(exclusions.asJson(), is("exclusions: [\n]"));
     }
 
     @Test
@@ -67,6 +70,7 @@ public class ExclusionsTest extends FileReading {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{x1: 230, y1: 350, x2: 450, y2: 420}]".getBytes()));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.forPage(8).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n{\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420}\n]"));
     }
 
     @Test
@@ -74,6 +78,22 @@ public class ExclusionsTest extends FileReading {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3}]".getBytes()));
         assertThat(exclusions.forPage(1).contains(300, 400), is(false));
         assertThat(exclusions.forPage(3).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n{\"page\": 3}\n]"));
+    }
+
+    @Test
+    public void withAndWithoutPageGetsSortedWithoutPageFirst() {
+        exclusions.readExclusions(new ByteArrayInputStream(("exclusions: [" +
+                "{page: 4, x1: 230, y1: 350, x2: 450, y2: 420}," +
+                "{page: 2, x1: 230, y1: 350, x2: 450, y2: 420}," +
+                "{page: 3}," +
+                "{x1: 230, y1: 350, x2: 450, y2: 420}]").getBytes()));
+        assertThat(exclusions.asJson(), is("exclusions: [\n" +
+                "{\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
+                "{\"page\": 2,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420},\n" +
+                "{\"page\": 3},\n" +
+                "{\"page\": 4,\"x1\": 230,\"y1\": 350,\"x2\": 450,\"y2\": 420}\n" +
+                "]"));
     }
 
     @Test

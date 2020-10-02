@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Exclusions collect rectangular areas of the document, that shall be ignored during comparison.
@@ -64,10 +64,19 @@ public class Exclusions {
     }
 
     public Exclusions add(final PageArea exclusion) {
-        if (exclusion.page < 0) {
-            exclusionsForAllPages.add(exclusion);
-        } else {
+        if (exclusion.hasPage()) {
             exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions(exclusionsForAllPages)).add(exclusion);
+        } else {
+            exclusionsForAllPages.add(exclusion);
+        }
+        return this;
+    }
+
+    public Exclusions remove(final PageArea exclusion) {
+        if (exclusion.hasPage()) {
+            exclusionsPerPage.computeIfAbsent(exclusion.page, k -> new PageExclusions(exclusionsForAllPages)).remove(exclusion);
+        } else {
+            exclusionsForAllPages.remove(exclusion);
         }
         return this;
     }
@@ -150,8 +159,11 @@ public class Exclusions {
         }
     }
 
-    public void forEach(final Consumer<PageArea> exclusionConsumer) {
-        exclusionsForAllPages.forEach(exclusionConsumer);
-        exclusionsPerPage.values().forEach(pe -> pe.forEach(exclusionConsumer));
+    public String asJson() {
+        Stream<PageArea> allPages = exclusionsForAllPages.getExclusions().stream();
+        Stream<PageArea> pageAreas = exclusionsPerPage.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .flatMap(e -> e.getValue().getExclusions().stream());
+        return PageArea.asJsonWithExclusion(Stream.concat(allPages, pageAreas));
     }
 }

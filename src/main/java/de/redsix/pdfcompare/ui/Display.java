@@ -1,8 +1,10 @@
 package de.redsix.pdfcompare.ui;
 
 import de.redsix.pdfcompare.CompareResultWithExpectedAndActual;
+import de.redsix.pdfcompare.Exclusions;
 import de.redsix.pdfcompare.PdfComparator;
 import de.redsix.pdfcompare.cli.CliArguments;
+import de.redsix.pdfcompare.env.DefaultEnvironment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
@@ -24,11 +26,13 @@ public class Display {
     private final ImagePanel leftPanel = new ImagePanel(viewModel.getLeftImage());
     private final ImagePanel resultPanel = new ImagePanel(viewModel.getDiffImage());
     private final JToggleButton expectedButton = new JToggleButton("Expected");
+    private Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
 
     public void init(CliArguments cliArguments) {
         init();
         if (cliArguments.hasFileArguments()) {
             try {
+                cliArguments.getExclusionsFile().ifPresent(exclusions::readExclusions);
                 openFiles(new File(cliArguments.getExpectedFile().get()), cliArguments.getExpectedPassword(),
                         new File(cliArguments.getActualFile().get()), cliArguments.getActualPassword(), cliArguments.getExclusionsFile());
             } catch (IOException ex) {
@@ -191,7 +195,7 @@ public class Display {
         resultPanel.setImage(viewModel.getDiffImage());
 
         if (compareResult.isEqual()) {
-            JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
+            JOptionPane.showMessageDialog(frame, "The compared documents are identical." + this.exclusions);
         }
 
         frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
