@@ -11,4 +11,4 @@
 - With the Diffs button, the calculated differences are displayed as exclusions.
 - The New button adds a new exclusions block for the current page.
 - The rectangles in the PDF display can be clicked. A double click in the right area jumps to the rectangle in the PDF display. Dashed guidelines appear around the rectangles.
-- You can now zoom in using the mouse wheel.
+- You can now zoom using the mouse wheel, while CTRL is pressed.
