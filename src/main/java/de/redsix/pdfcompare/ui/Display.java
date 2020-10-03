@@ -147,6 +147,7 @@ public class Display {
 
         final JToggleButton pageZoomButton = new JToggleButton("Zoom Page");
         pageZoomButton.setSelected(true);
+        pageZoomButton.setFocusable(false);
         pageZoomButton.addActionListener(event -> {
             leftPanel.zoomPage();
             resultPanel.zoomPage();
@@ -183,6 +184,7 @@ public class Display {
 
         final ButtonGroup buttonGroup = new ButtonGroup();
         expectedButton.setSelected(true);
+        expectedButton.setFocusable(false);
         expectedButton.addActionListener(event -> {
             viewModel.showExpected();
             leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
@@ -191,6 +193,7 @@ public class Display {
         buttonGroup.add(expectedButton);
 
         final JToggleButton actualButton = new JToggleButton("Actual");
+        actualButton.setFocusable(false);
         actualButton.addActionListener(event -> {
             viewModel.showActual();
             leftPanel.setImage(applyExclusions(viewModel.getLeftImage()));
@@ -307,10 +310,22 @@ public class Display {
                 });
             }
         };
-        leftPanel.addMouseWheelListener(mouseWheelListener);
-        resultPanel.addMouseWheelListener(mouseWheelListener);
+
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyEvent -> {
+            if (keyEvent.getKeyCode() == KeyEvent.VK_CONTROL) {
+                if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
+                    leftPanel.addMouseWheelListener(mouseWheelListener);
+                    resultPanel.addMouseWheelListener(mouseWheelListener);
+                } else if (keyEvent.getID() == KeyEvent.KEY_RELEASED) {
+                    leftPanel.removeMouseWheelListener(mouseWheelListener);
+                    resultPanel.removeMouseWheelListener(mouseWheelListener);
+                }
+            }
+            return false;
+        });
 
         final JToggleButton exclusionMode = new JToggleButton("Exclusions");
+        exclusionMode.setFocusable(false);
         exclusionMode.addActionListener(event -> {
             if (exclusionMode.isSelected()) {
                 leftPanel.addMouseListener(mouseListener);
@@ -376,6 +391,7 @@ public class Display {
 
     private static void addToolBarButton(final JToolBar toolBar, final String label, final ActionListener actionListener) {
         final JButton button = new JButton(label);
+        button.setFocusable(false);
         button.addActionListener(actionListener);
         toolBar.add(button);
     }

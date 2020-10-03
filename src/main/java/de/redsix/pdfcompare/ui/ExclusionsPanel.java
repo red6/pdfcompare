@@ -371,6 +371,7 @@ public class ExclusionsPanel extends JPanel {
 
     private static void addToolBarButton(final JToolBar toolBar, final String label, final String tooltip, final ActionListener actionListener) {
         final JButton button = new JButton(label);
+        button.setFocusable(false);
         button.addActionListener(actionListener);
         button.setToolTipText(tooltip);
         toolBar.add(button);
