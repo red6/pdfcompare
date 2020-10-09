@@ -370,7 +370,7 @@ public class Display {
             resultPanel.setImage(applyExclusions(viewModel.getDiffImage()));
 
             if (compareResult.isEqual()) {
-                JOptionPane.showMessageDialog(frame, "The compared documents are identical." + this.exclusions);
+                JOptionPane.showMessageDialog(frame, "The compared documents are identical.");
             }
 
             expectedButton.setSelected(true);
