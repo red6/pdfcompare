@@ -131,6 +131,9 @@ files. If you want to specify another configuration file, you can find out more 
 https://github.com/lightbend/config#standard-behavior. In particular you can specify a
 replacement config file with the -Dconfig.file=path/to/file command line argument.  
 
+Alternatively you can specify parameters either through a system environment variables or as a
+Jvm parameter with -DvariableName=<value>  
+
 Another way to specify a different config location programmatically is to create a
 new ConfigFileEnvironment(...) and pass it to PdfCompare.withEnvironment(...).
  
