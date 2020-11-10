@@ -116,7 +116,12 @@ public class CliArguments {
     }
 
     /*package*/ int printHelp() {
-        new HelpFormatter().printHelp("java -jar pdfcompare-x.x.x-full.jar [EXPECTED] [ACTUAL]", options);
+        new HelpFormatter().printHelp("java -jar pdfcompare-x.x.x-full.jar [EXPECTED] [ACTUAL]\n" +
+                "\n" +
+                "Return codes:\n" +
+                "   0 for documents are equal\n" +
+                "   1 for documents differ\n" +
+                "   2 for errors occured\n\n", options);
         return 0;
     }
 

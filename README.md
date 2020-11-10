@@ -18,9 +18,10 @@ Just include it as a dependency. Please check for the most current version avail
 
 ### Simple Usage
 
-There is a simple interactive UI, when you start the Class de.redsix.pdfcompare.Main 
-without any additional arguments. Next to the UI you can provide an expected and actual 
-file as well as an optional result file by CLI.
+There is a simple interactive UI, when you start the jar file 
+without any additional arguments (which starts the class de.redsix.pdfcompare.Main).
+Next to the UI you can provide an expected and actual 
+file and additional parameter via a CLI. To get a help for the CLI use the -h or --help option-.
 ```
 usage: java -jar pdfcompare-x.x.x-full.jar [EXPECTED] [ACTUAL]
  -h,--help              Displays this text and exit
