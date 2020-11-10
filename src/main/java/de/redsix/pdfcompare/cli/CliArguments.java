@@ -116,7 +116,7 @@ public class CliArguments {
     }
 
     /*package*/ int printHelp() {
-        new HelpFormatter().printHelp("java -jar pdfcompare-x.x.x.jar [EXPECTED] [ACTUAL]", options);
+        new HelpFormatter().printHelp("java -jar pdfcompare-x.x.x-full.jar [EXPECTED] [ACTUAL]", options);
         return 0;
     }
 
