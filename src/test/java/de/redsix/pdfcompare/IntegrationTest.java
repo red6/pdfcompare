@@ -263,7 +263,7 @@ public class IntegrationTest extends FileReading {
             result.writeTo(filename);
             try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
                 if (expectedPdf != null) {
-                    compareAndCheck(filename, expectedPdf);
+                    compareAndCheck(expectedPdf, filename);
                 } else {
                     assertFalse(Files.exists(Paths.get(filename + ".pdf")));
                 }
@@ -277,7 +277,7 @@ public class IntegrationTest extends FileReading {
             result.writeTo(new FileOutputStream(filename + ".pdf"));
             try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
                 if (expectedPdf != null) {
-                    compareAndCheck(filename, expectedPdf);
+                    compareAndCheck(expectedPdf, filename);
                 } else {
                     assertThat(Files.size(Paths.get(filename + ".pdf")), is(0));
                 }
@@ -285,7 +285,7 @@ public class IntegrationTest extends FileReading {
         }
     }
 
-    private void compareAndCheck(String filename, InputStream expectedPdf) throws IOException {
+    private void compareAndCheck(InputStream expectedPdf, String filename) throws IOException {
         CompareResultImpl compare = new PdfComparator<>(expectedPdf, new FileInputStream(filename + ".pdf")).compare();
         if (!compare.isEqual()) {
             compare.writeTo("diff_testName");
