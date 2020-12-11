@@ -37,6 +37,8 @@ public class SimpleEnvironment implements Environment {
     private Integer dpi;
     private Boolean addEqualPagesToResult;
     private Boolean failOnMissingIgnoreFile;
+    private Integer drawThreadCount;
+    private Integer diffThreadCount;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -184,6 +186,26 @@ public class SimpleEnvironment implements Environment {
 
     public SimpleEnvironment setFailOnMissingIgnoreFile(final boolean b) {
         this.failOnMissingIgnoreFile = b;
+        return this;
+    }
+
+    @Override
+    public int getDrawThreadCount() {
+        return drawThreadCount != null ? drawThreadCount : fallback.getDrawThreadCount();
+    }
+
+    public SimpleEnvironment setDrawThreadCount(int drawThreadCount) {
+        this.drawThreadCount = drawThreadCount;
+        return this;
+    }
+
+    @Override
+    public int getDiffThreadCount() {
+        return diffThreadCount != null ? diffThreadCount : fallback.getDiffThreadCount();
+    }
+
+    public SimpleEnvironment setDiffThreadCount(Integer diffThreadCount) {
+        this.diffThreadCount = diffThreadCount;
         return this;
     }
 }

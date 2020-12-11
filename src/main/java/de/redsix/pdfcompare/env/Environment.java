@@ -32,4 +32,8 @@ public interface Environment {
     boolean addEqualPagesToResult();
 
     boolean failOnMissingIgnoreFile();
+
+    int getDrawThreadCount();
+
+    int getDiffThreadCount();
 }

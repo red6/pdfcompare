@@ -364,11 +364,12 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private void buildEnvironment() {
-        compareResult.setEnvironment(getEnvironment());
+        Environment env = getEnvironment();
+        compareResult.setEnvironment(env);
 
-        drawExecutor = blockingExecutor("Draw", 1, 50, environment);
-        parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4, environment);
-        diffExecutor = blockingExecutor("Diff", 1, 2, environment);
+        drawExecutor = blockingExecutor("Draw", env.getDrawThreadCount(), 50, this.environment);
+        parrallelDrawExecutor = blockingExecutor("ParallelDraw", env.getDrawThreadCount() * 2, env.getDrawThreadCount() * 4, this.environment);
+        diffExecutor = blockingExecutor("Diff", env.getDiffThreadCount(), env.getDiffThreadCount() * 2, this.environment);
     }
 
     /**

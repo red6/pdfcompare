@@ -134,6 +134,16 @@ public class ConfigFileEnvironment implements Environment {
         return config.getBoolean("failOnMissingIgnoreFile");
     }
 
+    @Override
+    public int getDrawThreadCount() {
+        return config.getInt("drawThreadCount");
+    }
+
+    @Override
+    public int getDiffThreadCount() {
+        return config.getInt("diffThreadCount");
+    }
+
     private int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }
