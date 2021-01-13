@@ -17,3 +17,11 @@
 
 #### Added
 - Show return codes in CLI help text
+
+## 1.1.57
+
+#### Fixed
+- Integrations Tests - expected documents addapted to new PdfBox version.
+
+#### Security
+- Upgrade PdfBox to version 2.0.22, which fixes a vulnerability
