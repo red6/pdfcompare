@@ -25,3 +25,8 @@
 
 #### Security
 - Upgrade PdfBox to version 2.0.22, which fixes a vulnerability
+
+## 1.1.58
+
+#### Added
+- Add getPagesWithDifferences to CompareResult

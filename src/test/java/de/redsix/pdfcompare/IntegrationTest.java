@@ -159,6 +159,8 @@ public class IntegrationTest extends FileReading {
         assertThat(result.isEqual(), is(false));
         assertThat(result.getNumberOfPages(), is(2));
         assertThat(result.getDifferences(), hasSize(1));
+        assertThat(result.getPagesWithDifferences(), hasSize(1));
+        assertThat(result.getPagesWithDifferences().iterator().next(), is(2));
         assertThat(result.getDifferences().iterator().next().page, is(2));
         writeAndCompare(result);
     }
