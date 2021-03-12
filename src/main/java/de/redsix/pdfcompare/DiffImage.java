@@ -11,7 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import de.redsix.pdfcompare.env.Environment;
-import jdk.internal.org.jline.utils.Log;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
