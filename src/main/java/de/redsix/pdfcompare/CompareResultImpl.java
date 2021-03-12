@@ -217,7 +217,13 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 		        
 		        //Creto una nuova immagine con a sinistra l'atteso e a destra l'attuale con segnate le differenze
 		        MergeImages merge=new MergeImages();
-		        ImageWithDimension mergedImage=merge.mergeOnLeft(expectedImage, diffImage);
+		        ImageWithDimension mergedImage=null;
+		        if(pageIndex==0) {
+		        	mergedImage=merge.mergeOnLeft(expectedImage, diffImage,PdfComparator.headerLeft,PdfComparator.headerRight);
+		        }else {
+		        	mergedImage=merge.mergeOnLeft(expectedImage, diffImage,null,null);
+		        }
+		        
 		        if (diffCalculator.differencesFound()) {
 		            isEqual = false;
 		            diffAreas.add(diffCalculator.getDiffArea());
