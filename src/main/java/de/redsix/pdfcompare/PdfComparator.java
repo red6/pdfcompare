@@ -61,7 +61,9 @@ public class PdfComparator<T extends CompareResultImpl> {
     private final TimeUnit unit = TimeUnit.MINUTES;
     private String expectedPassword = "";
     private String actualPassword = "";
-    private boolean withIgnoreCalled = false;
+    private boolean withIgnoreCalled = false;   
+    public static String headerLeft="";
+    public static String headerRight="";
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
