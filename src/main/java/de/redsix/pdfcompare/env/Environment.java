@@ -32,4 +32,6 @@ public interface Environment {
     boolean addEqualPagesToResult();
 
     boolean failOnMissingIgnoreFile();
+    
+    boolean getEnableHorizontalCompareOutput();
 }
