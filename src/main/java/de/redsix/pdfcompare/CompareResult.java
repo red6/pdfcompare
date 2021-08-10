@@ -2,6 +2,7 @@ package de.redsix.pdfcompare;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Map;
 
 public interface CompareResult {
 
@@ -99,4 +100,11 @@ public interface CompareResult {
      * @return collection of page numbers, that have a difference
      */
     Collection<Integer> getPagesWithDifferences();
+
+    /**
+     * Gives a map of the difference percentages per page.
+     * 
+     * @return difference percentages mapped to the page index.
+     */
+    Map<Integer, Double> getPageDiffsInPercent();
 }

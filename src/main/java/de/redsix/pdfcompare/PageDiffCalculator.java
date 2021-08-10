@@ -50,6 +50,14 @@ public class PageDiffCalculator {
         return diffsFoundInExclusion > 0;
     }
 
+    public double getDifferenceInPercent() {
+        if (totalPixels == 0) {
+            return diffsFound > 0 ? 100.0 : 0.0;
+        } else {
+            return (double)diffsFound / (double)totalPixels * 100.0;
+        }
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

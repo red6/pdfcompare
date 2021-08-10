@@ -47,6 +47,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     private boolean expectedOnly;
     private boolean actualOnly;
     private final Collection<PageArea> diffAreas = new ArrayList<>();
+    private final Map<Integer, Double> diffPercentages = new TreeMap<>();
     private int pages = 0;
 
     @Override
@@ -131,10 +132,14 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
             isEqual = false;
             diffAreas.add(diffCalculator.getDiffArea());
             diffImages.put(pageIndex, diffImage);
+            diffPercentages.put(pageIndex, diffCalculator.getDifferenceInPercent());
             pages++;
-        } else if (environment.addEqualPagesToResult()) {
-            diffImages.put(pageIndex, diffImage);
-            pages++;
+        } else {
+            diffPercentages.put(pageIndex, 0.0);
+            if (environment.addEqualPagesToResult()) {
+                diffImages.put(pageIndex, diffImage);
+                pages++;
+            }
         }
     }
 
@@ -191,6 +196,11 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     @Override
     public Collection<Integer> getPagesWithDifferences() {
         return diffAreas.stream().map(a -> a.page).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<Integer, Double> getPageDiffsInPercent() {
+        return diffPercentages;
     }
 
     public void expectedOnly() {
