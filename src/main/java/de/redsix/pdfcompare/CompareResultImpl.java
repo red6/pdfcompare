@@ -128,18 +128,15 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         Objects.requireNonNull(actualImage, "actualImage is null");
         Objects.requireNonNull(diffImage, "diffImage is null");
         this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
+        diffPercentages.put(pageIndex, diffCalculator.getDifferenceInPercent());
         if (diffCalculator.differencesFound()) {
             isEqual = false;
             diffAreas.add(diffCalculator.getDiffArea());
             diffImages.put(pageIndex, diffImage);
-            diffPercentages.put(pageIndex, diffCalculator.getDifferenceInPercent());
             pages++;
-        } else {
-            diffPercentages.put(pageIndex, 0.0);
-            if (environment.addEqualPagesToResult()) {
-                diffImages.put(pageIndex, diffImage);
-                pages++;
-            }
+        } else if (environment.addEqualPagesToResult()) {
+            diffImages.put(pageIndex, diffImage);
+            pages++;
         }
     }
 
