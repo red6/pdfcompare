@@ -1,5 +1,6 @@
 package de.redsix.pdfcompare;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -61,5 +62,32 @@ class PageDiffCalculatorTest {
         diffCalculator.diffFound();
         diffCalculator.diffFound();
         assertTrue(diffCalculator.differencesFound());
+    }
+
+    @Test
+    public void zeroTotalPixelsWithDiffFoundReportsHundredPercentDifference() {
+        final PageDiffCalculator diffCalculator = new PageDiffCalculator(0, 0);
+        diffCalculator.diffFound();
+        assertEquals(100.0, diffCalculator.getDifferenceInPercent());
+    }
+
+    @Test
+    public void zeroTotalPixelsWithNoDiffFoundReportsZeroPercentDifference() {
+        final PageDiffCalculator diffCalculator = new PageDiffCalculator(0, 0);
+        assertEquals(0.0, diffCalculator.getDifferenceInPercent());
+    }
+
+    @Test
+    public void diffsFoundReportsCorrectPercentage() {
+        final PageDiffCalculator diffCalculator = new PageDiffCalculator(10, 0);
+        diffCalculator.diffFound();
+        diffCalculator.diffFound();
+        assertEquals(20.0, diffCalculator.getDifferenceInPercent());
+    }
+
+    @Test
+    public void noDiffsFoundReportsCorrectPercentage() {
+        final PageDiffCalculator diffCalculator = new PageDiffCalculator(6, 0);
+        assertEquals(0.0, diffCalculator.getDifferenceInPercent());
     }
 }
