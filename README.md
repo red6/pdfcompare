@@ -1,6 +1,6 @@
 # PdfCompare  [![Build Status](https://travis-ci.org/red6/pdfcompare.svg?branch=master)](https://travis-ci.org/red6/pdfcompare) [![Maven Central Version](https://img.shields.io/maven-central/v/de.redsix/pdfcompare.svg)](http://search.maven.org/#search|gav|1|g:"de.redsix"%20AND%20a:"pdfcompare")
 A simple Java library to compare two PDF files.
-Files are rendered and compared pixel by pixel.
+Files are rendered and compared pixel by pixel. There is no text comparison.
 
 ### Usage with Maven
 
@@ -16,10 +16,12 @@ Just include it as a dependency. Please check for the most current version avail
 </dependencies>
 ```
 
-### Simple Usage
+### Simple Usage via UI or Commandline
 
 There is a simple interactive UI, when you start the jar file 
 without any additional arguments (which starts the class de.redsix.pdfcompare.Main).
+It allows you to choose files to compare and also to mark areas to ignore and write those to an ignore-file.
+
 Next to the UI you can provide an expected and actual 
 file and additional parameter via a CLI. To get a help for the CLI use the -h or --help option-.
 ```
@@ -27,6 +29,8 @@ usage: java -jar pdfcompare-x.x.x-full.jar [EXPECTED] [ACTUAL]
  -h,--help              Displays this text and exit
  ...
 ```
+
+### Usage as a library
 
 But the focus of PdfCompare is on embedded usage as a library.
 

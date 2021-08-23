@@ -30,3 +30,14 @@
 
 #### Added
 - Add getPagesWithDifferences to CompareResult
+
+## 1.1.59
+
+#### Fixed
+- Upgrade dependencies
+
+## 1.1.60
+
+#### Added
+- Add getPageDiffsInPercent to CompareResult to hand out how different pages are
+
