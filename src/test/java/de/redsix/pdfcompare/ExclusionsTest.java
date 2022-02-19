@@ -1,5 +1,9 @@
 package de.redsix.pdfcompare;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.typesafe.config.ConfigException;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.SimpleEnvironment;
@@ -9,18 +13,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Paths;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public class ExclusionsTest {
+public class ExclusionsTest extends FileReading {
 
     private final Exclusions exclusions = new Exclusions(DefaultEnvironment.create());
 
     @Test
     public void readExclusions() {
-        exclusions.readExclusions("ignore.conf");
+        exclusions.readExclusions("src/test/resources/de/redsix/pdfcompare/ignore.conf");
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.forPage(1).contains(600, 400), is(false));
 
@@ -32,13 +31,17 @@ public class ExclusionsTest {
 
     @Test
     public void readFromFile() {
-        exclusions.readExclusions(new File("ignore.conf"));
+        exclusions.readExclusions(f("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n" +
+                "{\"page\": 1, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
+                "{\"page\": 2, \"x1\": 1750, \"y1\": 240, \"x2\": 2000, \"y2\": 300}\n" +
+                "]"));
     }
 
     @Test
     public void readFromPath() {
-        exclusions.readExclusions(Paths.get("ignore.conf"));
+        exclusions.readExclusions(p("ignore.conf"));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
     }
 
@@ -46,20 +49,21 @@ public class ExclusionsTest {
     public void missingPathIsIgnored() {
         exclusions.readExclusions(Paths.get("fileDoesNotExist.conf"));
         // No exclusions are read
-        exclusions.forEach(pageArea -> fail());
+        assertThat(exclusions.asJson(), is("exclusions: [\n]"));
     }
 
     @Test
     public void missingFileIsIgnored() {
         exclusions.readExclusions(new File("fileDoesNotExist.conf"));
         // No exclusions are read
-        exclusions.forEach(pageArea -> fail());
+        assertThat(exclusions.asJson(), is("exclusions: [\n]"));
     }
 
     @Test
     public void missingFileThrowsException() {
         Exclusions exclusions = new Exclusions(new SimpleEnvironment().setFailOnMissingIgnoreFile(true));
-        assertThrows(IgnoreFileMissing.class, () -> exclusions.readExclusions(new File("fileDoesNotExist.conf")));
+        assertThrows(IgnoreFileMissing.class,
+                () -> exclusions.readExclusions(new File("fileDoesNotExist.conf")));
     }
 
     @Test
@@ -67,6 +71,7 @@ public class ExclusionsTest {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{x1: 230, y1: 350, x2: 450, y2: 420}]".getBytes()));
         assertThat(exclusions.forPage(1).contains(300, 400), is(true));
         assertThat(exclusions.forPage(8).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n{\"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420}\n]"));
     }
 
     @Test
@@ -74,6 +79,22 @@ public class ExclusionsTest {
         exclusions.readExclusions(new ByteArrayInputStream("exclusions: [{page: 3}]".getBytes()));
         assertThat(exclusions.forPage(1).contains(300, 400), is(false));
         assertThat(exclusions.forPage(3).contains(300, 400), is(true));
+        assertThat(exclusions.asJson(), is("exclusions: [\n{\"page\": 3}\n]"));
+    }
+
+    @Test
+    public void withAndWithoutPageGetsSortedWithoutPageFirst() {
+        exclusions.readExclusions(new ByteArrayInputStream(("exclusions: [" +
+                "{page: 4, x1: 230, y1: 350, x2: 450, y2: 420}," +
+                "{page: 2, x1: 230, y1: 350, x2: 450, y2: 420}," +
+                "{page: 3}," +
+                "{x1: 230, y1: 350, x2: 450, y2: 420}]").getBytes()));
+        assertThat(exclusions.asJson(), is("exclusions: [\n" +
+                "{\"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
+                "{\"page\": 2, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420},\n" +
+                "{\"page\": 3},\n" +
+                "{\"page\": 4, \"x1\": 230, \"y1\": 350, \"x2\": 450, \"y2\": 420}\n" +
+                "]"));
     }
 
     @Test

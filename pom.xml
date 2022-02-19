@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.redsix</groupId>
     <artifactId>pdfcompare</artifactId>
-    <version>1.1.51-SNAPSHOT</version>
+    <version>1.1.62-SNAPSHOT</version>
     <name>PdfCompare</name>
     <url>https://github.com/red6/pdfcompare</url>
     <description>A simple Java library to compare two PDF files. Files are rendered and compared pixel by pixel.</description>
@@ -28,7 +28,7 @@
         <java.version>1.${java.src}</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <junit-minor.version>5.2</junit-minor.version>
+        <junit-minor.version>8.2</junit-minor.version>
         <junit.version>5.${junit-minor.version}</junit.version>
     </properties>
 
@@ -61,27 +61,27 @@
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.18</version>
+            <version>2.0.25</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
+            <version>1.7.35</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
+            <version>1.2.10</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
-            <version>1.4</version>
+            <version>1.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
@@ -110,7 +110,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.2.4</version>
+            <version>4.3.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

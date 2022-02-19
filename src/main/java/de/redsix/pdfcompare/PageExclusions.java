@@ -2,7 +2,6 @@ package de.redsix.pdfcompare;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Consumer;
 
 public class PageExclusions {
 
@@ -21,6 +20,10 @@ public class PageExclusions {
         exclusions.add(exclusion);
     }
 
+    public void remove(final PageArea exclusion) {
+        exclusions.remove(exclusion);
+    }
+
     public boolean contains(final int x, final int y) {
         for (PageArea exclusion : exclusions) {
             if (exclusion.contains(x, y)) {
@@ -33,7 +36,7 @@ public class PageExclusions {
         return false;
     }
 
-    public void forEach(final Consumer<PageArea> exclusionConsumer) {
-        exclusions.forEach(exclusionConsumer);
+    public Collection<PageArea> getExclusions() {
+        return exclusions;
     }
 }

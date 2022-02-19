@@ -21,13 +21,13 @@ public class InThreadExecutorServiceTest {
 
     @Test
     public void immediateFutureWithResult() throws ExecutionException, InterruptedException {
-        final ImmediateFuture future = new ImmediateFuture<>("Test");
+        final ImmediateFuture<String> future = new ImmediateFuture<>("Test");
         assertThat(future.get(), is("Test"));
     }
 
     @Test
     public void immediateFutureWithException() throws ExecutionException, InterruptedException {
-        final ImmediateFuture future = new ImmediateFuture(new Exception());
+        final ImmediateFuture<Exception> future = new ImmediateFuture<>(new Exception());
         assertThrows(Exception.class, () ->
                 future.get());
     }

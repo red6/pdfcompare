@@ -4,12 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class InThreadExecutorService implements ExecutorService {
 
@@ -82,7 +77,7 @@ public class InThreadExecutorService implements ExecutorService {
 
     @Override
     public <T> T invokeAny(final Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
-        return null;
+        return invokeAny(tasks);
     }
 
     @Override

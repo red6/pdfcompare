@@ -23,13 +23,14 @@ public class PageDiffCalculator {
      * pdc.diffFound();
      * pdc.addDiffArea(pageArea);
      * }</pre>
-     * @param pageArea the page area that covers the diff.
+     *
+     * @param diffArea the page area that covers the diff.
      */
-    public PageDiffCalculator(final PageArea pageArea) {
+    public PageDiffCalculator(final PageArea diffArea) {
         totalPixels = 0;
         allowedDiffInPercent = 0;
         diffsFound = 1;
-        this.diffArea = pageArea;
+        this.diffArea = diffArea;
     }
 
     public void diffFound() {
@@ -47,6 +48,14 @@ public class PageDiffCalculator {
 
     public boolean differencesFoundInExclusion() {
         return diffsFoundInExclusion > 0;
+    }
+
+    public double getDifferenceInPercent() {
+        if (totalPixels == 0) {
+            return diffsFound > 0 ? 100.0 : 0.0;
+        } else {
+            return (double)diffsFound / (double)totalPixels * 100.0;
+        }
     }
 
     @Override

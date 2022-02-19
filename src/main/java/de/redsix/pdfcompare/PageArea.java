@@ -1,5 +1,9 @@
 package de.redsix.pdfcompare;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Describes a rectangular area of a page or multiple pages.
  * Is is used to specify exclusions and areas, that differ.
@@ -14,6 +18,7 @@ public class PageArea {
 
     /**
      * Defines the area for the whole page.
+     *
      * @param page Page number starting with 1
      */
     public PageArea(final int page) {
@@ -26,6 +31,7 @@ public class PageArea {
 
     /**
      * Defines the same area for every page.
+     *
      * @param x1 x-coordinate of the upper left corner of the rectangle
      * @param y1 y-coordinate of the upper left corner of the rectangle
      * @param x2 x-coordinate of the lower right corner of the rectangle
@@ -42,11 +48,12 @@ public class PageArea {
 
     /**
      * Defines an area for one particular page.
+     *
      * @param page Page number starting with 1
-     * @param x1 x-coordinate of the upper left corner of the rectangle
-     * @param y1 y-coordinate of the upper left corner of the rectangle
-     * @param x2 x-coordinate of the lower right corner of the rectangle
-     * @param y2 y-coordinate of the lower right corner of the rectangle
+     * @param x1   x-coordinate of the upper left corner of the rectangle
+     * @param y1   y-coordinate of the upper left corner of the rectangle
+     * @param x2   x-coordinate of the lower right corner of the rectangle
+     * @param y2   y-coordinate of the lower right corner of the rectangle
      */
     public PageArea(final int page, final int x1, final int y1, final int x2, final int y2) {
         checkCoordinates(x1, y1, x2, y2);
@@ -67,6 +74,14 @@ public class PageArea {
         if (x1 > x2 || y1 > y2) {
             throw new IllegalArgumentException("x1 has to be smaller or equal to x2 and y1 has to be smaller or equal to y2");
         }
+    }
+
+    public boolean hasPage() {
+        return page >= 1;
+    }
+
+    public boolean hasCoordinates() {
+        return x1 >= 0;
     }
 
     public boolean contains(int x, int y) {
@@ -95,8 +110,60 @@ public class PageArea {
     public int getY2() {
         return y2;
     }
+    
+    @Override
+    public int hashCode() {
+        return page + 31 * x1;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        
+        if (obj == null || ! (obj instanceof PageArea)) {
+            return false;
+        }
+        
+        PageArea pageArea = (PageArea) obj;
+        
+        return this.getPage() == pageArea.getPage()
+                && this.getX1() == pageArea.getX1()
+                && this.getY1() == pageArea.getY1()
+                && this.getX2() == pageArea.getX2()
+                && this.getY2() == pageArea.getY2()
+            ;
+    }
 
     public String asJson() {
-        return "{\"page\":" + page + ",\"x1\":" + x1 + ",\"y1\":" + y1 + ",\"x2\":" + x2 + ",\"y2\":" + y2 + "}";
+        if (hasPage()) {
+            if (hasCoordinates()) {
+                return "{\"page\": " + page + ", \"x1\": " + x1 + ", \"y1\": " + y1 + ", \"x2\": " + x2 + ", \"y2\": " + y2 + "}";
+            } else {
+                return "{\"page\": " + page + "}";
+            }
+        } else {
+            return "{\"x1\": " + x1 + ", \"y1\": " + y1 + ", \"x2\": " + x2 + ", \"y2\": " + y2 + "}";
+        }
+    }
+
+    public static String asJsonWithExclusion(Collection<PageArea> pageAreas) {
+        return asJsonWithExclusion(pageAreas.stream());
+    }
+
+    public static String asJsonWithExclusion(Stream<PageArea> pageAreaStream) {
+        String json = asJson(pageAreaStream);
+        return json.isEmpty()
+                ? "exclusions: [\n]"
+                : "exclusions: [\n" + json + "\n]";
+    }
+
+    public static String asJson(Collection<PageArea> pageAreas) {
+        return asJson(pageAreas.stream());
+    }
+
+    public static String asJson(Stream<PageArea> pageAreas) {
+        return pageAreas.map(PageArea::asJson).collect(Collectors.joining(",\n"));
     }
 }

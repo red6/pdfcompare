@@ -2,6 +2,7 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
 
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -16,7 +17,13 @@ import de.redsix.pdfcompare.env.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+
 
 public class DiffImage {
 
@@ -33,15 +40,13 @@ public class DiffImage {
     private int expectedImageHeight;
     private int actualImageWidth;
     private int actualImageHeight;
-    private int resultImageWidth;
-    private int resultImageHeight;
     private BufferedImage resultImage;
     private int diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2;
     private final ResultCollector compareResult;
     private PageDiffCalculator diffCalculator;
 
     public DiffImage(final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final int page,
-                     final Environment environment, final Exclusions exclusions, final ResultCollector compareResult) {
+            final Environment environment, final Exclusions exclusions, final ResultCollector compareResult) {
         this.expectedImage = expectedImage;
         this.actualImage = actualImage;
         this.page = page;
@@ -52,6 +57,10 @@ public class DiffImage {
 
     public BufferedImage getImage() {
         return resultImage;
+    }
+
+    public int getPage() {
+        return page;
     }
 
     public void diffImages() {
@@ -68,8 +77,8 @@ public class DiffImage {
         actualImageWidth = actualBuffImage.getWidth();
         actualImageHeight = actualBuffImage.getHeight();
 
-        resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
-        resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
+        int resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
+        int resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
         resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
         DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 
@@ -97,8 +106,10 @@ public class DiffImage {
                     if (expectedElement != actualElement) {
                         extendDiffArea(x, y);
                         diffCalculator.diffFound();
-                        LOG.debug("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
-                        mark(resultBuffer, x, y, resultImageWidth, MARKER_RGB);
+
+                        LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
+                        mark(resultBuffer, x, y, resultImageWidth);
+
                     }
                 }
                 resultBuffer.setElem(x + resultLineOffset, element);
@@ -229,21 +240,21 @@ public class DiffImage {
     }
 
     /**
-     * Calculate the combined intensity of a pixel and normalizes it to a value of at most 255.
+     * Calculate the combined intensity of a pixel and normalize it to a value of at most 255.
      *
-     * @param element
-     * @return
+     * @param element a pixel encoded as an integer
+     * @return the intensity of all colors combined cut off at a maximum of 255
      */
     private static int calcCombinedIntensity(final int element) {
         final Color color = new Color(element);
         return Math.min(255, (color.getRed() + color.getGreen() + color.getRed()) / 3);
     }
 
-    private static void mark(final DataBuffer image, final int x, final int y, final int imageWidth, final int markerRGB) {
+    private static void mark(final DataBuffer image, final int x, final int y, final int imageWidth) {
         final int yOffset = y * imageWidth;
         for (int i = 0; i < MARKER_WIDTH; i++) {
-            image.setElem(x + i * imageWidth, markerRGB);
-            image.setElem(i + yOffset, markerRGB);
+            image.setElem(x + i * imageWidth, MARKER_RGB);
+            image.setElem(i + yOffset, MARKER_RGB);
         }
     }
 

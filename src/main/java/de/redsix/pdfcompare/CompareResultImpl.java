@@ -48,7 +48,8 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     protected boolean hasDifferenceInExclusion = false;
     private boolean expectedOnly;
     private boolean actualOnly;
-    private Collection<PageArea> diffAreas = new ArrayList<>();
+    private final Collection<PageArea> diffAreas = new ArrayList<>();
+    private final Map<Integer, Double> diffPercentages = new TreeMap<>();
     private int pages = 0;
 
     @Override
@@ -86,6 +87,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 
     /**
      * checks, whether this CompareResult has stored images.
+     *
      * @return true, when images are stored in this CompareResult
      */
     protected synchronized boolean hasImages() {
@@ -140,6 +142,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 				diffImages.put(pageIndex, diffImage);
 				pages++;
 			}
+
         }
     }
 
@@ -188,10 +191,19 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         return diffAreas;
     }
 
+    @Override
     public String getDifferencesJson() {
-        return "exclusions: [\n" +
-                getDifferences().stream().map(PageArea::asJson).collect(Collectors.joining(",\n")) +
-                "\n]";
+        return PageArea.asJsonWithExclusion(getDifferences());
+    }
+
+    @Override
+    public Collection<Integer> getPagesWithDifferences() {
+        return diffAreas.stream().map(a -> a.page).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<Integer, Double> getPageDiffsInPercent() {
+        return diffPercentages;
     }
 
     public void expectedOnly() {

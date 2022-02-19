@@ -2,6 +2,12 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 
+import de.redsix.pdfcompare.env.Environment;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -13,13 +19,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-
-import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import de.redsix.pdfcompare.env.Environment;
 
 /**
  * This CompareResult monitors the memory the JVM consumes through Runtime.totalMemory() - Runtime.freeMemory()
@@ -66,7 +65,9 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             }
             mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
-            LOG.info("Merging took: " + Duration.between(start, end).toMillis() + "ms");
+
+            LOG.trace("Merging took: {}ms", Duration.between(start, end).toMillis());
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -124,8 +125,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
                     try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
                         document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
-                        final Path tempDir = getTempDir();
-                        final Path tempFile = tempDir.resolve(String.format("partial_%06d.pdf", minPageIndex));
+                        final Path tempFile = getTempDir().resolve(String.format("partial_%06d.pdf", minPageIndex));
                         document.save(tempFile.toFile());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -150,7 +150,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    protected void finalize() {
         if (swapExecutor != null) {
             swapExecutor.shutdown();
         }

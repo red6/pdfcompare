@@ -15,8 +15,12 @@
  */
 package de.redsix.pdfcompare;
 
+import static de.redsix.pdfcompare.Utilities.blockingExecutor;
+
+import de.redsix.pdfcompare.env.ConfigFileEnvironment;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
+import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -35,8 +39,6 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.*;
 
-import static de.redsix.pdfcompare.Utilities.blockingExecutor;
-
 /**
  * The PdfComparator is the entry point to use for comparing documents.
  * It allows to specify which documents to compare and which additional features to apply, like
@@ -48,7 +50,11 @@ import static de.redsix.pdfcompare.Utilities.blockingExecutor;
 public class PdfComparator<T extends CompareResultImpl> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfComparator.class);
+
+    private static final int TIMEOUT = 3;
+    private static final TimeUnit unit = TimeUnit.MINUTES;
     public static final int MARKER_WIDTH = 20;
+
     private Environment environment;
     private Exclusions exclusions;
     private InputStreamSupplier expectedStreamSupplier;
@@ -57,33 +63,37 @@ public class PdfComparator<T extends CompareResultImpl> {
     private ExecutorService parrallelDrawExecutor;
     private ExecutorService diffExecutor;
     private final T compareResult;
-    private final int timeout = 3;
-    private final TimeUnit unit = TimeUnit.MINUTES;
     private String expectedPassword = "";
     private String actualPassword = "";
+
     private boolean withIgnoreCalled = false;   
     public static String headerLeft="";
     public static String headerRight="";
 
+    private final ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
+
+
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
+     *
      * @param expectedPdfBase64 expected PDF in base64 encoded format
-     * @param actualPdfBase64 actual PDF in base64 encoded format
+     * @param actualPdfBase64   actual PDF in base64 encoded format
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
     public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64) {
-        return base64(expectedPdfBase64, actualPdfBase64, (T) new CompareResultImpl());
+        return base64(expectedPdfBase64, actualPdfBase64, new CompareResultImpl());
     }
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
+     *
      * @param expectedPdfBase64 expected PDF in base64 encoded format
-     * @param actualPdfBase64 actual PDF in base64 encoded format
-     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     * @param actualPdfBase64   actual PDF in base64 encoded format
+     * @param compareResult     the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
     public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64, T compareResult) {
-        PdfComparator pdfComparator = new PdfComparator(compareResult);
+        PdfComparator pdfComparator = new PdfComparator<>(compareResult);
         pdfComparator.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(expectedPdfBase64));
         pdfComparator.actualStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(actualPdfBase64));
         return pdfComparator;
@@ -96,8 +106,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two filenames for the expected PDF and the actual PDF.
+     *
      * @param expectedPdfFilename filename for the expected PDF
-     * @param actualPdfFilename filename for the actual PDF
+     * @param actualPdfFilename   filename for the actual PDF
      */
     public PdfComparator(String expectedPdfFilename, String actualPdfFilename) {
         this(expectedPdfFilename, actualPdfFilename, (T) new CompareResultImpl());
@@ -105,9 +116,10 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two filenames for the expected PDF and the actual PDF.
+     *
      * @param expectedPdfFilename filename for the expected PDF
-     * @param actualPdfFilename filename for the actual PDF
-     * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
+     * @param actualPdfFilename   filename for the actual PDF
+     * @param compareResult       the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      */
     public PdfComparator(String expectedPdfFilename, String actualPdfFilename, T compareResult) {
         this(compareResult);
@@ -121,8 +133,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two Path objects for the expected PDF and the actual PDF.
+     *
      * @param expectedPath Path for the expected PDF
-     * @param actualPath Path for the actual PDF
+     * @param actualPath   Path for the actual PDF
      */
     public PdfComparator(final Path expectedPath, final Path actualPath) {
         this(expectedPath, actualPath, (T) new CompareResultImpl());
@@ -130,8 +143,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two Path objects for the expected PDF and the actual PDF.
-     * @param expectedPath Path for the expected PDF
-     * @param actualPath Path for the actual PDF
+     *
+     * @param expectedPath  Path for the expected PDF
+     * @param actualPath    Path for the actual PDF
      * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      */
     public PdfComparator(final Path expectedPath, final Path actualPath, final T compareResult) {
@@ -146,8 +160,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two File objects for the expected PDF and the actual PDF.
+     *
      * @param expectedFile File for the expected PDF
-     * @param actualFile File for the actual PDF
+     * @param actualFile   File for the actual PDF
      */
     public PdfComparator(final File expectedFile, final File actualFile) {
         this(expectedFile, actualFile, (T) new CompareResultImpl());
@@ -155,8 +170,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two File objects for the expected PDF and the actual PDF.
-     * @param expectedFile File for the expected PDF
-     * @param actualFile File for the actual PDF
+     *
+     * @param expectedFile  File for the expected PDF
+     * @param actualFile    File for the actual PDF
      * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      */
     public PdfComparator(final File expectedFile, final File actualFile, final T compareResult) {
@@ -171,8 +187,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two InputStream objects for the expected PDF and the actual PDF.
+     *
      * @param expectedPdfIS InputStream for the expected PDF
-     * @param actualPdfIS InputStream for the actual PDF
+     * @param actualPdfIS   InputStream for the actual PDF
      */
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS) {
         this(expectedPdfIS, actualPdfIS, (T) new CompareResultImpl());
@@ -180,8 +197,9 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Compare two PDFs by providing two InputStream objects for the expected PDF and the actual PDF.
+     *
      * @param expectedPdfIS InputStream for the expected PDF
-     * @param actualPdfIS InputStream for the actual PDF
+     * @param actualPdfIS   InputStream for the actual PDF
      * @param compareResult the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      */
     public PdfComparator(final InputStream expectedPdfIS, final InputStream actualPdfIS, final T compareResult) {
@@ -204,7 +222,10 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Allows to inject an Environment that can override environment settings.
-     * {@link de.redsix.pdfcompare.env.SimpleEnvironment} is particularly useful if you want to override some properties.
+     * {@link SimpleEnvironment} is particularly useful if you want to override some properties.
+     * If you want to specify your own config file, instead of the default application.conf
+     * in the root of the classpath, you an use a {@link ConfigFileEnvironment}.
+     *
      * @param environment the environment so use
      * @return this
      * @throws IllegalStateException when withIgnore methods are called before this method.
@@ -219,6 +240,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Reads a file with Exclusions.
+     *
      * @param ignoreFilename The file to read
      * @return this
      * @see PdfComparator#withIgnore(Path)
@@ -232,6 +254,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Reads a file with Exclusions.
+     *
      * @param ignoreFile The file to read
      * @return this
      * @see PdfComparator#withIgnore(Path)
@@ -245,7 +268,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Reads a file with Exclusions.
-     *
+     * <p>
      * It is possible to define rectangular areas that are ignored during comparison. For that, a file needs to be created, which defines areas to ignore.
      * The file format is JSON (or actually a superset called <a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a>) and has the following form:
      * <pre>
@@ -282,6 +305,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Reads Exclusions from an InputStream.
+     *
      * @param ignoreIS The file to read
      * @return this
      * @see PdfComparator#withIgnore(Path)
@@ -295,6 +319,7 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Allows to specify an area of a page that is excluded during the comparison.
+     *
      * @param exclusion An area of the document, that shall be ignored.
      * @return this
      */
@@ -307,9 +332,10 @@ public class PdfComparator<T extends CompareResultImpl> {
 
     /**
      * Allows to specify an area of a page that is excluded during the comparison.
-     * @deprecated Use {@link PdfComparator#withIgnore(PageArea)} instead.
+     *
      * @param exclusion An area of the document, that shall be ignored.
      * @return this
+     * @deprecated Use {@link PdfComparator#withIgnore(PageArea)} instead.
      */
     @Deprecated
     public PdfComparator<T> with(final PageArea exclusion) {
@@ -350,7 +376,16 @@ public class PdfComparator<T extends CompareResultImpl> {
         diffExecutor = blockingExecutor("Diff", 1, 2, environment);
     }
 
-    public CompareResult compare() throws IOException {
+    /**
+     * Does the actual comparison of the given PDF documents.
+     * When errors occur during the rendering or diffing of pages, they are collected and added to
+     * a RenderingException as SuppressedExceptions.
+     *
+     * @return the CompareResult gives information about the comparison
+     * @throws IOException        when an input file or stream can not be read
+     * @throws RenderingException when errors during rendering or diffing of pages occurred
+     */
+    public T compare() throws IOException, RenderingException {
         try {
             if (expectedStreamSupplier == null || actualStreamSupplier == null) {
                 return compareResult;
@@ -405,6 +440,11 @@ public class PdfComparator<T extends CompareResultImpl> {
         } else if (actualDocument.getNumberOfPages() > minPageCount) {
             addExtraPages(actualDocument, actualPdfRenderer, minPageCount, environment.getExpectedColor().getRGB(), false);
         }
+        if (!exceptionFromOtherThread.isEmpty()) {
+            RenderingException ex = new RenderingException("Exceptions where caught during rendering or diffing");
+            exceptionFromOtherThread.forEach(ex::addSuppressed);
+            throw ex;
+        }
     }
 
     private void drawImage(final CountDownLatch latch, final int pageIndex,
@@ -423,29 +463,42 @@ public class PdfComparator<T extends CompareResultImpl> {
                 LOG.trace("Enqueueing page {}.", pageIndex);
                 diffExecutor.execute(() -> {
                     LOG.trace("Diffing page {}", diffImage);
-                    diffImage.diffImages();
+                    try {
+                        diffImage.diffImages();
+                    } catch (Throwable t) {
+                        addErrorPage(pageIndex, "An error occurred, while diffing this page", t);
+                    }
                     LOG.trace("DONE Diffing page {}", diffImage);
                 });
                 LOG.trace("DONE drawing page {}", pageIndex);
-            } catch (RenderingException e) {
+            } catch (Throwable t) {
+                addErrorPage(pageIndex, "An error occurred, while rendering this page", t);
             } finally {
                 latch.countDown();
             }
         });
     }
 
+    private void addErrorPage(int pageIndex, String message, Throwable t) {
+        LOG.error(message, t);
+        exceptionFromOtherThread.add(t);
+        StacktraceImage stacktraceImage = new StacktraceImage(message, t, environment);
+        ImageWithDimension errorImage = stacktraceImage.getImage();
+        compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, stacktraceImage.getBlankImage(), errorImage, errorImage);
+    }
+
     private ImageWithDimension getImage(final Future<ImageWithDimension> imageFuture, final int pageIndex, final String type) {
         try {
-            return imageFuture.get(timeout, unit);
+            return imageFuture.get(TIMEOUT, unit);
         } catch (InterruptedException e) {
-            LOG.warn("Waiting for Future was interrupted while rendering page {} for {}", pageIndex, type, e);
             Thread.currentThread().interrupt();
+            throw new RenderingException("Waiting for Future was interrupted while rendering page " + (pageIndex + 1) + " of " + type, e);
         } catch (TimeoutException e) {
-            LOG.error("Waiting for Future timed out after {} {} while rendering page {} for {}", timeout, unit, pageIndex, type, e);
+            String msg = String.format("Waiting for Future timed out after %d %s while rendering page %d of %s", TIMEOUT, unit, pageIndex + 1, type);
+            throw new RenderingException(msg, e);
         } catch (ExecutionException e) {
-            LOG.error("Error while rendering page {} for {}", pageIndex, type, e);
+            throw new RenderingException("Error while rendering page " + (pageIndex + 1) + " of " + type, e);
         }
-        throw new RenderingException();
     }
 
     private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
@@ -477,25 +530,29 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private static ImageWithDimension blank(final ImageWithDimension image) {
-        return new ImageWithDimension(new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()), image.width, image.height);
+        return new ImageWithDimension(
+                new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()),
+                image.width, image.height);
     }
 
-    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex, Environment environment)
-            throws IOException {
+    public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex,
+            Environment environment) throws IOException {
         final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, environment.getDPI());
         final PDPage page = document.getPage(pageIndex);
         final PDRectangle mediaBox = page.getMediaBox();
-        if (page.getRotation() == 90 || page.getRotation() == 270)
+        if (page.getRotation() == 90 || page.getRotation() == 270) {
             return new ImageWithDimension(bufferedImage, mediaBox.getHeight(), mediaBox.getWidth());
-        else
+        } else {
             return new ImageWithDimension(bufferedImage, mediaBox.getWidth(), mediaBox.getHeight());
+        }
     }
 
     public T getResult() {
         return compareResult;
     }
 
-    @FunctionalInterface private interface InputStreamSupplier {
+    @FunctionalInterface
+    private interface InputStreamSupplier {
 
         InputStream get() throws IOException;
     }
