@@ -436,7 +436,7 @@ public class PdfComparator<T extends CompareResultImpl> {
             addExtraPages(actualDocument, actualPdfRenderer, minPageCount, environment.getExpectedColor().getRGB(), false);
         }
         if (!exceptionFromOtherThread.isEmpty()) {
-            RenderingException ex = new RenderingException("Exceptions where caught during rendering or diffing");
+            RenderingException ex = new RenderingException("Exceptions were caught during rendering or diffing");
             exceptionFromOtherThread.forEach(ex::addSuppressed);
             throw ex;
         }
