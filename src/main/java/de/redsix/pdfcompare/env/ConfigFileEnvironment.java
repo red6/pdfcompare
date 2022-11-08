@@ -108,7 +108,7 @@ public class ConfigFileEnvironment implements Environment {
         if (config.hasPath("expectedColor")) {
             return Color.decode("#" + config.getString("expectedColor"));
         }
-        return new Color(0, 180, 0);
+        return new Color(210, 0, 0);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ConfigFileEnvironment implements Environment {
         if (config.hasPath("actualColor")) {
             return Color.decode("#" + config.getString("actualColor"));
         }
-        return new Color(210, 0, 0);
+        return new Color(0, 180, 0);
     }
 
     @Override
