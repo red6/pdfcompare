@@ -163,14 +163,14 @@ Through the environment you can configure the memory settings (see above) and th
 
     Sets the DPI that Pdf pages are rendered with. Default is 300.
     
-- expectedColor=D20000
+- expectedColor=00B400 (GREEN)
 
     The expected color is the color that is used for pixels that were expected, but are not there.
     The colors are specified in HTML-Stlye format (without a leading '#'):
     The first two characters define the red-portion of the color in hexadecimal. The next two characters define the green-portion
     of the color. The last two characters define the blue-portion of the color to use.
     
-- actualColor=00B400
+- actualColor=D20000 (RED)
 
     The actual color is the color that is used for pixels that are there, but were not expected.
     The colors are specified in HTML-Stlye format (without a leading '#'):
