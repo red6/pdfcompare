@@ -21,6 +21,7 @@ import de.redsix.pdfcompare.env.ConfigFileEnvironment;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
 import de.redsix.pdfcompare.env.SimpleEnvironment;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -388,10 +389,10 @@ public class PdfComparator<T extends CompareResultImpl> {
             buildEnvironment();
             try (final InputStream expectedStream = expectedStreamSupplier.get()) {
                 try (final InputStream actualStream = actualStreamSupplier.get()) {
-                    try (PDDocument expectedDocument = PDDocument
-                            .load(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
-                        try (PDDocument actualDocument = PDDocument
-                                .load(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                    try (PDDocument expectedDocument = Loader
+                            .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                        try (PDDocument actualDocument = Loader
+                                .loadPDF(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
                             compare(expectedDocument, actualDocument);
                         }
                     }
@@ -497,7 +498,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     }
 
     private void addSingleDocumentToResult(InputStream expectedPdfIS, int markerColor) throws IOException {
-        try (PDDocument expectedDocument = PDDocument.load(expectedPdfIS)) {
+        try (PDDocument expectedDocument = Loader.loadPDF(expectedPdfIS)) {
             PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
             addExtraPages(expectedDocument, expectedPdfRenderer, 0, markerColor, true);
         }

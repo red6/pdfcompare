@@ -1,6 +1,7 @@
 package de.redsix.pdfcompare;
 
 import de.redsix.pdfcompare.env.Environment;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -102,7 +103,7 @@ public class Utilities {
     }
 
     private static int getNumberOfPages(final InputStream documentIS, Environment environment) throws IOException {
-        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+        try (PDDocument pdDocument = Loader.loadPDF(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
             return pdDocument.getNumberOfPages();
         }
     }
@@ -114,7 +115,7 @@ public class Utilities {
     }
 
     public static ImageWithDimension renderPage(final InputStream documentIS, final int page, Environment environment) throws IOException {
-        try (PDDocument pdDocument = PDDocument.load(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+        try (PDDocument pdDocument = Loader.loadPDF(documentIS, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
             if (page >= pdDocument.getNumberOfPages()) {
                 throw new IllegalArgumentException("Page out of range. Last page is: " + pdDocument.getNumberOfPages());
             }
