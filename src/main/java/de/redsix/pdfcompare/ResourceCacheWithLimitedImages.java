@@ -8,7 +8,6 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
     }
 
     @Override
-    public PDXObject getXObject(COSObject indirect) throws IOException {
+    public PDXObject getXObject(COSObject indirect) {
         SoftReference<PDXObject> xobject = this.xobjects.get(indirect);
         if (xobject != null) {
             return xobject.get();
@@ -40,7 +39,7 @@ public class ResourceCacheWithLimitedImages extends DefaultResourceCache {
     }
 
     @Override
-    public void put(COSObject indirect, PDXObject xobject) throws IOException {
+    public void put(COSObject indirect, PDXObject xobject) {
         final int length = xobject.getStream().getLength();
         if (length > environment.getMaxImageSize()) {
             LOG.trace("Not caching image with Size: {}", length);
