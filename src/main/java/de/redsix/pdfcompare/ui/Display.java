@@ -7,7 +7,7 @@ import de.redsix.pdfcompare.PdfComparator;
 import de.redsix.pdfcompare.cli.CliArguments;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
-import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
 import javax.swing.*;
@@ -433,7 +433,7 @@ public class Display {
 
     private static boolean isInvalidPassword(final File file, final String password) throws IOException {
         try {
-            PDDocument.load(file, password).close();
+            Loader.loadPDF(file, password).close();
         } catch (InvalidPasswordException e) {
             return true;
         }

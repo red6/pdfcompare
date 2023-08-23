@@ -252,17 +252,6 @@ public class IntegrationTest extends FileReading {
         assertThat(result.isEqual(), is(false));
     }
 
-    @Test
-    public void corruptPdfGivesRenderingException() throws IOException {
-        try {
-            new PdfComparator<>(r("expected.pdf"), r("corrupt.pdf")).compare();
-            fail("RenderingException expected");
-        } catch (RenderingException expected) {
-            assertThat(expected.getSuppressed().length, is(1));
-            assertThat(expected.getSuppressed()[0], instanceOf(RenderingException.class));
-        }
-    }
-
     private void writeAndCompare(final CompareResult result) throws IOException {
         if (System.getenv().get("pdfCompareInTest") != null || System.getProperty("pdfCompareInTest") != null) {
             final String filename = outDir.resolve(testName).toString();

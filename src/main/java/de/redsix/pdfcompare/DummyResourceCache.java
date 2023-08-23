@@ -10,17 +10,15 @@ import org.apache.pdfbox.pdmodel.graphics.pattern.PDAbstractPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
-import java.io.IOException;
-
 public class DummyResourceCache implements ResourceCache {
 
     @Override
-    public PDFont getFont(final COSObject indirect) throws IOException {
+    public PDFont getFont(final COSObject indirect) {
         return null;
     }
 
     @Override
-    public PDColorSpace getColorSpace(final COSObject indirect) throws IOException {
+    public PDColorSpace getColorSpace(final COSObject indirect) {
         return null;
     }
 
@@ -30,12 +28,12 @@ public class DummyResourceCache implements ResourceCache {
     }
 
     @Override
-    public PDShading getShading(final COSObject indirect) throws IOException {
+    public PDShading getShading(final COSObject indirect) {
         return null;
     }
 
     @Override
-    public PDAbstractPattern getPattern(final COSObject indirect) throws IOException {
+    public PDAbstractPattern getPattern(final COSObject indirect) {
         return null;
     }
 
@@ -45,28 +43,35 @@ public class DummyResourceCache implements ResourceCache {
     }
 
     @Override
-    public PDXObject getXObject(final COSObject indirect) throws IOException {
+    public PDXObject getXObject(final COSObject indirect) {
         return null;
     }
 
     @Override
-    public void put(final COSObject indirect, final PDFont font) throws IOException {}
+    public void put(final COSObject indirect, final PDFont font) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDColorSpace colorSpace) throws IOException {}
+    public void put(final COSObject indirect, final PDColorSpace colorSpace) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDExtendedGraphicsState extGState) {}
+    public void put(final COSObject indirect, final PDExtendedGraphicsState extGState) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDShading shading) throws IOException {}
+    public void put(final COSObject indirect, final PDShading shading) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDAbstractPattern pattern) throws IOException {}
+    public void put(final COSObject indirect, final PDAbstractPattern pattern) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDPropertyList propertyList) {}
+    public void put(final COSObject indirect, final PDPropertyList propertyList) {
+    }
 
     @Override
-    public void put(final COSObject indirect, final PDXObject xobject) throws IOException {}
+    public void put(final COSObject indirect, final PDXObject xobject) {
+    }
 }
