@@ -41,3 +41,13 @@
 #### Added
 - Add getPageDiffsInPercent to CompareResult to hand out how different pages are
 
+## 1.1.61
+
+#### Upgrades
+- Upgrade some dependencies versions
+
+## 1.1.62
+
+#### Upgrades
+- Upgrade to use PDFBox 3.0.0 internally
+- 
