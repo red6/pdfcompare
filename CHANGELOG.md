@@ -50,4 +50,18 @@
 
 #### Upgrades
 - Upgrade to use PDFBox 3.0.0 internally
-- 
+
+## 1.1.63
+
+#### Upgrades
+- Upgrade logback.classic to 1.3.12
+
+## 1.1.64
+
+#### Upgrades
+- Upgrade logback.classic to 1.3.14
+
+## 1.1.65
+
+#### Upgrades
+- Upgrade PDFBox to 3.0.1
