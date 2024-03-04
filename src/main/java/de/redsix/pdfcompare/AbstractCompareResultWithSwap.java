@@ -56,7 +56,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private boolean writeTo(final PDFMergerUtility mergerUtility) {
         swapToDisk();
-        Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap");
+        Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap", 30);
         try {
             LOG.trace("Merging...");
             Instant start = Instant.now();

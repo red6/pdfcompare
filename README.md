@@ -260,6 +260,9 @@ Just add a file called "application.conf" to the root of the classpath. This fil
 - overallTimeoutInMinutes=15
 
     Set the overall timeout. This is a safety measure to detect possible deadlocks. Complex comparisons might take longer, so this value might have to be increased.
+- executorTimeoutInSeconds=60
+
+  Sets the timeout to wait for the executors to finish after the overallTimeout was reached. It's unlikely that you ever need to change this.
 
 So in this default configuration, PdfBox should use up to 400MB of Ram for it's caches, before swapping to disk.
 I have good experience with granting a 2GB heap space to the JVM.

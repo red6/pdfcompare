@@ -30,6 +30,7 @@ public class SimpleEnvironment implements Environment {
     private Integer documentCacheSize;
     private Integer maxImageSize;
     private Integer overallTimeout;
+    private Integer executorTimeout;
     private Boolean parallelProcessing;
     private Double allowedDiffInPercent;
     private Color expectedColor;
@@ -112,8 +113,18 @@ public class SimpleEnvironment implements Environment {
         return overallTimeout != null ? overallTimeout : fallback.getOverallTimeout();
     }
 
-    public SimpleEnvironment setOverallTimeout(int overallTimeout) {
-        this.overallTimeout = overallTimeout;
+    public SimpleEnvironment setOverallTimeout(int overallTimeoutInMinutes) {
+        this.overallTimeout = overallTimeoutInMinutes;
+        return this;
+    }
+
+    @Override
+    public int getExecutorTimeout() {
+        return executorTimeout != null ? executorTimeout : fallback.getExecutorTimeout();
+    }
+
+    public SimpleEnvironment setExecutorTimeout(int executorTimeoutInSeconds) {
+        this.executorTimeout = executorTimeoutInSeconds;
         return this;
     }
 

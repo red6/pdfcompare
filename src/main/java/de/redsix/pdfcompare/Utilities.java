@@ -69,14 +69,17 @@ public class Utilities {
         }
     }
 
-    public static void shutdownAndAwaitTermination(final ExecutorService executor, final String executorName) {
+    public static void shutdownAndAwaitTermination(final ExecutorService executor, final String executorName, Environment environment) {
+        shutdownAndAwaitTermination(executor, executorName, environment.getExecutorTimeout());
+    }
+
+    public static void shutdownAndAwaitTermination(final ExecutorService executor, final String executorName, int executorTimeoutInSeconds) {
         if (executor != null) {
             executor.shutdown();
             try {
-                final int timeout = 15;
-                final TimeUnit unit = TimeUnit.MINUTES;
-                if (!executor.awaitTermination(timeout, unit)) {
-                    LOG.error("Awaiting Shutdown of Executor '{}' timed out after {} {}", executorName, timeout, unit);
+                final TimeUnit unit = TimeUnit.SECONDS;
+                if (!executor.awaitTermination(executorTimeoutInSeconds, unit)) {
+                    LOG.error("Awaiting Shutdown of Executor '{}' timed out after {} {}", executorName, executorTimeoutInSeconds, unit);
                 }
             } catch (InterruptedException e) {
                 LOG.warn("Awaiting Shutdown of Executor '{}' was interrupted", executorName);

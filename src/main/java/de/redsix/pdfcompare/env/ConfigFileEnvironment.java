@@ -94,6 +94,14 @@ public class ConfigFileEnvironment implements Environment {
     }
 
     @Override
+    public int getExecutorTimeout() {
+        if (config.hasPath("executorTimeoutInSeconds")) {
+            return config.getInt("executorTimeoutInSeconds");
+        }
+        return 60;
+    }
+
+    @Override
     public boolean useParallelProcessing() {
         return config.getBoolean("parallelProcessing");
     }

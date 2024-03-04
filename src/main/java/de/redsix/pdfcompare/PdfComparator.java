@@ -430,9 +430,9 @@ public class PdfComparator<T extends CompareResultImpl> {
             drawImage(latch, pageIndex, expectedDocument, actualDocument, expectedPdfRenderer, actualPdfRenderer);
         }
         Utilities.await(latch, "FullCompare", environment);
-        Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw");
-        Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw");
-        Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff");
+        Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw", environment);
+        Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw", environment);
+        Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff", environment);
         if (expectedDocument.getNumberOfPages() > minPageCount) {
             addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, environment.getActualColor().getRGB(), true);
         } else if (actualDocument.getNumberOfPages() > minPageCount) {

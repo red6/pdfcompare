@@ -65,3 +65,12 @@
 
 #### Upgrades
 - Upgrade PDFBox to 3.0.1
+
+## 1.2.00
+
+#### Added
+- Add a config settings to configure the executorTimeoutInSeconds and changed the default from 900 seconds (15 Minutes) to 60 seconds. This is a small change,
+that should not cause any compatibility issues.\
+The actual timeout for the whole comparisons is overallTimeoutInMinutes + executorTimeoutInSeconds. These timeouts are a security measure, should a comparisons
+run into a deadlock. The old defaults where 15 minutes overallTimeout + 15 minutes executorTimeout. This was reduced to 15 minutes + 1 minute. Comparisons that 
+take between 16 minutes and 30 minutes succeeded before and would now fail. Then the overallTimeoutInMinutes should be increased.

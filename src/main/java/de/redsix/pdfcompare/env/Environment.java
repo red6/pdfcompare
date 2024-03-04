@@ -19,6 +19,8 @@ public interface Environment {
 
     int getOverallTimeout();
 
+    int getExecutorTimeout();
+
     boolean useParallelProcessing();
 
     double getAllowedDiffInPercent();
