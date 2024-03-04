@@ -66,7 +66,7 @@
 #### Upgrades
 - Upgrade PDFBox to 3.0.1
 
-## 1.2.00
+## 1.2.0
 
 #### Added
 - Add a config settings to configure the executorTimeoutInSeconds and changed the default from 900 seconds (15 Minutes) to 60 seconds. This is a small change,
