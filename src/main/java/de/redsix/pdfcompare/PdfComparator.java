@@ -391,8 +391,10 @@ public class PdfComparator<T extends CompareResultImpl> {
             buildEnvironment();
             try (final InputStream expectedInputStream = expectedStreamSupplier.get()) {
                 try (final RandomAccessRead expectedStream = new RandomAccessReadBuffer(expectedInputStream)) {
+                    expectedInputStream.close();
                     try (final InputStream actualInputStream = actualStreamSupplier.get()) {
                         try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualInputStream)) {
+                            actualInputStream.close();
                             try (PDDocument expectedDocument = Loader
                                     .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
                                 try (PDDocument actualDocument = Loader
