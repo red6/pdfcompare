@@ -74,3 +74,14 @@ that should not cause any compatibility issues.\
 The actual timeout for the whole comparisons is overallTimeoutInMinutes + executorTimeoutInSeconds. These timeouts are a security measure, should a comparisons
 run into a deadlock. The old defaults where 15 minutes overallTimeout + 15 minutes executorTimeout. This was reduced to 15 minutes + 1 minute. Comparisons that 
 take between 16 minutes and 30 minutes succeeded before and would now fail. Then the overallTimeoutInMinutes should be increased.
+
+## 1.2.1
+
+#### Upgrades
+- Upgrade slf4j to 2.0.12
+- Upgrade logback to 1.5.3
+- Upgrade typesafe.config to 1.4.3
+- Upgrade commons-cli to 1.6.0
+
+#### Fixed
+- Close InputStreams properly after use
