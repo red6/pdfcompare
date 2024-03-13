@@ -389,28 +389,30 @@ public class PdfComparator<T extends CompareResultImpl> {
                 return compareResult;
             }
             buildEnvironment();
-            try (final RandomAccessRead expectedStream = new RandomAccessReadBuffer(expectedStreamSupplier.get())) {
-                expectedStreamSupplier.get().close();
-                try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
-                    actualStreamSupplier.get().close();
-                    try (PDDocument expectedDocument = Loader
-                            .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
-                        try (PDDocument actualDocument = Loader
-                                .loadPDF(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
-                            compare(expectedDocument, actualDocument);
+            try (final InputStream expectedInputStream = expectedStreamSupplier.get()) {
+                try (final RandomAccessRead expectedStream = new RandomAccessReadBuffer(expectedInputStream)) {
+                    try (final InputStream actualInputStream = actualStreamSupplier.get()) {
+                        try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualInputStream)) {
+                            try (PDDocument expectedDocument = Loader
+                                    .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                                try (PDDocument actualDocument = Loader
+                                        .loadPDF(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                                    compare(expectedDocument, actualDocument);
+                                }
+                            }
+                        } catch (NoSuchFileException ex) {
+                            addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
+                            compareResult.expectedOnly();
                         }
                     }
                 } catch (NoSuchFileException ex) {
-                    addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
-                    compareResult.expectedOnly();
-                }
-            } catch (NoSuchFileException ex) {
-                try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
-                    addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
-                    compareResult.actualOnly();
-                } catch (NoSuchFileException innerEx) {
-                    LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
-                    compareResult.noPagesFound();
+                    try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
+                        addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
+                        compareResult.actualOnly();
+                    } catch (NoSuchFileException innerEx) {
+                        LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
+                        compareResult.noPagesFound();
+                    }
                 }
             }
         } finally {
