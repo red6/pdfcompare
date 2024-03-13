@@ -400,19 +400,19 @@ public class PdfComparator<T extends CompareResultImpl> {
                                     compare(expectedDocument, actualDocument);
                                 }
                             }
-                        } catch (NoSuchFileException ex) {
-                            addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
-                            compareResult.expectedOnly();
                         }
+                    } catch (NoSuchFileException ex) {
+                        addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
+                        compareResult.expectedOnly();
                     }
-                } catch (NoSuchFileException ex) {
-                    try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
-                        addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
-                        compareResult.actualOnly();
-                    } catch (NoSuchFileException innerEx) {
-                        LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
-                        compareResult.noPagesFound();
-                    }
+                }
+            } catch (NoSuchFileException ex) {
+                try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
+                    addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
+                    compareResult.actualOnly();
+                } catch (NoSuchFileException innerEx) {
+                    LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
+                    compareResult.noPagesFound();
                 }
             }
         } finally {
