@@ -58,14 +58,16 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
         swapToDisk();
         Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap", 30);
         try {
-            LOG.trace("Merging...");
+            LOG.info("Merging...");
             Instant start = Instant.now();
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }
             mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
+
             LOG.trace("Merging took: {}ms", Duration.between(start, end).toMillis());
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -115,11 +117,11 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             if (!images.isEmpty()) {
                 swapped = true;
                 getExecutor(environment).execute(() -> {
-                    LOG.trace("Swapping {} pages to disk", images.size());
+                    LOG.info("Swapping {} pages to disk", images.size());
                     Instant start = Instant.now();
 
                     final int minPageIndex = images.keySet().iterator().next();
-                    LOG.trace("minPageIndex: {}", minPageIndex);
+                    LOG.info("minPageIndex: {}", minPageIndex);
                     try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
                         document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
@@ -129,7 +131,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
                         throw new RuntimeException(e);
                     }
                     Instant end = Instant.now();
-                    LOG.trace("Swapping took: {}ms", Duration.between(start, end).toMillis());
+                    LOG.info("Swapping took: {}ms", Duration.between(start, end).toMillis());
                 });
             }
         }
