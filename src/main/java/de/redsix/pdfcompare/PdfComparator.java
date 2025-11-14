@@ -525,10 +525,19 @@ public class PdfComparator<T extends CompareResultImpl> {
                     dataBuffer.setElem(i * image.bufferedImage.getWidth() + j, color);
                 }
             }
-            if (expected) {
-                compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, image, blank(image), image);
+            final Exclusions exclusions = getExclusions();
+            final PageDiffCalculator diffCalculator;
+            if (exclusions.forPage(pageIndex + 1).contains(0, 0)) {
+                diffCalculator = new PageDiffCalculator(0,0);
+                diffCalculator.diffFoundInExclusion();
+                diffCalculator.addDiffArea(new PageArea(pageIndex + 1));
             } else {
-                compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, blank(image), image, image);
+                diffCalculator = new PageDiffCalculator(new PageArea(pageIndex + 1));
+            }
+            if (expected) {
+                compareResult.addPage(diffCalculator, pageIndex, image, blank(image), image);
+            } else {
+                compareResult.addPage(diffCalculator, pageIndex, blank(image), image, image);
             }
         }
     }

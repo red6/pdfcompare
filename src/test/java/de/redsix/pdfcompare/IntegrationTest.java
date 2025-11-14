@@ -166,6 +166,28 @@ public class IntegrationTest extends FileReading {
     }
 
     @Test
+    public void aShorterDocumentActualWithPageIgnoreIsEqual() throws IOException {
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("short.pdf")).withIgnore(new PageArea(2)).compare();
+        assertThat(result.isNotEqual(), is(false));
+        assertThat(result.isEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
+        assertThat(result.hasDifferenceInExclusion(), is(true));
+        assertThat(result.getDifferences(), hasSize(0));
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void aShorterDocumentExpectedWithPageIgnoreIsEqual() throws IOException {
+        final CompareResult result = new PdfComparator<>(r("short.pdf"), r("expected.pdf")).withIgnore(new PageArea(2)).compare();
+        assertThat(result.isNotEqual(), is(false));
+        assertThat(result.isEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
+        assertThat(result.hasDifferenceInExclusion(), is(true));
+        assertThat(result.getDifferences(), hasSize(0));
+        writeAndCompare(result);
+    }
+
+    @Test
     public void aShorterDocumentExpectedIsNotEqual() throws IOException {
         final CompareResult result = new PdfComparator<>(r("short.pdf"), r("actual.pdf")).compare();
         assertThat(result.isNotEqual(), is(true));
