@@ -38,6 +38,7 @@ public class SimpleEnvironment implements Environment {
     private Integer dpi;
     private Boolean addEqualPagesToResult;
     private Boolean failOnMissingIgnoreFile;
+    private Boolean enableHorizontalCompareOutput=false;
 
     public SimpleEnvironment() {
         this(DefaultEnvironment.create());
@@ -197,4 +198,17 @@ public class SimpleEnvironment implements Environment {
         this.failOnMissingIgnoreFile = b;
         return this;
     }
+
+	public SimpleEnvironment setEnableHorizontalCompareOutput(Boolean enableHorizontalCompareOutput) {
+		this.enableHorizontalCompareOutput = enableHorizontalCompareOutput;
+		return this;
+	}
+
+	public boolean getEnableHorizontalCompareOutput() {
+		return enableHorizontalCompareOutput;
+	}
+	
+	
+    
+    
 }

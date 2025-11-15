@@ -65,7 +65,9 @@ public class ConfigFileEnvironment implements Environment {
 
     @Override
     public int getNrOfImagesToCache() {
-        return config.getInt("imageCacheSizeCount");
+    	   return(0);
+           //return config.getInt("imageCacheSizeCount");
+
     }
 
     @Override
@@ -145,4 +147,9 @@ public class ConfigFileEnvironment implements Environment {
     private int getMB(final String path) {
         return config.getInt(path) * 1024 * 1024;
     }
+
+	@Override
+	public boolean getEnableHorizontalCompareOutput() {
+		return false;
+	}
 }
