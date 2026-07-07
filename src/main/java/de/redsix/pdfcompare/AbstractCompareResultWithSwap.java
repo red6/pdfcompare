@@ -58,7 +58,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
         swapToDisk();
         Utilities.shutdownAndAwaitTermination(swapExecutor, "Swap");
         try {
-            LOG.info("Merging...");
+            LOG.trace("Merging...");
             Instant start = Instant.now();
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
@@ -117,11 +117,11 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             if (!images.isEmpty()) {
                 swapped = true;
                 getExecutor(environment).execute(() -> {
-                    LOG.info("Swapping {} pages to disk", images.size());
+                    LOG.trace("Swapping {} pages to disk", images.size());
                     Instant start = Instant.now();
 
                     final int minPageIndex = images.keySet().iterator().next();
-                    LOG.info("minPageIndex: {}", minPageIndex);
+                    LOG.trace("minPageIndex: {}", minPageIndex);
                     try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
                         document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
@@ -131,7 +131,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
                         throw new RuntimeException(e);
                     }
                     Instant end = Instant.now();
-                    LOG.info("Swapping took: {}ms", Duration.between(start, end).toMillis());
+                    LOG.trace("Swapping took: {}ms", Duration.between(start, end).toMillis());
                 });
             }
         }
