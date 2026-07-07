@@ -6,23 +6,12 @@ import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 import de.redsix.pdfcompare.env.Environment;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
 
 
 public class DiffImage {
@@ -64,9 +53,6 @@ public class DiffImage {
     }
 
     public void diffImages() {
-    	
-    	System.out.println("TEST JVM 1");
-    	
         BufferedImage expectBuffImage = this.expectedImage.bufferedImage;
         BufferedImage actualBuffImage = this.actualImage.bufferedImage;
         expectedBuffer = expectBuffImage.getRaster().getDataBuffer();
@@ -93,9 +79,8 @@ public class DiffImage {
             final int actualLineOffset = y * actualImageWidth;
             final int resultLineOffset = y * resultImageWidth;
             for (int x = 0; x < resultImageWidth; x++) {
-                expectedElement = getExpectedElement(x, y, expectedLineOffset);               
+                expectedElement = getExpectedElement(x, y, expectedLineOffset);
                 actualElement = getActualElement(x, y, actualLineOffset);
-                //this.salvaSuFileImmagine(actualBuffer, expectedBuffer);
                 int element = getElement(expectedElement, actualElement);
                 if (pageExclusions.contains(x, y)) {
                     element = ImageTools.fadeExclusion(element);
@@ -125,69 +110,7 @@ public class DiffImage {
         compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
     }
 
-    private void salvaSuFileImmagine(DataBuffer actualBuffer2, DataBuffer expectedBuffer2) {
-		System.out.println("********************* DATA BUFFER ACTUAL ******************************");
-		String actualBuffer="";
-		System.out.println("Inizio a leggere actualbuffer...");
-		int value=0;
-		for(int i=0;i<actualBuffer2.getSize();i++) {
-			value=actualBuffer2.getElem(i);
-
-			actualBuffer=actualBuffer.concat(String.valueOf(value));
-			if(i%100==0) {
-				//System.out.println(i+""+value);
-			}
-		}
-		this.writeTextFile("", "ACTUAL.txt",actualBuffer);
-		System.out.println("Ho creato il file:"+new File("ACTUAL.txt").getAbsolutePath());
-		
-		System.out.println("********************* DATA BUFFER EXPECTED ******************************");
-		String expectedBuffer="";
-		System.out.println("Inizio a leggere actualbuffer...");
-		value=0;
-		for(int i=0;i<expectedBuffer2.getSize();i++) {
-			value=expectedBuffer2.getElem(i);
-			expectedBuffer=expectedBuffer.concat(String.valueOf(value));
-			if(i%100==0) {
-				//System.out.println(i+""+value);	
-			}
-		}
-		this.writeTextFile("", "EXPECTED.txt",expectedBuffer);
-		System.out.println("Ho creato il file:"+new File("EXPECTED.txt").getAbsolutePath());
-	}
-    
-    
-	public String writeTextFile(String pathOutput, String fileNameOutput, String text) {
-		BufferedWriter writer     = null;
-		File           fileOutput = null;
-		try {
-			File dir = new File(pathOutput);
-			if (!dir.exists()) {
-				dir.mkdirs();
-			}
-			fileOutput = new File(dir + File.separator + fileNameOutput);
-			writer     = new BufferedWriter(new FileWriter(fileOutput.getAbsoluteFile()));
-			writer.write(text);
-			System.out.println("Created file: " + fileOutput.getAbsolutePath());
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("STACKTRACE"+e.getMessage());
-			return ("ERROR_WRITE_FILE");
-		} finally {
-			try {
-				if (writer != null) {
-					writer.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("STACKTRACE"+e.getMessage());				
-			}
-		}
-		return ("DONE");
-	}
-
-
-	private void extendDiffArea(final int x, final int y) {
+    private void extendDiffArea(final int x, final int y) {
         if (!diffCalculator.differencesFound()) {
             diffAreaX1 = x;
             diffAreaY1 = y;
