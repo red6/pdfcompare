@@ -125,24 +125,45 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
 
     @Override
     public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
-        if(this.environment.getEnableHorizontalCompareOutput()) {
-        	this.addPageWithHorizontalCompare(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
-        }else { 	
-			Objects.requireNonNull(expectedImage, "expectedImage is null");
-			Objects.requireNonNull(actualImage, "actualImage is null");
-			Objects.requireNonNull(diffImage, "diffImage is null");
+        Objects.requireNonNull(expectedImage, "expectedImage is null");
+        Objects.requireNonNull(actualImage, "actualImage is null");
+        Objects.requireNonNull(diffImage, "diffImage is null");
 
-			this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
-			if (diffCalculator.differencesFound()) {
-				isEqual = false;
-				diffAreas.add(diffCalculator.getDiffArea());
-				diffImages.put(pageIndex, diffImage);
-				pages++;
-			} else if (environment.addEqualPagesToResult()) {
-				diffImages.put(pageIndex, diffImage);
-				pages++;
-			}
+        this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
 
+        final ImageWithDimension imageToStore = buildImageToStore(pageIndex, expectedImage, diffImage);
+        storeImageForPage(diffCalculator, pageIndex, imageToStore);
+    }
+
+    /**
+     * Determines the image to store: when horizontal compare output is enabled, the expected image
+     * and the diff image are merged side by side; otherwise the diff image is used directly.
+     */
+    private ImageWithDimension buildImageToStore(final int pageIndex, final ImageWithDimension expectedImage, final ImageWithDimension diffImage) {
+        if (this.environment.getEnableHorizontalCompareOutput()) {
+            final MergeImages merge = new MergeImages();
+            if (pageIndex == 0) {
+                return merge.mergeOnLeft(expectedImage, diffImage, PdfComparator.headerLeft, PdfComparator.headerRight);
+            } else {
+                return merge.mergeOnLeft(expectedImage, diffImage, null, null);
+            }
+        }
+        return diffImage;
+    }
+
+    /**
+     * Stores the given image in the result structures if differences were found
+     * or if all pages should be included in the result.
+     */
+    private void storeImageForPage(final PageDiffCalculator diffCalculator, final int pageIndex, final ImageWithDimension image) {
+        if (diffCalculator.differencesFound()) {
+            isEqual = false;
+            diffAreas.add(diffCalculator.getDiffArea());
+            diffImages.put(pageIndex, image);
+            pages++;
+        } else if (environment.addEqualPagesToResult()) {
+            diffImages.put(pageIndex, image);
+            pages++;
         }
     }
 
@@ -218,32 +239,4 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         this.environment = environment;
     }
 
-	@Override
-	public void addPageWithHorizontalCompare(PageDiffCalculator diffCalculator, int pageIndex,
-			ImageWithDimension expectedImage, ImageWithDimension actualImage, ImageWithDimension diffImage) {
-
-		        Objects.requireNonNull(expectedImage, "expectedImage is null");
-		        Objects.requireNonNull(actualImage, "actualImage is null");
-		        Objects.requireNonNull(diffImage, "diffImage is null");
-		        this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
-		        
-		        //Creto una nuova immagine con a sinistra l'atteso e a destra l'attuale con segnate le differenze
-		        MergeImages merge=new MergeImages();
-		        ImageWithDimension mergedImage=null;
-		        if(pageIndex==0) {
-		        	mergedImage=merge.mergeOnLeft(expectedImage, diffImage,PdfComparator.headerLeft,PdfComparator.headerRight);
-		        }else {
-		        	mergedImage=merge.mergeOnLeft(expectedImage, diffImage,null,null);
-		        }
-		        
-		        if (diffCalculator.differencesFound()) {
-		            isEqual = false;
-		            diffAreas.add(diffCalculator.getDiffArea());
-		            diffImages.put(pageIndex, mergedImage);
-		            pages++;
-		        } else if (environment.addEqualPagesToResult()) {
-		        	diffImages.put(pageIndex, mergedImage);
-		            pages++;
-		        }
-	}
 }
