@@ -16,7 +16,6 @@
 package de.redsix.pdfcompare;
 
 import de.redsix.pdfcompare.env.Environment;
-import x.team.tool.MergeImages;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
