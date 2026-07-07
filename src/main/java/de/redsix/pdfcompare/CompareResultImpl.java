@@ -130,7 +130,7 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
         Objects.requireNonNull(diffImage, "diffImage is null");
 
         this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
-
+        diffPercentages.put(pageIndex, diffCalculator.getDifferenceInPercent());
         final ImageWithDimension imageToStore = buildImageToStore(pageIndex, expectedImage, diffImage);
         storeImageForPage(diffCalculator, pageIndex, imageToStore);
     }
