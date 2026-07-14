@@ -65,9 +65,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             }
             mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
             Instant end = Instant.now();
-
             LOG.trace("Merging took: {}ms", Duration.between(start, end).toMillis());
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {

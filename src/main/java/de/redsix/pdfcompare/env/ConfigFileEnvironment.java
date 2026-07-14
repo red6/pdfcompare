@@ -65,7 +65,7 @@ public class ConfigFileEnvironment implements Environment {
 
     @Override
     public int getNrOfImagesToCache() {
-           return config.getInt("imageCacheSizeCount");
+        return config.getInt("imageCacheSizeCount");
     }
 
     @Override

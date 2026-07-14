@@ -197,7 +197,4 @@ public class SimpleEnvironment implements Environment {
 		return enableHorizontalCompareOutput != null ? enableHorizontalCompareOutput : fallback.getEnableHorizontalCompareOutput();
 	}
 	
-	
-    
-    
 }

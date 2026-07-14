@@ -91,10 +91,8 @@ public class DiffImage {
                     if (expectedElement != actualElement) {
                         extendDiffArea(x, y);
                         diffCalculator.diffFound();
-
                         LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
                         mark(resultBuffer, x, y, resultImageWidth);
-
                     }
                 }
                 resultBuffer.setElem(x + resultLineOffset, element);
