@@ -2,13 +2,17 @@ package de.redsix.pdfcompare;
 
 import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
 
-import de.redsix.pdfcompare.env.Environment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+
+import de.redsix.pdfcompare.env.Environment;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class DiffImage {
 
@@ -96,7 +100,7 @@ public class DiffImage {
         }
         if (diffCalculator.differencesFound()) {
             diffCalculator.addDiffArea(new PageArea(page + 1, diffAreaX1, diffAreaY1, diffAreaX2, diffAreaY2));
-            LOG.info("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
+            LOG.debug("Differences found at { page: {}, x1: {}, y1: {}, x2: {}, y2: {} }", page + 1, diffAreaX1, diffAreaY1, diffAreaX2,
                     diffAreaY2);
         }
         final float maxWidth = Math.max(expectedImage.width, actualImage.width);
