@@ -17,6 +17,8 @@ package de.redsix.pdfcompare;
 
 import de.redsix.pdfcompare.env.Environment;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -41,8 +43,14 @@ import java.util.stream.Collectors;
 public class CompareResultImpl implements ResultCollector, CompareResult {
 
     private static final Logger LOG = LoggerFactory.getLogger(CompareResultImpl.class);
+    /** Alpha value for the semi-transparent diff overlay in horizontal compare mode (0 = transparent, 1 = opaque). */
+    private static final float OVERLAY_ALPHA = 0.45f;
+    /** Default pixel color (white) used for out-of-bounds areas when images differ in size. */
+    private static final int WHITE_PIXEL = 0xFFFFFF;
     protected Environment environment;
     protected final Map<Integer, ImageWithDimension> diffImages = new TreeMap<>();
+    /** Stores the actual-overlay images per page when horizontal compare output is enabled. */
+    protected final Map<Integer, ImageWithDimension> diffImagesActualOverlay = new TreeMap<>();
     protected boolean isEqual = true;
     protected boolean hasDifferenceInExclusion = false;
     private boolean expectedOnly;
@@ -94,7 +102,28 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     }
 
     protected synchronized void addImagesToDocument(final PDDocument document) throws IOException {
-        addImagesToDocument(document, diffImages);
+        if (environment != null && environment.getEnableHorizontalCompareOutput()) {
+            final Iterator<Entry<Integer, ImageWithDimension>> iterator = diffImages.entrySet().iterator();
+            while (iterator.hasNext()) {
+                final Entry<Integer, ImageWithDimension> entry = iterator.next();
+                final int key = entry.getKey();
+                if (!keepImages()) {
+                    iterator.remove();
+                }
+                // Page A: Expected with red overlay
+                addPageToDocument(document, entry.getValue());
+                // Page B: Actual with green overlay
+                final ImageWithDimension actualOverlay = diffImagesActualOverlay.get(key);
+                if (actualOverlay != null) {
+                    if (!keepImages()) {
+                        diffImagesActualOverlay.remove(key);
+                    }
+                    addPageToDocument(document, actualOverlay);
+                }
+            }
+        } else {
+            addImagesToDocument(document, diffImages);
+        }
     }
 
     protected synchronized void addImagesToDocument(final PDDocument document, final Map<Integer, ImageWithDimension> images)
@@ -123,38 +152,108 @@ public class CompareResultImpl implements ResultCollector, CompareResult {
     }
 
     @Override
-    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
+    public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
         Objects.requireNonNull(expectedImage, "expectedImage is null");
         Objects.requireNonNull(actualImage, "actualImage is null");
         Objects.requireNonNull(diffImage, "diffImage is null");
 
         this.hasDifferenceInExclusion |= diffCalculator.differencesFoundInExclusion();
         diffPercentages.put(pageIndex, diffCalculator.getDifferenceInPercent());
-        final ImageWithDimension imageToStore = buildImageToStore(pageIndex, expectedImage, diffImage);
-        storeImageForPage(diffCalculator, pageIndex, imageToStore);
+
+        if (this.environment.getEnableHorizontalCompareOutput()) {
+            // Two pages per logical page: readable background with semi-transparent color overlay on differing pixels
+            // Page A: expected image as background + semi-transparent red overlay on differing pixels
+            final ImageWithDimension expectedOverlay = createOverlay(
+                    expectedImage, actualImage, environment.getActualColor(), OVERLAY_ALPHA, true);
+            // Page B: actual image as background + semi-transparent green overlay on differing pixels
+            final ImageWithDimension actualOverlay = createOverlay(
+                    expectedImage, actualImage, environment.getExpectedColor(), OVERLAY_ALPHA, false);
+            storeImagesForPageHorizontal(diffCalculator, pageIndex, expectedOverlay, actualOverlay);
+        } else {
+            storeImageForPage(diffCalculator, pageIndex, diffImage);
+        }
     }
 
     /**
-     * Determines the image to store: when horizontal compare output is enabled, the expected image
-     * and the diff image are merged side by side; otherwise the diff image is used directly.
+     * Creates an overlay image: the background image (expected or actual) remains fully readable at 100% opacity.
+     * Pixels that differ between expected and actual are blended with the given overlay color
+     * at the specified alpha level (0 = transparent, 1 = opaque).
+     *
+     * @param expected              the expected image
+     * @param actual                the actual image
+     * @param overlayColor          color of the overlay for differing pixels
+     * @param alpha                 opacity of the overlay (0 = transparent, 1 = opaque)
+     * @param useExpectedAsBackground if true, uses expected as background; otherwise uses actual
      */
-    private ImageWithDimension buildImageToStore(final int pageIndex, final ImageWithDimension expectedImage, final ImageWithDimension diffImage) {
-        if (this.environment.getEnableHorizontalCompareOutput()) {
-            final MergeImages merge = new MergeImages();
-            if (pageIndex == 0) {
-                return merge.mergeOnLeft(expectedImage, diffImage, PdfComparator.headerLeft, PdfComparator.headerRight);
-            } else {
-                return merge.mergeOnLeft(expectedImage, diffImage, null, null);
+    private ImageWithDimension createOverlay(final ImageWithDimension expected, final ImageWithDimension actual,
+            final Color overlayColor, final float alpha, final boolean useExpectedAsBackground) {
+        final BufferedImage expectedBuf = expected.bufferedImage;
+        final BufferedImage actualBuf = actual.bufferedImage;
+        final BufferedImage backgroundBuf = useExpectedAsBackground ? expectedBuf : actualBuf;
+
+        final int width  = Math.max(expectedBuf.getWidth(),  actualBuf.getWidth());
+        final int height = Math.max(expectedBuf.getHeight(), actualBuf.getHeight());
+
+        final BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        final float backgroundAlpha = 1.0f - alpha;
+        final int overlayRed   = overlayColor.getRed();
+        final int overlayGreen = overlayColor.getGreen();
+        final int overlayBlue  = overlayColor.getBlue();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                final int expectedElement = (x < expectedBuf.getWidth() && y < expectedBuf.getHeight())
+                        ? expectedBuf.getRGB(x, y) : WHITE_PIXEL;
+                final int actualElement = (x < actualBuf.getWidth()   && y < actualBuf.getHeight())
+                        ? actualBuf.getRGB(x, y) : WHITE_PIXEL;
+                final int backgroundElement  = (x < backgroundBuf.getWidth() && y < backgroundBuf.getHeight())
+                        ? backgroundBuf.getRGB(x, y) : WHITE_PIXEL;
+
+                final int resultRgb;
+                if (expectedElement != actualElement) {
+                    // Difference found: blend overlay color semi-transparently onto background
+                    final Color bg = new Color(backgroundElement);
+                    final int r = Math.min(255, (int)(bg.getRed()   * backgroundAlpha + overlayRed   * alpha));
+                    final int g = Math.min(255, (int)(bg.getGreen() * backgroundAlpha + overlayGreen * alpha));
+                    final int b = Math.min(255, (int)(bg.getBlue()  * backgroundAlpha + overlayBlue  * alpha));
+                    resultRgb = new Color(r, g, b).getRGB();
+                } else {
+                    // No difference: copy background pixel unchanged
+                    resultRgb = backgroundElement;
+                }
+                result.setRGB(x, y, resultRgb);
             }
         }
-        return diffImage;
+
+        final ImageWithDimension bgImage = useExpectedAsBackground ? expected : actual;
+        return new ImageWithDimension(result, bgImage.width, bgImage.height);
     }
 
     /**
-     * Stores the given image in the result structures if differences were found
-     * or if all pages should be included in the result.
+     * Stores the expected and actual overlay images for the horizontal compare mode.
      */
-    private void storeImageForPage(final PageDiffCalculator diffCalculator, final int pageIndex, final ImageWithDimension image) {
+    private void storeImagesForPageHorizontal(final PageDiffCalculator diffCalculator, final int pageIndex,
+            final ImageWithDimension expectedOverlay, final ImageWithDimension actualOverlay) {
+        if (diffCalculator.differencesFound()) {
+            isEqual = false;
+            diffAreas.add(diffCalculator.getDiffArea());
+            diffImages.put(pageIndex, expectedOverlay);
+            diffImagesActualOverlay.put(pageIndex, actualOverlay);
+            pages++;
+        } else if (environment.addEqualPagesToResult()) {
+            diffImages.put(pageIndex, expectedOverlay);
+            diffImagesActualOverlay.put(pageIndex, actualOverlay);
+            pages++;
+        }
+    }
+
+    /**
+     * Stores the diff image for the standard mode (without horizontal compare).
+     */
+    private void storeImageForPage(final PageDiffCalculator diffCalculator, final int pageIndex,
+            final ImageWithDimension image) {
         if (diffCalculator.differencesFound()) {
             isEqual = false;
             diffAreas.add(diffCalculator.getDiffArea());

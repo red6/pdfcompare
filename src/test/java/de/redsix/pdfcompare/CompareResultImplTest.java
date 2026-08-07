@@ -51,8 +51,10 @@ class CompareResultImplTest {
         assertThat(compareResult.isNotEqual(), is(true));
         assertThat(compareResult.hasImages(), is(true));
         assertThat(compareResult.getNumberOfPages(), is(1));
-        // merged image width must equal expectedWidth(10) + diffWidth(6)
-        assertThat(compareResult.diffImages.get(1).width, is(16.0f));
+        // expected overlay page retains the expected image width
+        assertThat(compareResult.diffImages.get(1).width, is(10.0f));
+        // actual overlay page retains the actual image width
+        assertThat(compareResult.diffImagesActualOverlay.get(1).width, is(10.0f));
     }
 
     @Test
@@ -69,8 +71,10 @@ class CompareResultImplTest {
         assertThat(compareResult.isEqual(), is(true));
         assertThat(compareResult.hasImages(), is(true));
         assertThat(compareResult.getNumberOfPages(), is(1));
-        // merged image width must equal expectedWidth(10) + diffWidth(6)
-        assertThat(compareResult.diffImages.get(1).width, is(16.0f));
+        // expected overlay page retains the expected image width
+        assertThat(compareResult.diffImages.get(1).width, is(10.0f));
+        // actual overlay page retains the actual image width
+        assertThat(compareResult.diffImagesActualOverlay.get(1).width, is(10.0f));
     }
 
     @Test
