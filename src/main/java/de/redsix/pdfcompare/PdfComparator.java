@@ -70,8 +70,6 @@ public class PdfComparator<T extends CompareResultImpl> {
     private String actualPassword = "";
 
     private boolean withIgnoreCalled = false;   
-    public static String headerLeft="";
-    public static String headerRight="";
 
     private final ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
 
