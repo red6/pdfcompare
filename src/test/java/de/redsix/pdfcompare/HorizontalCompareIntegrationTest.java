@@ -29,7 +29,7 @@ public class HorizontalCompareIntegrationTest extends FileReading {
         return new SimpleEnvironment()
                 .setActualColor(Color.red)
                 .setExpectedColor(Color.white)
-                .setAddEqualPagesToResult(true)
+                .setAddEqualPagesToResult(false)
                 .setEnableHorizontalCompareOutput(true);
     }
 
@@ -48,6 +48,8 @@ public class HorizontalCompareIntegrationTest extends FileReading {
         assertThat(result.hasOnlyOneDoc(), is(false));
         assertThat(result.getDifferences(), not(empty()));
         assertThat(result.getPagesWithDifferences(), not(empty()));
+
+        writeAndCompare(result);
     }
 
     @Test
@@ -62,6 +64,9 @@ public class HorizontalCompareIntegrationTest extends FileReading {
         assertThat(result.isNotEqual(), is(false));
         assertThat(result.getDifferences(), empty());
         assertThat(result.hasDifferenceInExclusion(), is(false));
+        assertThat(result.getNumberOfPages(), is(0));
+
+        writeAndCompare(result);
     }
 
     @Test
@@ -69,26 +74,77 @@ public class HorizontalCompareIntegrationTest extends FileReading {
         // Arrange - equal documents so no differences exist, but addEqualPagesToResult=true
         // should still cause all pages to be stored in the result
         final CompareResult result = new PdfComparator<>(r("expectedSameAsActual.pdf"), r("actual.pdf"))
-                .withEnvironment(pocEnvironment())
+                .withEnvironment(pocEnvironment().setAddEqualPagesToResult(true))
                 .compare();
 
         // Assert - pages are recorded even though the documents are equal
-        assertThat(result.getNumberOfPages(), is(greaterThan(0)));
         assertThat(result.isEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
+
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsWithHorizontalCompareShortDifferentPages() throws IOException {
+        // Arrange - differing documents with addEqualPagesToResult=true:
+        // both pages with differences and pages without differences should be included
+        final CompareResult result = new PdfComparator<>(r("short.pdf"), r("actual.pdf"))
+                .withEnvironment(pocEnvironment())
+                .compare();
+
+        // Assert - number of stored pages equals the total page count of the document,
+        // not just the pages that contain differences
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
+
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsWithHorizontalCompareLongDifferentPages() throws IOException {
+        // Arrange - differing documents with addEqualPagesToResult=true:
+        // both pages with differences and pages without differences should be included
+        final CompareResult result = new PdfComparator<>(r("actual.pdf"), r("short.pdf"))
+                .withEnvironment(pocEnvironment())
+                .compare();
+
+        // Assert - number of stored pages equals the total page count of the document,
+        // not just the pages that contain differences
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(2));
+
+        writeAndCompare(result);
+    }
+
+    @Test
+    public void differingDocumentsWithHorizontalCompareOnlyAdditionalPages() throws IOException {
+        // Arrange - differing documents with addEqualPagesToResult=true:
+        // both pages with differences and pages without differences should be included
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("short.pdf"))
+                .withEnvironment(pocEnvironment())
+                .compare();
+
+        // Assert - number of stored pages equals the total page count of the document,
+        // not just the pages that contain differences
+        assertThat(result.isNotEqual(), is(true));
+        assertThat(result.getNumberOfPages(), is(1));
+
+        writeAndCompare(result);
     }
 
     @Test
     public void differingDocumentsWithHorizontalCompareIncludeAllPagesInResult() throws IOException {
         // Arrange - differing documents with addEqualPagesToResult=true:
         // both pages with differences and pages without differences should be included
-        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"))
-                .withEnvironment(pocEnvironment())
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("short.pdf"))
+                .withEnvironment(pocEnvironment().setAddEqualPagesToResult(true))
                 .compare();
 
         // Assert - number of stored pages equals the total page count of the document,
         // not just the pages that contain differences
-        assertThat(result.getNumberOfPages(), is(greaterThanOrEqualTo(result.getDifferences().size())));
+        assertThat(result.getNumberOfPages(), is(2));
         assertThat(result.isNotEqual(), is(true));
+
+        writeAndCompare(result);
     }
 }
-

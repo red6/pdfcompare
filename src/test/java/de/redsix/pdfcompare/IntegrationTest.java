@@ -23,17 +23,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
 
-@ExtendWith(TempDirectoryExtension.class)
 public class IntegrationTest extends FileReading {
-
-    private String testName;
-    private Path outDir;
-
-    @BeforeEach
-    public void before(TestInfo testInfo, @TempDirectory(parentPath = ".") Path outDir) {
-        testName = testInfo.getTestMethod().get().getName();
-        this.outDir = outDir;
-    }
 
     @Test
     public void equalDocumentsAreEqual() throws IOException {
@@ -202,7 +192,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void missingActualIsNotEqual() throws IOException {
-        final Path target = outDir.resolve("expected.pdf");
+        final Path target = resolve("expected.pdf");
         Files.copy(r("expected.pdf"), target);
         final CompareResult result = new PdfComparator<>(target.toString(), "doesNotExist.pdf").compare();
         assertThat(result.isNotEqual(), is(true));
@@ -216,7 +206,7 @@ public class IntegrationTest extends FileReading {
 
     @Test
     public void missingExpectedIsNotEqual() throws IOException {
-        final Path target = outDir.resolve("actual.pdf");
+        final Path target = resolve("actual.pdf");
         Files.copy(r("actual.pdf"), target);
         final CompareResult result = new PdfComparator<>("doesNotExist.pdf", target.toString()).compare();
         assertThat(result.isNotEqual(), is(true));
@@ -272,42 +262,5 @@ public class IntegrationTest extends FileReading {
                 .withEnvironment(new SimpleEnvironment().setAllowedDiffInPercent(0.03))
                 .compare();
         assertThat(result.isEqual(), is(false));
-    }
-
-    private void writeAndCompare(final CompareResult result) throws IOException {
-        if (System.getenv().get("pdfCompareInTest") != null || System.getProperty("pdfCompareInTest") != null) {
-            final String filename = outDir.resolve(testName).toString();
-            result.writeTo(filename);
-            try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
-                if (expectedPdf != null) {
-                    compareAndCheck(expectedPdf, filename, testName);
-                } else {
-                    assertFalse(Files.exists(Paths.get(filename + ".pdf")));
-                }
-            }
-        }
-    }
-
-    private void writeAndCompareWithOutputStream(final CompareResult result) throws IOException {
-        if (System.getenv().get("pdfCompareInTest") != null || System.getProperty("pdfCompareInTest") != null) {
-            final String filename = outDir.resolve(testName).toString();
-            result.writeTo(new FileOutputStream(filename + ".pdf"));
-            try (final InputStream expectedPdf = getClass().getResourceAsStream(testName + ".pdf")) {
-                if (expectedPdf != null) {
-                    compareAndCheck(expectedPdf, filename, testName);
-                } else {
-                    assertThat(Files.size(Paths.get(filename + ".pdf")), is(0));
-                }
-            }
-        }
-    }
-
-    private void compareAndCheck(InputStream expectedPdf, String filename, String testName) throws IOException {
-        CompareResultImpl compare = new PdfComparator<>(expectedPdf, new FileInputStream(filename + ".pdf")).compare();
-        if (!compare.isEqual()) {
-            Files.move(Paths.get(filename + ".pdf"), Paths.get("actual_" + testName + ".pdf"), StandardCopyOption.REPLACE_EXISTING);
-            compare.writeTo("diff_" + testName);
-        }
-        assertTrue(compare.isEqual());
     }
 }
