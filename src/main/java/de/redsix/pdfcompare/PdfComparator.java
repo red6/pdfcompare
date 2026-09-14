@@ -68,8 +68,13 @@ public class PdfComparator<T extends CompareResultImpl> {
     private final T compareResult;
     private String expectedPassword = "";
     private String actualPassword = "";
-    private boolean withIgnoreCalled = false;
+
+    private boolean withIgnoreCalled = false;   
+    public static String headerLeft="";
+    public static String headerRight="";
+
     private final ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
+
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
