@@ -293,6 +293,7 @@ public class PdfComparator<T extends CompareResultImpl> {
      *         // coordinates are optional. When not given, the whole page is excluded.
      *     }
      * ]</pre>
+     * HOCON includes are not supported. A file that contains one is rejected with a {@link com.typesafe.config.ConfigException}.
      *
      * @param ignorePath The file to read
      * @return this
@@ -399,9 +400,9 @@ public class PdfComparator<T extends CompareResultImpl> {
                         try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualInputStream)) {
                             actualInputStream.close();
                             try (PDDocument expectedDocument = Loader
-                                    .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                                    .loadPDF(expectedStream, expectedPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize(), environment.getTempDirectory()))) {
                                 try (PDDocument actualDocument = Loader
-                                        .loadPDF(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+                                        .loadPDF(actualStream, actualPassword, Utilities.getMemorySettings(environment.getDocumentCacheSize(), environment.getTempDirectory()))) {
                                     compare(expectedDocument, actualDocument);
                                 }
                             }
@@ -551,15 +552,38 @@ public class PdfComparator<T extends CompareResultImpl> {
                 image.width, image.height);
     }
 
+    /**
+     * Renders one page at the configured DPI.
+     *
+     * @throws RenderingException when the page would render to more than {@link Environment#getMaxPagePixels()} pixels.
+     *                            The check runs before rendering, so an oversized page never allocates its image.
+     */
     public static ImageWithDimension renderPageAsImage(final PDDocument document, final PDFRenderer expectedPdfRenderer, final int pageIndex,
             Environment environment) throws IOException {
-        final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, environment.getDPI());
         final PDPage page = document.getPage(pageIndex);
+        rejectOversizedPage(page, pageIndex, environment);
+        final BufferedImage bufferedImage = expectedPdfRenderer.renderImageWithDPI(pageIndex, environment.getDPI());
         final PDRectangle mediaBox = page.getMediaBox();
         if (page.getRotation() == 90 || page.getRotation() == 270) {
             return new ImageWithDimension(bufferedImage, mediaBox.getHeight(), mediaBox.getWidth());
         } else {
             return new ImageWithDimension(bufferedImage, mediaBox.getWidth(), mediaBox.getHeight());
+        }
+    }
+
+    // Mirrors how PDFRenderer sizes its image: the crop box scaled by dpi/72, each side floored to an int of at least 1.
+    private static void rejectOversizedPage(final PDPage page, final int pageIndex, final Environment environment) {
+        final int dpi = environment.getDPI();
+        final float scale = dpi / 72f;
+        final PDRectangle cropBox = page.getCropBox();
+        final int width = (int) Math.max(Math.floor(cropBox.getWidth() * scale), 1);
+        final int height = (int) Math.max(Math.floor(cropBox.getHeight() * scale), 1);
+        final long pixels = (long) width * height;
+        final long limit = environment.getMaxPagePixels();
+        if (pixels > limit) {
+            throw new RenderingException(String.format(
+                    "Page %d would render to %d x %d = %d pixels at %d DPI, which exceeds the limit of %d pixels (maxPagePixels)",
+                    pageIndex + 1, width, height, pixels, dpi, limit));
         }
     }
 

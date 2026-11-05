@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
  *         // coordinates are optional. When not given, the whole page is excluded.
  *     }
  * ]</pre>
+ * HOCON includes are not supported. Reading a file that contains one throws a {@link ConfigException}.
  */
 public class Exclusions {
 
@@ -52,7 +54,10 @@ public class Exclusions {
     private final float MM_TO_PIXEL;
     private final float PT_TO_PIXEL;
     private static final Pattern NUMBER = Pattern.compile("([0-9.]+)(cm|mm|pt)");
-    private static final ConfigParseOptions configParseOptions = ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF).setAllowMissing(true);
+    private static final ConfigParseOptions configParseOptions = ConfigParseOptions.defaults()
+            .setSyntax(ConfigSyntax.CONF)
+            .setAllowMissing(true)
+            .setIncluder(new RejectingIncluder());
     private final Map<Integer, PageExclusions> exclusionsPerPage = new HashMap<>();
     private final PageExclusions exclusionsForAllPages = new PageExclusions();
 
@@ -176,5 +181,42 @@ public class Exclusions {
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(e -> e.getValue().getExclusions().stream());
         return Stream.concat(allPages, pageAreas);
+    }
+
+    /**
+     * Rejects every HOCON include, so an exclusions file can never make us fetch a URL or read another file.
+     * Lightbend Config only routes include file(), url() and classpath() through a custom includer
+     * that implements the matching interface, so all of them are implemented here.
+     */
+    private static final class RejectingIncluder implements ConfigIncluder, ConfigIncluderFile, ConfigIncluderURL, ConfigIncluderClasspath {
+
+        @Override
+        public ConfigIncluder withFallback(final ConfigIncluder fallback) {
+            return this;
+        }
+
+        @Override
+        public ConfigObject include(final ConfigIncludeContext context, final String what) {
+            throw rejected(what);
+        }
+
+        @Override
+        public ConfigObject includeFile(final ConfigIncludeContext context, final File what) {
+            throw rejected(what);
+        }
+
+        @Override
+        public ConfigObject includeURL(final ConfigIncludeContext context, final URL what) {
+            throw rejected(what);
+        }
+
+        @Override
+        public ConfigObject includeResources(final ConfigIncludeContext context, final String what) {
+            throw rejected(what);
+        }
+
+        private static ConfigException rejected(final Object what) {
+            return new ConfigException.Generic("Includes are not allowed in exclusion files, found include of: " + what);
+        }
     }
 }

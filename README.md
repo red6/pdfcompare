@@ -100,6 +100,7 @@ exclusions: [
 ```
 
 When the provided exclusion file is not found, it is ignored and the compare is done without the exclusions.
+HOCON includes (`include "..."`, `include file(...)`, `include url(...)`, `include classpath(...)`) are not supported in exclusion files. A file that contains one is rejected with an exception.
 
 Exclusions are provided in the code as follows:
 
@@ -162,6 +163,16 @@ Through the environment you can configure the memory settings (see above) and th
 - DPI=300
 
     Sets the DPI that Pdf pages are rendered with. Default is 300.
+
+- maxPagePixels=150000000
+
+    The maximum number of pixels a single page may render to at the configured DPI. A larger page is rejected with a
+    RenderingException before it is rendered. The diff image of a page pair may have up to twice as many pixels, so an
+    A0 page compared with the same page in landscape still fits. A larger diff image is rejected before it is allocated.
+    The default allows an A0 page at 300 DPI (about 139 million pixels). Each pixel takes 4 bytes of heap. A page pair
+    holds three images while it is compared, or five with enableHorizontalCompareOutput, so two pages at the default
+    limit need about 1.8 GB, or about 3 GB with horizontal output. Pages of different orientation need more.
+    The limit does not cap the total heap use of a compare. Lower it when the heap is small.
     
 - expectedColor=00B400 (GREEN)
 

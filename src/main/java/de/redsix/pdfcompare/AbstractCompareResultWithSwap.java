@@ -25,6 +25,10 @@ import java.util.concurrent.ExecutorService;
  * when a new page is added. When the consumed memory crosses a threshold, images are swapped to disk and removed
  * from memory. The threshold defaults to 70% of Runtime.maxMemory() but at least 200MB, which worked for me.
  * After swapping, a System.gc() is triggered.
+ * <p>
+ * Swapped pages are written as PDF files to a temporary directory. They stay there until {@link #writeTo(String)} or
+ * {@link #writeTo(OutputStream)} runs, or the JVM shuts down. They are not encrypted, even when the compared documents
+ * were password protected.
  */
 public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
@@ -63,7 +67,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
             for (Path path : FileUtils.getPaths(getTempDir(), "partial_*")) {
                 mergerUtility.addSource(path.toFile());
             }
-            mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize()));
+            mergerUtility.mergeDocuments(Utilities.getMemorySettings(environment.getMergeCacheSize(), environment.getTempDirectory()));
             Instant end = Instant.now();
             LOG.trace("Merging took: {}ms", Duration.between(start, end).toMillis());
         } catch (IOException e) {
@@ -120,7 +124,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
                     final int minPageIndex = images.keySet().iterator().next();
                     LOG.trace("minPageIndex: {}", minPageIndex);
-                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize()))) {
+                    try (PDDocument document = new PDDocument(Utilities.getMemorySettings(environment.getSwapCacheSize(), environment.getTempDirectory()))) {
                         document.setResourceCache(new ResourceCacheWithLimitedImages(environment));
                         addImagesToDocument(document, images);
                         final Path tempFile = getTempDir().resolve(String.format("partial_%06d.pdf", minPageIndex));
@@ -142,7 +146,7 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private synchronized Path getTempDir() throws IOException {
         if (tempDir == null) {
-            tempDir = FileUtils.createTempDir("PdfCompare");
+            tempDir = FileUtils.createTempDir(environment.getTempDirectory(), "PdfCompare");
         }
         return tempDir;
     }

@@ -3,6 +3,7 @@ package de.redsix.pdfcompare;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import com.typesafe.config.ConfigException;
 import de.redsix.pdfcompare.env.DefaultEnvironment;
@@ -11,7 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.SocketTimeoutException;
 import java.nio.file.Paths;
+import java.time.Duration;
 
 public class ExclusionsTest extends FileReading {
 
@@ -130,6 +137,27 @@ public class ExclusionsTest extends FileReading {
         assertThat(exclusions.forPage(3).contains(283, 1654), is(true));
         assertThat(exclusions.forPage(3).contains(284, 1654), is(false));
         assertThat(exclusions.forPage(3).contains(283, 1655), is(false));
+    }
+
+    @Test
+    public void includesAreRejectedWithoutFetching() throws IOException {
+        try (ServerSocket server = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            final String ignore = "include url(\"http://127.0.0.1:" + server.getLocalPort() + "/\")\nexclusions: []";
+            assertThrows(ConfigException.class, () -> assertTimeoutPreemptively(Duration.ofSeconds(10),
+                    () -> exclusions.readExclusions(new StringReader(ignore))));
+            server.setSoTimeout(200);
+            assertThrows(SocketTimeoutException.class, server::accept, "exclusions parser connected to the include URL");
+        }
+    }
+
+    @Test
+    public void localIncludesAreRejected() {
+        assertThrows(ConfigException.class, () -> exclusions.readExclusions(
+                new StringReader("include file(\"src/test/resources/de/redsix/pdfcompare/ignore.conf\")")));
+        assertThrows(ConfigException.class, () -> exclusions.readExclusions(
+                new StringReader("include classpath(\"de/redsix/pdfcompare/ignore.conf\")")));
+        assertThrows(ConfigException.class, () -> exclusions.readExclusions(
+                new StringReader("include \"de/redsix/pdfcompare/ignore.conf\"")));
     }
 
     @Test

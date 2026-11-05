@@ -85,3 +85,17 @@ take between 16 minutes and 30 minutes succeeded before and would now fail. Then
 
 #### Fixed
 - Close InputStreams properly after use
+
+## 1.2.12
+
+#### Security
+- Exclusion files no longer follow HOCON includes. Any `include` (plain, `file(...)`, `url(...)` or `classpath(...)`) is rejected with a `ConfigException`, so an exclusion file can no longer make PdfCompare fetch a URL or read another file.
+- Add the `maxPagePixels` setting (default 150000000, enough for A0 at 300 DPI). A page that would render to more pixels is rejected with a `RenderingException` before it is rendered. A page pair whose diff image would need more than twice the limit is rejected before the diff image is allocated. The limit caps each image, not the total heap use of a compare. At the default, one page pair can need about 1.8 GB while it is compared, or about 3 GB with `enableHorizontalCompareOutput`.
+
+#### Fixed
+- Temporary directories for PDFBox scratch files are removed when their document is closed. Before, every loaded document left a directory behind until the JVM shut down.
+- The `tempDir` setting (`Environment.getTempDirectory()`) is now used for temporary files. It was documented but ignored. `FileUtils.setTempDirParent(...)` still takes precedence when set, and a `null` temp directory means `java.io.tmpdir`.
+- A missing temporary directory now makes the compare fail with an `IOException`. Before, it was reported as a missing input file.
+
+#### Upgrades
+- Upgrade PDFBox to 3.0.8

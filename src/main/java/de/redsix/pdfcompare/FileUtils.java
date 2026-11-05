@@ -19,6 +19,10 @@ public class FileUtils {
     private static volatile boolean shutdownRegistered;
     private static Path tempDirParent;
 
+    /**
+     * Sets a parent directory for all temporary directories. When set, it takes precedence over
+     * {@link de.redsix.pdfcompare.env.Environment#getTempDirectory()}.
+     */
     public static void setTempDirParent(final Path tempDirParentPath) {
         tempDirParent = tempDirParentPath;
     }
@@ -35,14 +39,23 @@ public class FileUtils {
     }
 
     public static Path createTempDir(final String prefix) throws IOException {
-        final Path tempDir = tempDirParent != null ? Files.createTempDirectory(tempDirParent, prefix) : Files.createTempDirectory(prefix);
+        return createTempDir(null, prefix);
+    }
+
+    /**
+     * Creates a temporary directory under the directory given to {@link #setTempDirParent(Path)}, else under {@code parent},
+     * else under java.io.tmpdir. Callers remove it with {@link #removeTempDir(Path)}.
+     * Whatever is left is removed when the JVM shuts down.
+     */
+    public static Path createTempDir(final Path parent, final String prefix) throws IOException {
+        final Path dir = tempDirParent != null ? tempDirParent : parent;
+        final Path tempDir = dir != null ? Files.createTempDirectory(dir, prefix) : Files.createTempDirectory(prefix);
         tempDirs.add(tempDir);
         addShutdownHook();
         return tempDir;
     }
 
     public static void removeTempDir(final Path tempDir) {
-        tempDirs.remove(tempDir);
         if (Files.exists(tempDir) && Files.isDirectory(tempDir)) {
             try {
                 Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
@@ -60,9 +73,12 @@ public class FileUtils {
                     }
                 });
             } catch (IOException e) {
+                // Stays registered, so the shutdown hook tries again.
                 LOG.warn("Error removing temporary directory: {}", tempDir, e);
+                return;
             }
         }
+        tempDirs.remove(tempDir);
     }
 
     public static List<Path> getPaths(final Path dir, final String glob) throws IOException {
