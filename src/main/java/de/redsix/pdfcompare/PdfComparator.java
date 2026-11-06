@@ -63,7 +63,7 @@ public class PdfComparator<T extends CompareResultImpl> {
     private InputStreamSupplier expectedStreamSupplier;
     private InputStreamSupplier actualStreamSupplier;
     private ExecutorService drawExecutor;
-    private ExecutorService parrallelDrawExecutor;
+    private ExecutorService parallelDrawExecutor;
     private ExecutorService diffExecutor;
     private final T compareResult;
     private String expectedPassword = "";
@@ -374,7 +374,7 @@ public class PdfComparator<T extends CompareResultImpl> {
         compareResult.setEnvironment(getEnvironment());
 
         drawExecutor = blockingExecutor("Draw", 1, 50, environment);
-        parrallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4, environment);
+        parallelDrawExecutor = blockingExecutor("ParallelDraw", 2, 4, environment);
         diffExecutor = blockingExecutor("Diff", 1, 2, environment);
     }
 
@@ -441,7 +441,7 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
         Utilities.await(latch, "FullCompare", environment);
         Utilities.shutdownAndAwaitTermination(drawExecutor, "Draw", environment);
-        Utilities.shutdownAndAwaitTermination(parrallelDrawExecutor, "Parallel Draw", environment);
+        Utilities.shutdownAndAwaitTermination(parallelDrawExecutor, "Parallel Draw", environment);
         Utilities.shutdownAndAwaitTermination(diffExecutor, "Diff", environment);
         if (expectedDocument.getNumberOfPages() > minPageCount) {
             addExtraPages(expectedDocument, expectedPdfRenderer, minPageCount, environment.getActualColor().getRGB(), true);
@@ -461,9 +461,9 @@ public class PdfComparator<T extends CompareResultImpl> {
         drawExecutor.execute(() -> {
             try {
                 LOG.trace("Drawing page {}", pageIndex);
-                final Future<ImageWithDimension> expectedImageFuture = parrallelDrawExecutor
+                final Future<ImageWithDimension> expectedImageFuture = parallelDrawExecutor
                         .submit(() -> renderPageAsImage(expectedDocument, expectedPdfRenderer, pageIndex, environment));
-                final Future<ImageWithDimension> actualImageFuture = parrallelDrawExecutor
+                final Future<ImageWithDimension> actualImageFuture = parallelDrawExecutor
                         .submit(() -> renderPageAsImage(actualDocument, actualPdfRenderer, pageIndex, environment));
                 final ImageWithDimension expectedImage = getImage(expectedImageFuture, pageIndex, "expected document");
                 final ImageWithDimension actualImage = getImage(actualImageFuture, pageIndex, "actual document");
