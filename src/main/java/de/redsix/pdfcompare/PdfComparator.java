@@ -81,8 +81,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @param actualPdfBase64   actual PDF in base64 encoded format
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
-    public static <T extends CompareResultImpl> PdfComparator<T> base64(String expectedPdfBase64, String actualPdfBase64) {
-        return base64(expectedPdfBase64, actualPdfBase64, (T) new CompareResultImpl());
+    public static PdfComparator<CompareResultImpl> base64(String expectedPdfBase64, String actualPdfBase64) {
+        return base64(expectedPdfBase64, actualPdfBase64, new CompareResultImpl());
     }
 
     /**
