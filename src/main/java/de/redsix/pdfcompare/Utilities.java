@@ -3,7 +3,9 @@ package de.redsix.pdfcompare;
 import de.redsix.pdfcompare.env.Environment;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.io.RandomAccess;
 import org.apache.pdfbox.io.RandomAccessReadBuffer;
+import org.apache.pdfbox.io.RandomAccessStreamCache;
 import org.apache.pdfbox.io.RandomAccessStreamCache.StreamCacheCreateFunction;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +25,47 @@ public class Utilities {
     private static final Logger LOG = LoggerFactory.getLogger(Utilities.class);
 
     public static StreamCacheCreateFunction getMemorySettings(final int bytes) throws IOException {
-        return MemoryUsageSetting.setupMixed(bytes).setTempDir(FileUtils.createTempDir("PdfBox").toFile()).streamCache;
+        return getMemorySettings(bytes, null);
+    }
+
+    /**
+     * PDFBox memory settings that keep up to {@code bytes} in memory and spill to scratch files on disk.
+     * Every document created with them gets its own temporary directory under {@code tempDirParent}
+     * (java.io.tmpdir when it is null), which is removed when the document is closed.
+     */
+    public static StreamCacheCreateFunction getMemorySettings(final int bytes, final Path tempDirParent) throws IOException {
+        probeTempDir(tempDirParent);
+        return () -> {
+            final Path tempDir = FileUtils.createTempDir(tempDirParent, "PdfBox");
+            final RandomAccessStreamCache scratchFile = MemoryUsageSetting.setupMixed(bytes).setTempDir(tempDir.toFile()).streamCache.create();
+            return new RandomAccessStreamCache() {
+
+                @Override
+                public RandomAccess createBuffer() throws IOException {
+                    return scratchFile.createBuffer();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    try {
+                        scratchFile.close();
+                    } finally {
+                        FileUtils.removeTempDir(tempDir);
+                    }
+                }
+            };
+        };
+    }
+
+    // PDFBox swallows an IOException from the cache factory and falls back to an unbounded in-memory cache,
+    // so an unusable temp dir has to fail here. Wrapping hides a NoSuchFileException from the
+    // "input file missing" handling in PdfComparator.compare.
+    private static void probeTempDir(final Path tempDirParent) throws IOException {
+        try {
+            FileUtils.removeTempDir(FileUtils.createTempDir(tempDirParent, "PdfBox"));
+        } catch (NoSuchFileException e) {
+            throw new IOException("Can not create a temporary directory, the parent directory does not exist: " + e.getFile(), e);
+        }
     }
 
     static class NamedThreadFactory implements ThreadFactory {
@@ -108,7 +151,7 @@ public class Utilities {
     }
 
     private static int getNumberOfPages(final InputStream documentIS, Environment environment) throws IOException {
-        try (PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(documentIS), Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+        try (PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(documentIS), getMemorySettings(environment.getDocumentCacheSize(), environment.getTempDirectory()))) {
             return pdDocument.getNumberOfPages();
         }
     }
@@ -120,7 +163,7 @@ public class Utilities {
     }
 
     public static ImageWithDimension renderPage(final InputStream documentIS, final int page, Environment environment) throws IOException {
-        try (PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(documentIS), Utilities.getMemorySettings(environment.getDocumentCacheSize()))) {
+        try (PDDocument pdDocument = Loader.loadPDF(new RandomAccessReadBuffer(documentIS), getMemorySettings(environment.getDocumentCacheSize(), environment.getTempDirectory()))) {
             if (page >= pdDocument.getNumberOfPages()) {
                 throw new IllegalArgumentException("Page out of range. Last page is: " + pdDocument.getNumberOfPages());
             }

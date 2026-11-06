@@ -4,11 +4,15 @@ import static de.redsix.pdfcompare.DiffImage.MARKER_RGB;
 import static de.redsix.pdfcompare.DiffImage.color;
 import static de.redsix.pdfcompare.ImageTools.EXCLUDED_BACKGROUND_RGB;
 import static de.redsix.pdfcompare.ImageTools.blankImage;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import de.redsix.pdfcompare.env.DefaultEnvironment;
 import de.redsix.pdfcompare.env.Environment;
@@ -120,6 +124,30 @@ public class DiffImageTest {
         assertThat(pageDiffCalculator.getDiffArea(), nullValue());
         assertMarker(resultImage, 26, 26);
         assertMarker(resultImage, 31, 27);
+    }
+
+    @Test
+    public void diffImageLargerThanPixelLimitIsRejectedEvenWhenEachPageFits() {
+        // Each page has 200,000 pixels, but the diff needs 2000 x 2000 = 4,000,000.
+        final ImageWithDimension wide = new ImageWithDimension(new BufferedImage(2000, 100, BufferedImage.TYPE_INT_RGB), 1.0f, 1.0f);
+        final ImageWithDimension tall = new ImageWithDimension(new BufferedImage(100, 2000, BufferedImage.TYPE_INT_RGB), 1.0f, 1.0f);
+        final Environment env = new SimpleEnvironment().setMaxPagePixels(1_000_000);
+
+        final DiffImage diffImage = new DiffImage(wide, tall, 0, env, exclusions, resultMock);
+
+        final RenderingException e = assertThrows(RenderingException.class, diffImage::diffImages);
+        assertThat(e.getMessage(), containsString("2000 x 2000"));
+        verifyNoInteractions(resultMock);
+    }
+
+    @Test
+    public void diffImageOfARotatedPageAtTheLimitIsAllowed() {
+        // 700 x 1000 against 1000 x 700 needs a 1000 x 1000 diff, within twice the limit of 700,000.
+        final ImageWithDimension portrait = new ImageWithDimension(new BufferedImage(700, 1000, BufferedImage.TYPE_INT_RGB), 1.0f, 1.0f);
+        final ImageWithDimension landscape = new ImageWithDimension(new BufferedImage(1000, 700, BufferedImage.TYPE_INT_RGB), 1.0f, 1.0f);
+        final DiffImage diffImage = new DiffImage(portrait, landscape, 0, new SimpleEnvironment().setMaxPagePixels(700_000), exclusions, resultMock);
+
+        assertDoesNotThrow(diffImage::diffImages);
     }
 
     private BufferedImage createAndAssertDiffImage() {

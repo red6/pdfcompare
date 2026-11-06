@@ -36,6 +36,7 @@ public class SimpleEnvironment implements Environment {
     private Color expectedColor;
     private Color actualColor;
     private Integer dpi;
+    private Long maxPagePixels;
     private Boolean addEqualPagesToResult;
     private Boolean failOnMissingIgnoreFile;
     private Boolean enableHorizontalCompareOutput;
@@ -176,6 +177,16 @@ public class SimpleEnvironment implements Environment {
 
     public SimpleEnvironment setDPI(int dpi) {
         this.dpi = dpi;
+        return this;
+    }
+
+    @Override
+    public long getMaxPagePixels() {
+        return maxPagePixels != null ? maxPagePixels : fallback.getMaxPagePixels();
+    }
+
+    public SimpleEnvironment setMaxPagePixels(long maxPagePixels) {
+        this.maxPagePixels = maxPagePixels;
         return this;
     }
 

@@ -65,6 +65,16 @@ public class DiffImage {
 
         int resultImageWidth = Math.max(expectedImageWidth, actualImageWidth);
         int resultImageHeight = Math.max(expectedImageHeight, actualImageHeight);
+        // Each page passed the pixel limit alone, but the diff takes the larger width and the larger height.
+        // Twice the limit still fits a page compared with the same page rotated, for aspect ratios up to 2.
+        final long maxPagePixels = environment.getMaxPagePixels();
+        final long diffLimit = maxPagePixels > Long.MAX_VALUE / 2 ? Long.MAX_VALUE : 2 * maxPagePixels;
+        final long resultPixels = (long) resultImageWidth * resultImageHeight;
+        if (resultPixels > diffLimit) {
+            throw new RenderingException(String.format(
+                    "Page %d would need a diff image of %d x %d = %d pixels, which exceeds the limit of %d pixels (2 x maxPagePixels)",
+                    page + 1, resultImageWidth, resultImageHeight, resultPixels, diffLimit));
+        }
         resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
         DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
 

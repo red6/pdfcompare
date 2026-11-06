@@ -133,6 +133,14 @@ public class ConfigFileEnvironment implements Environment {
     }
 
     @Override
+    public long getMaxPagePixels() {
+        if (config.hasPath("maxPagePixels")) {
+            return config.getLong("maxPagePixels");
+        }
+        return Environment.super.getMaxPagePixels();
+    }
+
+    @Override
     public boolean addEqualPagesToResult() {
         return config.getBoolean("addEqualPagesToResult");
     }
