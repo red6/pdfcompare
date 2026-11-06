@@ -26,13 +26,14 @@ import org.mockito.MockitoAnnotations;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class DiffImageTest {
 
     @Mock
     private ResultCollector resultMock;
     @Captor
-    private ArgumentCaptor<ImageWithDimension> captor;
+    private ArgumentCaptor<List<ImageWithDimension>> captor;
     @Captor
     private ArgumentCaptor<PageDiffCalculator> pageDiffCalculatorCaptor;
     private final BufferedImage expected = blankImage(new BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB));
@@ -150,6 +151,38 @@ public class DiffImageTest {
         assertDoesNotThrow(diffImage::diffImages);
     }
 
+    @Test
+    public void horizontalOutputTintsDifferingPixelsOnTheExpectedAndTheActualPage() {
+        expected.setRGB(23, 23, Color.BLACK.getRGB());
+        actual.setRGB(24, 24, Color.BLACK.getRGB());
+        final List<ImageWithDimension> pages = createHorizontalPages();
+        assertThat(pages.size(), is(2));
+        final BufferedImage expectedPage = pages.get(0).bufferedImage;
+        final BufferedImage actualPage = pages.get(1).bufferedImage;
+        assertThat(expectedPage.getRGB(23, 23), is(color(114, 0, 0)));
+        assertThat(actualPage.getRGB(24, 24), is(color(0, 114, 0)));
+        assertThat(expectedPage.getRGB(10, 10), is(Color.WHITE.getRGB()));
+        assertThat(actualPage.getRGB(10, 10), is(Color.WHITE.getRGB()));
+    }
+
+    @Test
+    public void horizontalOutputFadesExcludedDifferencesInsteadOfTintingThem() {
+        expected.setRGB(36, 36, Color.BLACK.getRGB());
+        final List<ImageWithDimension> pages = createHorizontalPages();
+        assertThat(pageDiffCalculator.differencesFound(), is(false));
+        assertThat(pageDiffCalculator.differencesFoundInExclusion(), is(true));
+        assertThat(pages.get(0).bufferedImage.getRGB(36, 36), is(color(153, 153, 153)));
+        assertThat(pages.get(1).bufferedImage.getRGB(36, 36), is(EXCLUDED_BACKGROUND_RGB));
+    }
+
+    private List<ImageWithDimension> createHorizontalPages() {
+        createAndAssertDiffImage(new SimpleEnvironment()
+                .setEnableHorizontalCompareOutput(true)
+                .setActualColor(Color.RED)
+                .setExpectedColor(Color.GREEN));
+        return captor.getValue();
+    }
+
     private BufferedImage createAndAssertDiffImage() {
         return createAndAssertDiffImage(DefaultEnvironment.create());
     }
@@ -162,7 +195,7 @@ public class DiffImageTest {
         diffImage.diffImages();
         verify(resultMock).addPage(pageDiffCalculatorCaptor.capture(), eq(1), eq(expectedImage), eq(actualImage), captor.capture());
         pageDiffCalculator = pageDiffCalculatorCaptor.getValue();
-        resultImage = captor.getValue().bufferedImage;
+        resultImage = captor.getValue().get(0).bufferedImage;
         return resultImage;
     }
 

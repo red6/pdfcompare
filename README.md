@@ -170,8 +170,8 @@ Through the environment you can configure the memory settings (see above) and th
     RenderingException before it is rendered. The diff image of a page pair may have up to twice as many pixels, so an
     A0 page compared with the same page in landscape still fits. A larger diff image is rejected before it is allocated.
     The default allows an A0 page at 300 DPI (about 139 million pixels). Each pixel takes 4 bytes of heap. A page pair
-    holds three images while it is compared, or five with enableHorizontalCompareOutput, so two pages at the default
-    limit need about 1.8 GB, or about 3 GB with horizontal output. Pages of different orientation need more.
+    holds three images while it is compared, or four with enableHorizontalCompareOutput, so two pages at the default
+    limit need about 1.8 GB, or about 2.4 GB with horizontal output. Pages of different orientation need more.
     The limit does not cap the total heap use of a compare. Lower it when the heap is small.
     
 - expectedColor=00B400 (GREEN)

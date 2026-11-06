@@ -7,7 +7,9 @@ import de.redsix.pdfcompare.env.SimpleEnvironment;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Integration tests covering the horizontal compare output scenario.
@@ -146,5 +148,34 @@ public class HorizontalCompareIntegrationTest extends FileReading {
         assertThat(result.isNotEqual(), is(true));
 
         writeAndCompare(result);
+    }
+
+    @Test
+    public void swappingToDiskWritesTheSameResultAsKeepingPagesInMemory() throws IOException {
+        final CompareResult result = new PdfComparator<>(r("expected.pdf"), r("actual.pdf"), new CompareResultWithPageOverflow(1))
+                .withEnvironment(pocEnvironment())
+                .compare();
+
+        final String filename = resolve("swapped").toString();
+        result.writeTo(filename);
+        try (final InputStream inMemoryResult = getClass().getResourceAsStream("differingDocumentsWithHorizontalCompareAreNotEqual.pdf")) {
+            compareAndCheck(inMemoryResult, filename, "swapped");
+        }
+    }
+
+    @Test
+    public void aMissingExpectedDocumentLeavesTheExpectedSideBlank() throws IOException {
+        final CompareResultWithExpectedAndActual result = new PdfComparator<>(
+                resolve("doesNotExist.pdf").toString(), p("actual.pdf").toString(), new CompareResultWithExpectedAndActual())
+                .withEnvironment(pocEnvironment())
+                .compare();
+
+        assertThat(result.hasOnlyActual(), is(true));
+        final BufferedImage expectedSide = result.getDiffImage(0);
+        for (int y = 0; y < expectedSide.getHeight(); y++) {
+            for (int x = 0; x < expectedSide.getWidth(); x++) {
+                assertThat(expectedSide.getRGB(x, y), is(Color.WHITE.getRGB()));
+            }
+        }
     }
 }

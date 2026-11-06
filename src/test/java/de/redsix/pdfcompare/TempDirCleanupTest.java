@@ -39,9 +39,9 @@ public class TempDirCleanupTest {
         final CompareResultImpl result = new CompareResultImpl() {
             @Override
             public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex, final ImageWithDimension expectedImage,
-                    final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
+                    final ImageWithDimension actualImage, final List<ImageWithDimension> resultPages) {
                 seenWhileComparing.addAll(entries(tempDir));
-                super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
+                super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, resultPages);
             }
         };
 
