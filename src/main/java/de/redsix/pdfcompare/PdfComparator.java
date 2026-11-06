@@ -81,8 +81,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @param actualPdfBase64   actual PDF in base64 encoded format
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
-    public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64) {
-        return base64(expectedPdfBase64, actualPdfBase64, new CompareResultImpl());
+    public static <T extends CompareResultImpl> PdfComparator<T> base64(String expectedPdfBase64, String actualPdfBase64) {
+        return base64(expectedPdfBase64, actualPdfBase64, (T) new CompareResultImpl());
     }
 
     /**
@@ -93,8 +93,8 @@ public class PdfComparator<T extends CompareResultImpl> {
      * @param compareResult     the CompareResult to use during this compare. Allows to provide CompareResultImpl Subtypes with Swapping for example.
      * @return A CompareResultImpl object, that contains the result of this compare.
      */
-    public static <T extends CompareResultImpl> PdfComparator base64(String expectedPdfBase64, String actualPdfBase64, T compareResult) {
-        PdfComparator pdfComparator = new PdfComparator<>(compareResult);
+    public static <T extends CompareResultImpl> PdfComparator<T> base64(String expectedPdfBase64, String actualPdfBase64, T compareResult) {
+        PdfComparator<T> pdfComparator = new PdfComparator<>(compareResult);
         pdfComparator.expectedStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(expectedPdfBase64));
         pdfComparator.actualStreamSupplier = () -> new ByteArrayInputStream(Base64.getDecoder().decode(actualPdfBase64));
         return pdfComparator;
@@ -181,8 +181,8 @@ public class PdfComparator<T extends CompareResultImpl> {
         Objects.requireNonNull(expectedFile, "expectedFile is null");
         Objects.requireNonNull(actualFile, "actualFile is null");
         if (!expectedFile.equals(actualFile)) {
-            this.expectedStreamSupplier = () -> new FileInputStream(expectedFile);
-            this.actualStreamSupplier = () -> new FileInputStream(actualFile);
+            this.expectedStreamSupplier = () -> Files.newInputStream(expectedFile.toPath());
+            this.actualStreamSupplier = () -> Files.newInputStream(actualFile.toPath());
         }
     }
 
