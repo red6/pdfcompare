@@ -475,14 +475,18 @@ public class PdfComparator<T extends CompareResultImpl> {
                         diffImage.diffImages();
                     } catch (Throwable t) {
                         addErrorPage(pageIndex, "An error occurred, while diffing this page", t);
+                    } finally {
+                        LOG.trace("DONE Diffing page {}", diffImage);
+                        latch.countDown();
                     }
-                    LOG.trace("DONE Diffing page {}", diffImage);
                 });
                 LOG.trace("DONE drawing page {}", pageIndex);
             } catch (Throwable t) {
-                addErrorPage(pageIndex, "An error occurred, while rendering this page", t);
-            } finally {
-                latch.countDown();
+                try {
+                    addErrorPage(pageIndex, "An error occurred, while rendering this page", t);
+                } finally {
+                    latch.countDown();
+                }
             }
         });
     }
