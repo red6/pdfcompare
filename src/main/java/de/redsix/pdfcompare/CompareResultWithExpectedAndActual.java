@@ -1,6 +1,7 @@
 package de.redsix.pdfcompare;
 
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,8 +15,8 @@ public class CompareResultWithExpectedAndActual extends CompareResultImpl {
 
     @Override
     public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
-            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
-        super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final List<ImageWithDimension> resultPages) {
+        super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, resultPages);
         expectedImages.put(pageIndex, expectedImage);
         actualImages.put(pageIndex, actualImage);
     }
@@ -25,8 +26,12 @@ public class CompareResultWithExpectedAndActual extends CompareResultImpl {
         return true;
     }
 
+    /**
+     * The first result page of the given page. With horizontal compare output that is the tinted expected page.
+     */
     public synchronized BufferedImage getDiffImage(final int page) {
-        return getBufferedImageOrNull(diffImages.get(page));
+        final List<ImageWithDimension> resultPages = diffImages.get(page);
+        return resultPages == null ? null : resultPages.get(0).bufferedImage;
     }
 
     public BufferedImage getExpectedImage(final int page) {

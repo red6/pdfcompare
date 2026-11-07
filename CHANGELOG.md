@@ -99,3 +99,16 @@ take between 16 minutes and 30 minutes succeeded before and would now fail. Then
 
 #### Upgrades
 - Upgrade PDFBox to 3.0.8
+
+## 1.2.14
+
+#### Fixed
+- `enableHorizontalCompareOutput` with `CompareResultWithMemoryOverflow` or `CompareResultWithPageOverflow` no longer drops the actual page of every pair that was swapped to disk.
+- `enableHorizontalCompareOutput` respects exclusions. Differences inside an excluded area are faded like in the normal diff image instead of tinted.
+- With `enableHorizontalCompareOutput`, a page that only one document has is written as the marked page next to a white page, so pairs stay aligned in a two-page view. Before, it was tinted over its whole area and paired with a solid page.
+- When the expected document is missing, `CompareResultWithExpectedAndActual.getExpectedImage(...)` returns the blank page and `getActualImage(...)` the actual page. They were swapped before. The written result is unchanged in normal mode.
+- `enableHorizontalCompareOutput` is about 5 times faster. Both pages are built in the same pass that finds the differences, and the unused diff image is no longer created.
+
+#### Changed
+- `ResultCollector.addPage(...)` takes `List<ImageWithDimension> resultPages` instead of a single diff image. Subclasses of `CompareResultImpl` that override `addPage` need the new signature.
+- `CompareResultImpl.diffImages` is now a `Map<Integer, List<ImageWithDimension>>` with every result page of a compared page, and the protected field `diffImagesActualOverlay` is gone. The protected `addImagesToDocument(PDDocument, Map)` takes the new map type. Subclasses that read these fields or call that method need to change.

@@ -6,18 +6,19 @@ import static de.redsix.pdfcompare.PdfComparator.MARKER_WIDTH;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+import java.util.List;
 
 import de.redsix.pdfcompare.env.Environment;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class DiffImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiffImage.class);
     /*package*/ static final int MARKER_RGB = color(230, 0, 230);
+    /** Opacity of the tint on differing pixels in horizontal compare output (0 = transparent, 1 = opaque). */
+    private static final float OVERLAY_ALPHA = 0.45f;
+    private static final int WHITE_RGB = 0xFFFFFF;
     private final ImageWithDimension expectedImage;
     private final ImageWithDimension actualImage;
     private final int page;
@@ -75,13 +76,19 @@ public class DiffImage {
                     "Page %d would need a diff image of %d x %d = %d pixels, which exceeds the limit of %d pixels (2 x maxPagePixels)",
                     page + 1, resultImageWidth, resultImageHeight, resultPixels, diffLimit));
         }
+        final boolean horizontal = environment.getEnableHorizontalCompareOutput();
+        // Normal mode writes one blended diff image. Horizontal mode writes the expected page tinted where it differs,
+        // then the actual page tinted where it differs, for reading side by side in a two-page view.
         resultImage = new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType());
-        DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
+        final BufferedImage actualOverlayImage = horizontal
+                ? new BufferedImage(resultImageWidth, resultImageHeight, actualBuffImage.getType()) : null;
+        final DataBuffer resultBuffer = resultImage.getRaster().getDataBuffer();
+        final DataBuffer actualOverlayBuffer = horizontal ? actualOverlayImage.getRaster().getDataBuffer() : null;
+        final int actualRgb = environment.getActualColor().getRGB();
+        final int expectedRgb = environment.getExpectedColor().getRGB();
 
         diffCalculator = new PageDiffCalculator(resultImageWidth * resultImageHeight, environment.getAllowedDiffInPercent());
 
-        int expectedElement;
-        int actualElement;
         final PageExclusions pageExclusions = exclusions.forPage(page + 1);
 
         for (int y = 0; y < resultImageHeight; y++) {
@@ -89,23 +96,31 @@ public class DiffImage {
             final int actualLineOffset = y * actualImageWidth;
             final int resultLineOffset = y * resultImageWidth;
             for (int x = 0; x < resultImageWidth; x++) {
-                expectedElement = getExpectedElement(x, y, expectedLineOffset);
-                actualElement = getActualElement(x, y, actualLineOffset);
-                int element = getElement(expectedElement, actualElement);
-                if (pageExclusions.contains(x, y)) {
-                    element = ImageTools.fadeExclusion(element);
-                    if (expectedElement != actualElement) {
-                        diffCalculator.diffFoundInExclusion();
-                    }
+                final int expectedElement = getExpectedElement(x, y, expectedLineOffset);
+                final int actualElement = getActualElement(x, y, actualLineOffset);
+                final boolean differs = expectedElement != actualElement;
+                final boolean excluded = pageExclusions.contains(x, y);
+                if (differs && excluded) {
+                    diffCalculator.diffFoundInExclusion();
+                } else if (differs) {
+                    extendDiffArea(x, y);
+                    diffCalculator.diffFound();
+                    LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
+                }
+                if (horizontal) {
+                    final int expectedBackground = x < expectedImageWidth && y < expectedImageHeight ? expectedElement : WHITE_RGB;
+                    final int actualBackground = x < actualImageWidth && y < actualImageHeight ? actualElement : WHITE_RGB;
+                    resultBuffer.setElem(x + resultLineOffset, overlayElement(expectedBackground, actualRgb, differs, excluded));
+                    actualOverlayBuffer.setElem(x + resultLineOffset, overlayElement(actualBackground, expectedRgb, differs, excluded));
                 } else {
-                    if (expectedElement != actualElement) {
-                        extendDiffArea(x, y);
-                        diffCalculator.diffFound();
-                        LOG.trace("Difference found on page: {} at x: {}, y: {}", page + 1, x, y);
+                    int element = getElement(expectedElement, actualElement);
+                    if (excluded) {
+                        element = ImageTools.fadeExclusion(element);
+                    } else if (differs) {
                         mark(resultBuffer, x, y, resultImageWidth);
                     }
+                    resultBuffer.setElem(x + resultLineOffset, element);
                 }
-                resultBuffer.setElem(x + resultLineOffset, element);
             }
         }
         if (diffCalculator.differencesFound()) {
@@ -115,7 +130,29 @@ public class DiffImage {
         }
         final float maxWidth = Math.max(expectedImage.width, actualImage.width);
         final float maxHeight = Math.max(expectedImage.height, actualImage.height);
-        compareResult.addPage(diffCalculator, page, expectedImage, actualImage, new ImageWithDimension(resultImage, maxWidth, maxHeight));
+        final List<ImageWithDimension> resultPages = horizontal
+                ? List.of(new ImageWithDimension(resultImage, maxWidth, maxHeight), new ImageWithDimension(actualOverlayImage, maxWidth, maxHeight))
+                : List.of(new ImageWithDimension(resultImage, maxWidth, maxHeight));
+        compareResult.addPage(diffCalculator, page, expectedImage, actualImage, resultPages);
+    }
+
+    /**
+     * One pixel of a horizontal compare page: the page's own pixel, tinted with the given color where the documents differ.
+     * Excluded areas are faded the same way as in the normal diff image.
+     */
+    private static int overlayElement(final int background, final int tintRgb, final boolean differs, final boolean excluded) {
+        if (excluded) {
+            return ImageTools.fadeExclusion(background);
+        }
+        if (!differs) {
+            return background;
+        }
+        return color(tint(background >> 16, tintRgb >> 16), tint(background >> 8, tintRgb >> 8), tint(background, tintRgb));
+    }
+
+    // Blends the low byte of each argument, the background at 1 - OVERLAY_ALPHA and the tint at OVERLAY_ALPHA.
+    private static int tint(final int background, final int tint) {
+        return Math.min(255, (int) ((background & 0xFF) * (1.0f - OVERLAY_ALPHA) + (tint & 0xFF) * OVERLAY_ALPHA));
     }
 
     private void extendDiffArea(final int x, final int y) {

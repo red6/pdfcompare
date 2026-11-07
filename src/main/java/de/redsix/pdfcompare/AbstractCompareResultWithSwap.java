@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -82,8 +83,8 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     @Override
     public synchronized void addPage(final PageDiffCalculator diffCalculator, final int pageIndex,
-            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final ImageWithDimension diffImage) {
-        super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, diffImage);
+            final ImageWithDimension expectedImage, final ImageWithDimension actualImage, final List<ImageWithDimension> resultPages) {
+        super.addPage(diffCalculator, pageIndex, expectedImage, actualImage, resultPages);
         hasImages = true;
         if (needToSwap()) {
             swapToDisk();
@@ -105,11 +106,11 @@ public abstract class AbstractCompareResultWithSwap extends CompareResultImpl {
 
     private synchronized void swapToDisk() {
         if (!diffImages.isEmpty()) {
-            final Map<Integer, ImageWithDimension> images = new TreeMap<>();
-            final Iterator<Entry<Integer, ImageWithDimension>> iterator = diffImages.entrySet().iterator();
+            final Map<Integer, List<ImageWithDimension>> images = new TreeMap<>();
+            final Iterator<Entry<Integer, List<ImageWithDimension>>> iterator = diffImages.entrySet().iterator();
             int previousPage = diffImages.keySet().iterator().next();
             while (iterator.hasNext()) {
-                final Entry<Integer, ImageWithDimension> entry = iterator.next();
+                final Entry<Integer, List<ImageWithDimension>> entry = iterator.next();
                 if (entry.getKey() <= previousPage + 1) {
                     images.put(entry.getKey(), entry.getValue());
                     iterator.remove();

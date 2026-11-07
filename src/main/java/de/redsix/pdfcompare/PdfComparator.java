@@ -39,6 +39,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -69,10 +70,8 @@ public class PdfComparator<T extends CompareResultImpl> {
     private String expectedPassword = "";
     private String actualPassword = "";
 
-    private boolean withIgnoreCalled = false;   
-
+    private boolean withIgnoreCalled = false;
     private final ConcurrentLinkedQueue<Throwable> exceptionFromOtherThread = new ConcurrentLinkedQueue<>();
-
 
     /**
      * Compare two PDFs, that are given as base64 encoded strings.
@@ -408,13 +407,13 @@ public class PdfComparator<T extends CompareResultImpl> {
                             }
                         }
                     } catch (NoSuchFileException ex) {
-                        addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB());
+                        addSingleDocumentToResult(expectedStream, environment.getActualColor().getRGB(), true);
                         compareResult.expectedOnly();
                     }
                 }
             } catch (NoSuchFileException ex) {
                 try (final RandomAccessRead actualStream = new RandomAccessReadBuffer(actualStreamSupplier.get())) {
-                    addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB());
+                    addSingleDocumentToResult(actualStream, environment.getExpectedColor().getRGB(), false);
                     compareResult.actualOnly();
                 } catch (NoSuchFileException innerEx) {
                     LOG.warn("No files found to compare. Tried Expected: '{}' and Actual: '{}'", ex.getFile(), innerEx.getFile());
@@ -496,7 +495,9 @@ public class PdfComparator<T extends CompareResultImpl> {
         exceptionFromOtherThread.add(t);
         StacktraceImage stacktraceImage = new StacktraceImage(message, t, environment);
         ImageWithDimension errorImage = stacktraceImage.getImage();
-        compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, stacktraceImage.getBlankImage(), errorImage, errorImage);
+        final List<ImageWithDimension> resultPages = environment.getEnableHorizontalCompareOutput()
+                ? List.of(errorImage, errorImage) : List.of(errorImage);
+        compareResult.addPage(new PageDiffCalculator(new PageArea(pageIndex + 1)), pageIndex, stacktraceImage.getBlankImage(), errorImage, resultPages);
     }
 
     private ImageWithDimension getImage(final Future<ImageWithDimension> imageFuture, final int pageIndex, final String type) {
@@ -513,10 +514,10 @@ public class PdfComparator<T extends CompareResultImpl> {
         }
     }
 
-    private void addSingleDocumentToResult(RandomAccessRead expectedPdfIS, int markerColor) throws IOException {
-        try (PDDocument expectedDocument = Loader.loadPDF(expectedPdfIS)) {
-            PDFRenderer expectedPdfRenderer = new PDFRenderer(expectedDocument);
-            addExtraPages(expectedDocument, expectedPdfRenderer, 0, markerColor, true);
+    private void addSingleDocumentToResult(RandomAccessRead pdf, int markerColor, final boolean expected) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            addExtraPages(document, pdfRenderer, 0, markerColor, expected);
         }
     }
 
@@ -543,11 +544,23 @@ public class PdfComparator<T extends CompareResultImpl> {
                 diffCalculator = new PageDiffCalculator(new PageArea(pageIndex + 1));
             }
             if (expected) {
-                compareResult.addPage(diffCalculator, pageIndex, image, blank(image), image);
+                compareResult.addPage(diffCalculator, pageIndex, image, blank(image), oneSidedResultPages(image, true));
             } else {
-                compareResult.addPage(diffCalculator, pageIndex, blank(image), image, image);
+                compareResult.addPage(diffCalculator, pageIndex, blank(image), image, oneSidedResultPages(image, false));
             }
         }
+    }
+
+    // A page only one document has. Horizontal output pairs it with a white page on the missing side,
+    // so expected and actual stay side by side in a two-page view.
+    private List<ImageWithDimension> oneSidedResultPages(final ImageWithDimension image, final boolean expected) {
+        if (!environment.getEnableHorizontalCompareOutput()) {
+            return List.of(image);
+        }
+        final BufferedImage white = ImageTools.blankImage(
+                new BufferedImage(image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), image.bufferedImage.getType()));
+        final ImageWithDimension missing = new ImageWithDimension(white, image.width, image.height);
+        return expected ? List.of(image, missing) : List.of(missing, image);
     }
 
     private static ImageWithDimension blank(final ImageWithDimension image) {
